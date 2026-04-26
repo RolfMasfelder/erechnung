@@ -29,7 +29,7 @@
     "@tailwindcss/postcss": "^4.2.2",
     "@vitejs/plugin-vue": "^6.0.6",
     "@vitest/coverage-v8": "^4.1.4",
-    "@vitest/ui": "^4.0.8",
+    "@vitest/ui": "^4.1.5",
     "@vue/test-utils": "^2.4.6",
     "autoprefixer": "^10.5.0",
     "esbuild": "^0.28.0",
