@@ -1,0 +1,72 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+labels: [ "enhancement", "needs-triage" ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting an improvement!
+        Please describe your idea as clearly as possible.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the use case or pain point that motivates this request.
+      placeholder: "As a user, I want to ... so that ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe what you'd like to see. Screenshots or mockups are welcome.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Invoice creation / editing
+        - PDF generation
+        - ZUGFeRD / Factur-X XML
+        - Import (incoming invoices)
+        - Export / Download
+        - Business partners
+        - User management
+        - API
+        - Frontend / UI
+        - Docker / Deployment
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: How important is this to you?
+      options:
+        - Nice to have
+        - Would significantly improve my workflow
+        - Blocking — I cannot use the application without this
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any workarounds you currently use, or alternative solutions you've thought of?
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and this has not been requested before.
+          required: true
+        - label: This feature fits the scope of an e-invoicing application.
+          required: false

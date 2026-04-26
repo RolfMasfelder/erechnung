@@ -130,10 +130,10 @@ services:
     ports:
       - "5173:5173"
     volumes:
-      - ./frontend:/app
-      # Mount node_modules from host (instead of anonymous volume)
-      - ./frontend/node_modules:/app/node_modules
-      - ./frontend/.env.development:/app/.env.development
+      - ./frontend:/app:z
+      # Anonymous volume prevents host bind-mount from overwriting build-installed node_modules
+      - /app/node_modules
+      - ./frontend/.env.development:/app/.env.development:z
     environment:
       - NODE_ENV=development
       - VITE_API_BASE_URL=http://localhost:8000/api

@@ -462,14 +462,37 @@
       "bom-ref": "ghostscript",
       "name": "Ghostscript",
       "version": "latest",
-      "description": "PostScript and PDF interpreter",
+      "description": "PostScript and PDF interpreter (used for PDF/A-3 conversion via subprocess)",
       "supplier": {
         "name": "Artifex Software"
       },
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-or-later",
+            "url": "https://www.gnu.org/licenses/agpl-3.0.html"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.ghostscript.com/"
+        },
+        {
+          "type": "license",
+          "url": "https://www.ghostscript.com/licensing/index.html",
+          "comment": "AGPL v3 (open-source). Commercial license available from Artifex Software."
+        }
+      ],
       "properties": [
         {
           "name": "system:package",
           "value": "ghostscript"
+        },
+        {
+          "name": "license:note",
+          "value": "AGPL-3.0 forces this project to be licensed under AGPL-3.0 or later. Ghostscript is invoked as a subprocess for PDF/A-3 conversion (see invoice_app/utils/pdf.py)."
         }
       ]
     }
