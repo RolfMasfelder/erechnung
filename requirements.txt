@@ -188,7 +188,7 @@ platformdirs==4.9.6
     #   virtualenv
 pluggy==1.6.0
     # via pytest
-pre-commit==4.5.1
+pre-commit==4.6.0
     # via -r requirements.in
 prometheus-client==0.25.0
     # via
@@ -196,7 +196,7 @@ prometheus-client==0.25.0
     #   django-prometheus
 prompt-toolkit==3.0.52
     # via click-repl
-psycopg2-binary==2.9.11
+psycopg2-binary==2.9.12
     # via -r requirements.in
 py-serializable==2.1.0
     # via cyclonedx-python-lib
