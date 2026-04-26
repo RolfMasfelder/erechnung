@@ -1,0 +1,54 @@
+# Prometheus configuration for eRechnung monitoring
+# Docs: https://prometheus.io/docs/prometheus/latest/configuration/configuration/
+
+global:
+  scrape_interval: 15s        # Default scrape interval
+  evaluation_interval: 15s    # Rule evaluation interval
+  scrape_timeout: 10s
+
+# Alerting rules
+rule_files:
+  - "alert_rules.yml"
+
+# Scrape targets
+scrape_configs:
+  # -----------------------------------------------------------------------
+  # Django application metrics (via django-prometheus)
+  # Exposes: request latency, DB queries, cache hits, custom business metrics
+  # -----------------------------------------------------------------------
+  - job_name: "django"
+    metrics_path: /metrics
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["web:8000"]
+        labels:
+          service: "django-backend"
+          environment: "development"
+
+  # -----------------------------------------------------------------------
+  # Redis metrics (via redis_exporter sidecar)
+  # -----------------------------------------------------------------------
+  - job_name: "redis"
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["redis-exporter:9121"]
+        labels:
+          service: "redis"
+
+  # -----------------------------------------------------------------------
+  # PostgreSQL metrics (via postgres_exporter sidecar)
+  # -----------------------------------------------------------------------
+  - job_name: "postgres"
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["postgres-exporter:9187"]
+        labels:
+          service: "postgres"
+
+  # -----------------------------------------------------------------------
+  # Prometheus self-monitoring
+  # -----------------------------------------------------------------------
+  - job_name: "prometheus"
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["localhost:9090"]

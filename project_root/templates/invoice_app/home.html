@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}eRechnung - Home{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="jumbotron bg-light p-5 rounded">
+        <h1 class="display-4">Welcome to eRechnung</h1>
+        <p class="lead">A Django-based electronic invoicing system.</p>
+        <hr class="my-4">
+        <p>Use the links below to navigate through the application:</p>
+        <div class="mt-4">
+            <a href="{% url 'company-list' %}" class="btn btn-primary btn-lg me-2">
+                <i class="fas fa-building"></i> Companies
+            </a>
+            <a href="{% url 'business-partner-list' %}" class="btn btn-success btn-lg me-2">
+                <i class="fas fa-users"></i> Customers
+            </a>
+            <a href="/admin/" class="btn btn-secondary btn-lg">
+                <i class="fas fa-cog"></i> Admin Panel
+            </a>
+        </div>
+    </div>
+
+    <!-- Debug Information -->
+    <div class="card mt-4">
+        <div class="card-header bg-info text-white">
+            Debug Information
+        </div>
+        <div class="card-body">
+            <p><strong>Current URL:</strong> {{ request.path }}</p>
+            <p><strong>Company List URL:</strong> {% url 'company-list' %}</p>
+            <p><strong>Business Partner List URL:</strong> {% url 'business-partner-list' %}</p>
+            <p><strong>Current View:</strong> {{ view_name }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

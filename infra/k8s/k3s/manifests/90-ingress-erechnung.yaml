@@ -1,0 +1,29 @@
+# Ingress for LAN access via nginx-ingress (TLS termination via cert-manager)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: erechnung-ingress
+  namespace: erechnung
+  annotations:
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$binary_remote_addr"
+    nginx.ingress.kubernetes.io/service-upstream: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "erechnung-ca-issuer"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - erechnung.local
+    secretName: erechnung-tls
+  rules:
+  - host: erechnung.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: api-gateway-service
+            port:
+              number: 80

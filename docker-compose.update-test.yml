@@ -1,0 +1,107 @@
+# Isolierte Testumgebung für Update-Tests
+# Kein Konflikt mit dev/prod (eigene Ports, Netzwerk, Volumes)
+#
+# Usage:
+#   docker compose -f docker-compose.update-test.yml up -d
+#   docker compose -f docker-compose.update-test.yml down -v
+
+services:
+  db-update-test:
+    image: postgres:17-alpine
+    tmpfs:
+      - /var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: erechnung_update_test
+      POSTGRES_USER: erechnung_test
+      POSTGRES_PASSWORD: test_password_only_for_update_tests
+    ports:
+      - "15432:5432"
+    networks:
+      - update-test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d erechnung_update_test -U erechnung_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis-update-test:
+    image: redis:7-alpine
+    tmpfs:
+      - /data
+    command: redis-server --appendonly no
+    ports:
+      - "16379:6379"
+    networks:
+      - update-test
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  web-old:
+    build:
+      context: .
+      target: development
+      args:
+        APP_VERSION: ${OLD_VERSION:-1.0.0}
+    depends_on:
+      db-update-test:
+        condition: service_healthy
+      redis-update-test:
+        condition: service_healthy
+    environment:
+      POSTGRES_DB: erechnung_update_test
+      POSTGRES_USER: erechnung_test
+      POSTGRES_PASSWORD: test_password_only_for_update_tests
+      POSTGRES_HOST: db-update-test
+      POSTGRES_PORT: 5432
+      REDIS_URL: redis://redis-update-test:6379/0
+      DJANGO_SECRET_KEY: update-test-secret-key-not-for-production
+      DJANGO_ALLOWED_HOSTS: "*"
+      DEBUG: "True"
+    volumes:
+      - ./project_root:/app/project_root:z
+      - ./test-artifacts:/app/test-artifacts:z
+    ports:
+      - "18000:8000"
+    networks:
+      - update-test
+    profiles:
+      - old
+
+  web-new:
+    build:
+      context: .
+      target: development
+      args:
+        APP_VERSION: ${NEW_VERSION:-1.0.0}
+    depends_on:
+      db-update-test:
+        condition: service_healthy
+      redis-update-test:
+        condition: service_healthy
+    environment:
+      POSTGRES_DB: erechnung_update_test
+      POSTGRES_USER: erechnung_test
+      POSTGRES_PASSWORD: test_password_only_for_update_tests
+      POSTGRES_HOST: db-update-test
+      POSTGRES_PORT: 5432
+      REDIS_URL: redis://redis-update-test:6379/0
+      DJANGO_SECRET_KEY: update-test-secret-key-not-for-production
+      DJANGO_ALLOWED_HOSTS: "*"
+      DEBUG: "True"
+    volumes:
+      - ./project_root:/app/project_root:z
+      - ./test-artifacts:/app/test-artifacts:z
+    ports:
+      - "18001:8000"
+    networks:
+      - update-test
+    profiles:
+      - new
+
+networks:
+  update-test:
+    driver: bridge
+    name: erechnung-update-test

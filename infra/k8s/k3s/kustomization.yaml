@@ -1,0 +1,58 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - manifests/00-namespace.yaml
+  - manifests/00-namespace-monitoring.yaml
+  - manifests/10-configmap-erechnung-config.yaml
+  - manifests/11-secret-erechnung-secrets.yaml
+  - manifests/11-secret-monitoring.yaml
+  - manifests/20-pvc-postgres.yaml
+  - manifests/21-pvc-redis.yaml
+  - manifests/30-deploy-postgres.yaml
+  - manifests/31-svc-postgres.yaml
+  - manifests/32-deploy-redis.yaml
+  - manifests/33-svc-redis.yaml
+  - manifests/40-job-django-init.yaml
+  - manifests/50-deploy-django-web.yaml
+  - manifests/51-svc-django-web.yaml
+  - manifests/52-deploy-celery-worker.yaml
+  - manifests/53-pdb-django-web.yaml
+  - manifests/60-deploy-api-gateway.yaml
+  - manifests/61-svc-api-gateway.yaml
+  - manifests/63-pdb-api-gateway.yaml
+  - manifests/70-deploy-frontend.yaml
+  - manifests/71-svc-frontend.yaml
+  - manifests/80-configmap-nginx.yaml
+  - manifests/90-ingress-erechnung.yaml
+  - manifests/91-ingress-monitoring.yaml
+  - manifests/12-cert-manager-issuer.yaml
+  - manifests/13-cert-postgres-tls.yaml
+  # Monitoring stack (Prometheus + Grafana + kube-state-metrics)
+  - manifests/92-configmap-prometheus.yaml
+  - manifests/93-deploy-prometheus.yaml
+  - manifests/94-deploy-grafana.yaml
+  - manifests/94-configmap-grafana-dashboards.yaml
+  - manifests/95-deploy-kube-state-metrics.yaml
+  # Log aggregation (Loki + Promtail)
+  - manifests/96-deploy-loki.yaml
+  - manifests/97-deploy-promtail.yaml
+  - policies/ingress-nginx-network-policies.yaml
+  - policies/erechnung-network-policies.yaml
+  - policies/monitoring-network-policies.yaml
+
+# Image tags for self-built images.
+# Updated automatically by scripts/k3s-update-images.sh
+images:
+  - name: 192.168.178.80:5000/erechnung-web
+    newTag: v0.1.1-8793228
+  - name: 192.168.178.80:5000/erechnung-init
+    newTag: v0.1.1-8793228
+  - name: 192.168.178.80:5000/erechnung-celery
+    newTag: v0.1.1-8793228
+  - name: 192.168.178.80:5000/erechnung-frontend
+    newTag: v0.1.1-8793228
+  - name: 192.168.178.80:5000/erechnung-api-gateway
+    newTag: v0.1.1-8793228
+  - name: 192.168.178.80:5000/erechnung-postgres
+    newTag: v0.1.1-8793228

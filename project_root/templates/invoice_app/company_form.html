@@ -1,0 +1,316 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ title }}</h1>
+        <a href="{% url 'company-list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h3>Company Information</h3>
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }} *</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.tax_id.id_for_label }}" class="form-label">{{ form.tax_id.label }}</label>
+                                    {{ form.tax_id }}
+                                    {% if form.tax_id.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.tax_id.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.vat_id.id_for_label }}" class="form-label">{{ form.vat_id.label }}</label>
+                                    {{ form.vat_id }}
+                                    {% if form.vat_id.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.vat_id.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.commercial_register.id_for_label }}" class="form-label">{{ form.commercial_register.label }}</label>
+                            {{ form.commercial_register }}
+                            {% if form.commercial_register.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.commercial_register.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h3>Address Information</h3>
+                        <div class="mb-3">
+                            <label for="{{ form.address_line1.id_for_label }}" class="form-label">{{ form.address_line1.label }} *</label>
+                            {{ form.address_line1 }}
+                            {% if form.address_line1.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.address_line1.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.address_line2.id_for_label }}" class="form-label">{{ form.address_line2.label }}</label>
+                            {{ form.address_line2 }}
+                            {% if form.address_line2.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.address_line2.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.postal_code.id_for_label }}" class="form-label">{{ form.postal_code.label }} *</label>
+                                    {{ form.postal_code }}
+                                    {% if form.postal_code.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.postal_code.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="{{ form.city.id_for_label }}" class="form-label">{{ form.city.label }} *</label>
+                                    {{ form.city }}
+                                    {% if form.city.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.city.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.state_province.id_for_label }}" class="form-label">{{ form.state_province.label }}</label>
+                                    {{ form.state_province }}
+                                    {% if form.state_province.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.state_province.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.country.id_for_label }}" class="form-label">{{ form.country.label }} *</label>
+                                    {{ form.country }}
+                                    {% if form.country.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.country.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <h3>Contact Information</h3>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.phone.id_for_label }}" class="form-label">{{ form.phone.label }}</label>
+                                    {{ form.phone }}
+                                    {% if form.phone.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.phone.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.fax.id_for_label }}" class="form-label">{{ form.fax.label }}</label>
+                                    {{ form.fax }}
+                                    {% if form.fax.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.fax.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }} *</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.email.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.website.id_for_label }}" class="form-label">{{ form.website.label }}</label>
+                            {{ form.website }}
+                            {% if form.website.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.website.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h3>Business Settings</h3>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.default_currency.id_for_label }}" class="form-label">{{ form.default_currency.label }}</label>
+                                    {{ form.default_currency }}
+                                    {% if form.default_currency.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.default_currency.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.default_payment_terms.id_for_label }}" class="form-label">{{ form.default_payment_terms.label }}</label>
+                                    {{ form.default_payment_terms }}
+                                    {% if form.default_payment_terms.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.default_payment_terms.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4>Banking Information</h4>
+                        <div class="mb-3">
+                            <label for="{{ form.bank_name.id_for_label }}" class="form-label">{{ form.bank_name.label }}</label>
+                            {{ form.bank_name }}
+                            {% if form.bank_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.bank_name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.iban.id_for_label }}" class="form-label">{{ form.iban.label }}</label>
+                                    {{ form.iban }}
+                                    {% if form.iban.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.iban.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.bic.id_for_label }}" class="form-label">{{ form.bic.label }}</label>
+                                    {{ form.bic }}
+                                    {% if form.bic.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.bic.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end mt-4">
+                    <a href="{% url 'company-list' %}" class="btn btn-secondary me-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Company
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add form-control class to all form inputs
+    const inputs = document.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+        if (!input.classList.contains('btn')) {
+            input.classList.add('form-control');
+        }
+    });
+});
+</script>
+{% endblock %}

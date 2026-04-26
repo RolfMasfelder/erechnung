@@ -1,0 +1,84 @@
+############################################################
+# requirements.in
+#
+# Purpose:
+#   Source file for pip-tools (pip-compile) to generate a fully
+#   pinned requirements.txt used by the application and CI.
+#
+# Policy:
+#   - Pin ONLY major version ranges where breaking changes are likely.
+#   - Allow weekly workflow (.github/workflows/dependencies.yml) to
+#     refresh to newest compatible minor/patch versions automatically.
+#   - Keep ALL direct (top-level) dependencies listed here. Transitives
+#     are resolved & pinned automatically into requirements.txt.
+#   - Development / QA tools are included so the single compiled
+#     requirements.txt remains the universal lock file inside Docker.
+#
+# If a package upgrade causes breakage, constrain it here with an
+# upper bound (e.g. package<2.5) and document the reason.
+#
+# Regenerate (locally) with:
+#   pip install pip-tools
+#   pip-compile --upgrade requirements.in
+#
+# NOTE: Django major/minor is intentionally constrained to avoid
+#       accidental jump to a new minor introducing deprecations.
+############################################################
+
+# --- Core Framework & REST ---
+django>=5.2,<5.3
+djangorestframework>=3.16,<3.18
+django-allauth
+django-axes
+django-cors-headers
+django-csp
+django-debug-toolbar
+django-extensions
+django-filter
+django-redis
+djangorestframework-simplejwt
+drf-spectacular
+
+# --- Business / Domain Specific ---
+factur-x
+weasyprint
+pikepdf
+pillow
+lxml
+xmlschema
+saxonche                  # Saxon-HE for EN16931 Schematron (XPath 2.0+)
+
+# --- Task Queue & Caching ---
+celery
+redis
+
+# --- Deployment & Server ---
+gunicorn
+whitenoise
+
+# --- Monitoring / Observability ---
+django-prometheus
+prometheus-client
+python-json-logger
+sentry-sdk
+
+# --- Configuration ---
+python-dotenv
+environs
+
+# --- Database ---
+psycopg2-binary
+
+# --- Tooling / Dev / QA ---
+ruff
+pytest
+pytest-django
+coverage
+factory-boy
+pip-audit
+bandit
+pre-commit
+setuptools
+wheel
+
+# (Leave pip itself unmanaged here; GitHub runner provides a recent version.)

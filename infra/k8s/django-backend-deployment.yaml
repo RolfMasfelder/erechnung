@@ -1,0 +1,42 @@
+# Django Backend Deployment for eRechnung
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-backend
+  namespace: erechnung
+  labels:
+    app: django-backend
+    component: api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: django-backend
+  template:
+    metadata:
+      labels:
+        app: django-backend
+    spec:
+      containers:
+      - name: django-app
+        image: erechnung/django-app:KUSTOMIZE
+        ports:
+        - containerPort: 8000
+        env:
+        - name: POSTGRES_HOST
+          value: "postgres-service"
+        - name: BEHIND_GATEWAY
+          value: "true"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /api/health/
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 30

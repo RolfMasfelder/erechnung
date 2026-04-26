@@ -1,0 +1,33 @@
+# Docker Compose für E2E-Tests mit Playwright
+# Verwendet Microsoft Playwright Image mit vorinstallierten Browsern
+# Nutzt bestehende Backend-Services aus docker-compose.yml
+#
+# WICHTIG:
+# - Verwendet eigenen Port 5174 um Konflikt mit normalem Frontend zu vermeiden
+# - Backend muss mit BEHIND_GATEWAY=false gestartet werden für CORS:
+#     BEHIND_GATEWAY=false docker-compose up -d
+#     docker-compose -f docker-compose.e2e.yml up -d
+
+services:
+  frontend-e2e:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.e2e
+    container_name: erechnung_frontend_e2e
+    ports:
+      - "5174:5173"  # Host:5174 -> Container:5173 (避免与normalem Frontend Port-Konflikt)
+      - "9323:9323"  # Playwright HTML Report
+    volumes:
+      - ./frontend:/app:z  # :z relabelt für SELinux (container_file_t)
+      - /app/node_modules  # Verhindert dass Host node_modules das Container-Verzeichnis überschreiben
+    environment:
+      - NODE_ENV=development
+      - VITE_API_BASE_URL=http://web:8000/api
+    command: npm run dev
+    networks:
+      - erechnung-network
+
+networks:
+  erechnung-network:
+    driver: bridge
+    name: erechnung-network

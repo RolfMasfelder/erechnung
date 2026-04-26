@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Invoice Line{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Delete Invoice Line</h1>
+        <a href="{% url 'invoice-detail' invoice.id %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Invoice
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="alert alert-danger">
+                <h4 class="alert-heading">Warning!</h4>
+                <p>Are you sure you want to delete this line item from invoice <strong>"{{ invoice.invoice_number }}"</strong>?</p>
+                <p>This action cannot be undone.</p>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <h5>Line Item Details:</h5>
+                    <dl class="row">
+                        <dt class="col-sm-3">Description:</dt>
+                        <dd class="col-sm-9">{{ object.description }}</dd>
+
+                        <dt class="col-sm-3">Product Code:</dt>
+                        <dd class="col-sm-9">{{ object.product_code|default:"-" }}</dd>
+
+                        <dt class="col-sm-3">Quantity:</dt>
+                        <dd class="col-sm-9">{{ object.quantity }} {{ object.get_unit_of_measure_display }}</dd>
+
+                        <dt class="col-sm-3">Unit Price:</dt>
+                        <dd class="col-sm-9">{{ object.unit_price }} {{ invoice.currency }}</dd>
+
+                        <dt class="col-sm-3">Tax Rate:</dt>
+                        <dd class="col-sm-9">{{ object.tax_rate }}%</dd>
+
+                        <dt class="col-sm-3">Line Total:</dt>
+                        <dd class="col-sm-9">{{ object.line_total }} {{ invoice.currency }}</dd>
+                    </dl>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <a href="{% url 'invoice-detail' invoice.id %}" class="btn btn-secondary me-2">Cancel</a>
+                    <button type="submit" class="btn btn-danger">Confirm Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

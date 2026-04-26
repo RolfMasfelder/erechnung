@@ -1,0 +1,36 @@
+---
+# MetalLB IP Address Pool für produktionsnahe Konfiguration
+#
+# ⚠️ WICHTIG: IP-Bereich muss angepasst werden!
+# - Für lokales Netzwerk: 192.168.178.200-192.168.178.210
+# - Für Docker-Netzwerk (kind-interne Tests): 172.18.255.200-172.18.255.210
+#
+# Der IP-Bereich MUSS:
+# 1. Im gleichen Subnet wie Host-Maschine sein (z.B. 192.168.178.0/24)
+# 2. NICHT vom DHCP-Server vergeben werden (statisch reserviert)
+# 3. Vom Router/Gateway erreichbar sein
+#
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: local-pool
+  namespace: metallb-system
+spec:
+  addresses:
+  # kind-Cluster: Docker-Netzwerk (172.18.0.0/16)
+  # MetalLB kann in kind NUR Docker-IPs vergeben, nicht Host-LAN IPs!
+  - 172.18.255.200-172.18.255.210
+  # Für echtes K8s (nicht kind): Lokales Netzwerk verwenden
+  # - 192.168.178.200-192.168.178.210
+
+---
+# Layer 2 Advertisement
+# Macht die LoadBalancer-IPs im lokalen Netzwerk bekannt (ARP)
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: local-l2-advert
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+  - local-pool

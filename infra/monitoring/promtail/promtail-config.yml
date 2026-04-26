@@ -1,0 +1,63 @@
+# Promtail configuration for eRechnung
+# Scrapes Docker container logs and ships them to Loki
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+  log_level: warn
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # ---------------------------------------------------------------------------
+  # Docker container log scraping
+  # ---------------------------------------------------------------------------
+  - job_name: docker
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: docker
+          __path__: /var/log/containers/*.log
+
+  - job_name: docker-direct
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: label
+            values: ["com.erechnung.service"]
+    relabel_configs:
+      # Use the container name as a label
+      - source_labels: ["__meta_docker_container_name"]
+        regex: "/?(.*)"
+        target_label: "container"
+      # Use the erechnung service label
+      - source_labels: ["__meta_docker_container_label_com_erechnung_service"]
+        target_label: "service"
+      # Use the erechnung environment label
+      - source_labels: ["__meta_docker_container_label_com_erechnung_environment"]
+        target_label: "environment"
+    pipeline_stages:
+      # Try to parse JSON logs (from our Django JSON formatter)
+      - json:
+          expressions:
+            level: level
+            logger: logger
+            request_id: request_id
+            service: service
+      # If JSON parsing succeeds, use the extracted level
+      - labels:
+          level:
+          logger:
+          service:
+      # Drop noisy debug logs from third-party libs
+      - match:
+          selector: '{level="DEBUG"}'
+          stages:
+            - drop:
+                expression: "fontTools|weasyprint|PIL"

@@ -1,0 +1,66 @@
+# cert-manager Configuration for eRechnung k3s Cluster
+# Provides automatic TLS certificate management for Ingress resources.
+#
+# Installation (one-time):
+#   kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.17.1/cert-manager.yaml
+#   kubectl wait --for=condition=Available -n cert-manager deployment/cert-manager --timeout=120s
+#   kubectl apply -f infra/k8s/k3s/manifests/12-cert-manager-issuer.yaml
+#
+# For LAN-only deployments (no public DNS), we use a self-signed CA.
+# For public deployments, switch to the letsencrypt ClusterIssuer below.
+---
+# Step 1: Self-signed issuer (bootstraps the CA)
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-issuer
+spec:
+  selfSigned: {}
+---
+# Step 2: CA Certificate (signed by the self-signed issuer)
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: erechnung-ca
+  namespace: cert-manager
+spec:
+  isCA: true
+  commonName: eRechnung Internal CA
+  secretName: erechnung-ca-secret
+  duration: 87600h  # 10 years
+  renewBefore: 8760h  # 1 year before expiry
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: selfsigned-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
+---
+# Step 3: CA Issuer (uses the CA cert to sign application certificates)
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: erechnung-ca-issuer
+spec:
+  ca:
+    secretName: erechnung-ca-secret
+---
+# Optional: Let's Encrypt issuer for public deployments
+# Requires public DNS pointing to the cluster.
+# Uncomment and configure if needed.
+# ---
+# apiVersion: cert-manager.io/v1
+# kind: ClusterIssuer
+# metadata:
+#   name: letsencrypt-prod
+# spec:
+#   acme:
+#     server: https://acme-v02.api.letsencrypt.org/directory
+#     email: admin@example.com  # ← Change this
+#     privateKeySecretRef:
+#       name: letsencrypt-prod-key
+#     solvers:
+#     - http01:
+#         ingress:
+#           class: nginx

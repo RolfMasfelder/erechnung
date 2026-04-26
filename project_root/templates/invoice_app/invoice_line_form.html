@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ title }}</h1>
+        <a href="{% url 'invoice-detail' invoice.id %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Invoice
+        </a>
+    </div>
+
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Invoice Information</h5>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Invoice Number:</dt>
+                <dd class="col-sm-9">{{ invoice.invoice_number }}</dd>
+
+                <dt class="col-sm-3">Customer:</dt>
+                <dd class="col-sm-9">{{ invoice.customer.name }}</dd>
+
+                <dt class="col-sm-3">Currency:</dt>
+                <dd class="col-sm-9">{{ invoice.currency }}</dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.product_code.id_for_label }}" class="form-label">{{ form.product_code.label }}</label>
+                            {{ form.product_code }}
+                            {% if form.product_code.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.product_code.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.quantity.id_for_label }}" class="form-label">{{ form.quantity.label }}</label>
+                                    {{ form.quantity }}
+                                    {% if form.quantity.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.quantity.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.unit_of_measure.id_for_label }}" class="form-label">{{ form.unit_of_measure.label }}</label>
+                                    {{ form.unit_of_measure }}
+                                    {% if form.unit_of_measure.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.unit_of_measure.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.unit_price.id_for_label }}" class="form-label">{{ form.unit_price.label }} ({{ invoice.currency }})</label>
+                                    {{ form.unit_price }}
+                                    {% if form.unit_price.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.unit_price.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.tax_rate.id_for_label }}" class="form-label">{{ form.tax_rate.label }} (%)</label>
+                                    {{ form.tax_rate }}
+                                    {% if form.tax_rate.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.tax_rate.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <p><strong>Note:</strong> The line total will be calculated automatically from quantity × unit price.</p>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'invoice-detail' invoice.id %}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">{{ action }} Line Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // JavaScript is prepared for future enhancement of real-time calculation
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fields are already defined for future use
+        const quantityField = document.getElementById('{{ form.quantity.id_for_label }}');
+        const priceField = document.getElementById('{{ form.unit_price.id_for_label }}');
+
+        // This function could be enhanced later to show real-time calculation
+        function setupCalculation() {
+            if (quantityField && priceField) {
+                // Event listeners ready to be implemented when needed
+                console.log('Form fields ready for calculation functionality');
+            }
+        }
+
+        setupCalculation();
+    });
+</script>
+{% endblock %}

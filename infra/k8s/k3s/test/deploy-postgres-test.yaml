@@ -1,0 +1,43 @@
+# PostgreSQL Deployment für Test-Namespace
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: erechnung-update-test
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: 192.168.178.80:5000/erechnung-postgres:KUSTOMIZE
+        imagePullPolicy: IfNotPresent
+        args: ["-c", "shared_preload_libraries=pg_stat_statements"]
+        envFrom:
+        - secretRef:
+            name: erechnung-secrets
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc

@@ -1,0 +1,91 @@
+# Django Web Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-web
+  namespace: erechnung
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  minReadySeconds: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: django-web
+  template:
+    metadata:
+      labels:
+        app: django-web
+    spec:
+      # Pod Security Context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1234
+        runAsGroup: 1234
+        fsGroup: 1234
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: django-web
+        image: 192.168.178.80:5000/erechnung-web:KUSTOMIZE
+        imagePullPolicy: IfNotPresent
+        # Container Security Context
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false  # Django needs write to /tmp, /media
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - configMapRef:
+            name: erechnung-config
+        - secretRef:
+            name: erechnung-secrets
+        volumeMounts:
+        - name: postgres-ca
+          mountPath: /etc/ssl/postgres
+          readOnly: true
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "100m"
+          limits:
+            memory: "1536Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health/
+            port: 8000
+            scheme: HTTP
+            httpHeaders:
+            - name: Host
+              value: erechnung.local
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health/
+            port: 8000
+            scheme: HTTP
+            httpHeaders:
+            - name: Host
+              value: erechnung.local
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+      volumes:
+      - name: postgres-ca
+        secret:
+          secretName: postgres-tls-certs
+          items:
+          - key: ca.crt
+            path: ca.crt

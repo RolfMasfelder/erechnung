@@ -1,0 +1,115 @@
+# Nginx ConfigMap für Test-Namespace
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: erechnung-update-test
+data:
+  nginx.conf: |
+    events {
+        worker_connections 1024;
+    }
+    http {
+        upstream django_backend {
+            server django-web-service:8000;
+        }
+        upstream frontend_service {
+            server frontend-service:80;
+        }
+
+        limit_req_zone $binary_remote_addr zone=api_limit:10m rate=10r/s;
+        limit_req_zone $binary_remote_addr zone=auth_limit:10m rate=5r/s;
+        limit_req_zone $binary_remote_addr zone=health_limit:10m rate=10r/s;
+
+        server {
+            listen 8080;
+            absolute_redirect off;
+            port_in_redirect off;
+
+            location = /gateway-health {
+                access_log off;
+                default_type application/json;
+                return 200 '{"status":"ok","component":"api-gateway"}';
+            }
+
+            location = /health {
+                access_log off;
+                limit_req zone=health_limit burst=20 nodelay;
+                proxy_pass http://django_backend/health/;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto https;
+                proxy_set_header X-Forwarded-Host $host;
+                proxy_connect_timeout 2s;
+                proxy_send_timeout 2s;
+                proxy_read_timeout 2s;
+            }
+
+            location /health/ {
+                access_log off;
+                proxy_pass http://django_backend;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto https;
+                proxy_set_header X-Forwarded-Host $host;
+                proxy_connect_timeout 2s;
+                proxy_send_timeout 2s;
+                proxy_read_timeout 2s;
+            }
+
+            location /api/auth/ {
+                limit_req zone=auth_limit burst=10 nodelay;
+                proxy_pass http://django_backend;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto https;
+            }
+
+            location /api/token/ {
+                limit_req zone=auth_limit burst=5 nodelay;
+                proxy_pass http://django_backend;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto https;
+            }
+
+            location /api/ {
+                limit_req zone=api_limit burst=20 nodelay;
+                proxy_pass http://django_backend;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto https;
+            }
+
+            location /admin/ {
+                proxy_pass http://django_backend;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto https;
+            }
+
+            location /static/ {
+                proxy_pass http://django_backend;
+                proxy_set_header Host $host;
+            }
+
+            location /media/ {
+                proxy_pass http://django_backend;
+                proxy_set_header Host $host;
+            }
+
+            location / {
+                proxy_pass http://frontend_service;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto https;
+            }
+        }
+    }

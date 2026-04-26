@@ -1,0 +1,249 @@
+name: E2E Tests (Playwright)
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/e2e-tests.yml'
+      - 'docker-compose.yml'
+      - 'docker-compose.production.yml'
+      - 'docker-compose.e2e.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'frontend/**'
+  workflow_dispatch:
+    inputs:
+      debug:
+        description: 'Enable debug logging'
+        required: false
+        default: 'false'
+
+env:
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+concurrency:
+  group: e2e-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-tests:
+    name: Playwright E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Create .env files
+        run: |
+          # Django .env
+          cat > .env << EOF
+          DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY || 'django-insecure-ci-dummy-key-for-e2e-testing-only' }}
+          DJANGO_DEBUG=False
+          DJANGO_ALLOWED_HOSTS=localhost,api-gateway,web
+          BEHIND_GATEWAY=false
+          DATABASE_URL=postgresql://erechnung:erechnung@db:5432/erechnung_db
+          REDIS_URL=redis://redis:6379/0
+          CORS_ALLOWED_ORIGINS=http://localhost:5173,http://frontend-e2e:5173
+          POSTGRES_DB=erechnung_db
+          POSTGRES_USER=erechnung
+          POSTGRES_PASSWORD=erechnung
+          POSTGRES_HOST=db
+          POSTGRES_PORT=5432
+          EOF
+
+          # Frontend .env.test
+          cat > frontend/.env.test << EOF
+          VITE_API_BASE_URL=http://web:8000/api
+          PLAYWRIGHT_BASE_URL=http://localhost:5173
+          NODE_TLS_REJECT_UNAUTHORIZED=0
+          EOF
+
+      - name: Prepare media and logs directories
+        run: |
+          mkdir -p project_root/media/company_logos \
+                   project_root/media/invoices \
+                   project_root/media/xml
+          chmod -R 777 project_root/media
+          # docker-compose.yml mounts ./logs:/app/logs — must be writable by app_user (UID 1234)
+          mkdir -p logs
+          chmod -R 777 logs
+
+      - name: Generate PostgreSQL TLS certificates
+        run: |
+          bash scripts/generate-pg-certs.sh
+          echo "🔒 PostgreSQL TLS certificates generated for CI"
+
+      - name: Build Docker images
+        run: |
+          docker compose -f docker-compose.yml \
+                         -f docker-compose.e2e.yml \
+                         build --parallel \
+                         db redis init web frontend-e2e
+
+      - name: Start services
+        run: |
+          # Start db and redis first
+          docker compose -f docker-compose.yml \
+                         -f docker-compose.e2e.yml \
+                         up -d db redis
+
+          # Wait for db and redis to be healthy
+          echo "Waiting for db and redis..."
+          sleep 5
+
+          # Start init container (runs migrations and creates users)
+          docker compose -f docker-compose.yml \
+                         -f docker-compose.e2e.yml \
+                         up init
+
+          # Start web and frontend after init completes
+          docker compose -f docker-compose.yml \
+                         -f docker-compose.e2e.yml \
+                         up -d web frontend-e2e
+
+      - name: Show initial container status and logs
+        run: |
+          echo "=== Container Status ==="
+          docker compose -f docker-compose.yml -f docker-compose.e2e.yml ps
+          echo ""
+          echo "=== Init Container Logs ==="
+          docker compose -f docker-compose.yml -f docker-compose.e2e.yml logs init || true
+          echo ""
+
+          # Give Django a moment to start and produce logs
+          echo "=== Waiting 10 seconds for Django to start ==="
+          sleep 10
+
+          echo "=== Django Web Container Logs ==="
+          docker compose -f docker-compose.yml -f docker-compose.e2e.yml logs web || true
+          echo ""
+          echo "=== Checking web container health ==="
+          docker compose -f docker-compose.yml -f docker-compose.e2e.yml exec -T web python --version 2>&1 || echo "❌ Web container not responding to python command"
+          docker compose -f docker-compose.yml -f docker-compose.e2e.yml exec -T web pwd 2>&1 || echo "❌ Web container not responding to pwd command"
+          echo ""
+          echo "=== Checking if Django is listening on port 8000 ==="
+          docker compose -f docker-compose.yml -f docker-compose.e2e.yml exec -T web sh -c 'ss -tlnp | grep 8000' 2>&1 || echo "❌ Nothing listening on port 8000"
+
+      - name: Wait for services to be ready
+        run: |
+          echo "⏳ Waiting for PostgreSQL..."
+          timeout 90 bash -c 'until docker compose -f docker-compose.yml -f docker-compose.e2e.yml exec -T db pg_isready -U erechnung; do echo "Waiting for DB..."; sleep 2; done'
+          echo "✅ PostgreSQL is ready"
+
+          echo "⏳ Giving web container a moment to start..."
+          sleep 5
+
+          echo "=== Current web container status ==="
+          docker compose -f docker-compose.yml -f docker-compose.e2e.yml ps web
+          echo "=== Web container logs ==="
+          docker compose -f docker-compose.yml -f docker-compose.e2e.yml logs --tail=50 web
+
+          echo "⏳ Waiting for Django health endpoint (using curl inside container)..."
+          timeout 120 bash -c 'until docker compose -f docker-compose.yml -f docker-compose.e2e.yml exec -T web curl -f -s http://localhost:8000/health/ > /dev/null 2>&1; do echo "Waiting for Django health check..."; sleep 3; done' || {
+            echo "❌ Django health check timeout! - showing full logs:"
+            docker compose -f docker-compose.yml -f docker-compose.e2e.yml logs web
+            exit 1
+          }
+          echo "✅ Django is healthy"
+
+          echo "⏳ Waiting for Frontend (using curl inside container)..."
+          timeout 90 bash -c 'until docker compose -f docker-compose.yml -f docker-compose.e2e.yml exec -T frontend-e2e curl -f -s http://localhost:5173 > /dev/null 2>&1; do echo "Waiting for Frontend..."; sleep 3; done' || {
+            echo "❌ Frontend timeout - showing logs:"
+            docker compose -f docker-compose.yml -f docker-compose.e2e.yml logs frontend-e2e
+            exit 1
+          }
+          echo "✅ Frontend is ready"
+
+          echo "🎉 All services are ready!"
+
+      # Migrations and superuser are handled by init container
+      # No need to run them again here
+
+      - name: Load test fixtures
+        run: |
+          # Country fixtures are already loaded via migration 0002_load_countries
+          # Just create test data (50 invoices, 25 business partners)
+          docker compose -f docker-compose.yml -f docker-compose.e2e.yml exec -T web python project_root/manage.py create_test_data
+
+      - name: Install Playwright in Frontend container
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.e2e.yml exec -T frontend-e2e npm install
+
+      - name: Run Playwright tests
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.e2e.yml exec -T frontend-e2e bash -c "PLAYWRIGHT_BASE_URL=http://localhost:5173 npm run test:e2e"
+        env:
+          CI: true
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 30
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: test-results
+          path: frontend/test-results/
+          retention-days: 30
+
+      - name: Upload Screenshots on Failure
+        uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-screenshots
+          path: frontend/test-results/**/*.png
+          retention-days: 7
+
+      - name: Upload Videos on Failure
+        uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-videos
+          path: frontend/test-results/**/*.webm
+          retention-days: 7
+
+      - name: Show Docker logs on failure
+        if: failure()
+        run: |
+          echo "=== Container Status ==="
+          docker compose -f docker-compose.yml -f docker-compose.e2e.yml ps
+          echo ""
+          echo "=== Django logs ==="
+          docker compose -f docker-compose.yml -f docker-compose.e2e.yml logs web
+          echo ""
+          echo "=== Frontend logs ==="
+          docker compose -f docker-compose.yml -f docker-compose.e2e.yml logs frontend-e2e
+          echo ""
+          echo "=== Init logs ==="
+          docker compose -f docker-compose.yml -f docker-compose.e2e.yml logs init
+          echo ""
+          echo "=== Database logs ==="
+          docker compose -f docker-compose.yml -f docker-compose.e2e.yml logs db
+          echo ""
+          echo "=== Redis logs ==="
+          docker compose -f docker-compose.yml -f docker-compose.e2e.yml logs redis
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker compose -f docker-compose.yml \
+                         -f docker-compose.e2e.yml \
+                         down -v

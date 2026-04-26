@@ -1,0 +1,28 @@
+# ConfigMap für Test-Namespace
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: erechnung-config
+  namespace: erechnung-update-test
+data:
+  DJANGO_ENV: "production"
+  DJANGO_DEBUG: "False"
+  DJANGO_ALLOWED_HOSTS: "erechnung.local,localhost,127.0.0.1,django-web-service,*"
+  PYTHONPATH: "/app/project_root"
+  PYTHONUNBUFFERED: "1"
+  DJANGO_SETTINGS_MODULE: "invoice_project.settings"
+  POSTGRES_HOST: "postgres-service"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "erechnung_test"
+  DB_HOST: "postgres-service"
+  DB_PORT: "5432"
+  DB_NAME: "erechnung_test"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  GHOSTSCRIPT_PATH: "/usr/bin/gs"
+  MEDIA_ROOT: "/app/project_root/media"
+  STATIC_ROOT: "/app/static"
+  IS_DOCKER: "true"
+  BEHIND_GATEWAY: "true"
+  INIT_CREATE_ADMIN: "false"
+  INIT_CREATE_TEST_DATA: "false"

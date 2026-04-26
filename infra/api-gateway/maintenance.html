@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="30">
+    <title>eRechnung — Wartung</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f0f4f8;
+            color: #1a202c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            padding: 3rem 2.5rem;
+            max-width: 520px;
+            text-align: center;
+        }
+        .icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+        }
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            color: #2d3748;
+        }
+        p {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #4a5568;
+            margin-bottom: 1rem;
+        }
+        .info-box {
+            background: #ebf8ff;
+            border: 1px solid #bee3f8;
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: #2a4365;
+        }
+        .info-box strong {
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 2px;
+            margin-top: 2rem;
+            overflow: hidden;
+        }
+        .progress-bar::after {
+            content: '';
+            display: block;
+            width: 30%;
+            height: 100%;
+            background: #4299e1;
+            border-radius: 2px;
+            animation: slide 2s ease-in-out infinite;
+        }
+        @keyframes slide {
+            0%   { transform: translateX(-100%); }
+            100% { transform: translateX(433%); }
+        }
+        .footer {
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: #a0aec0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">&#128736;</div>
+        <h1>Wartungsarbeiten</h1>
+        <p>
+            Das eRechnung-System wird gerade aktualisiert.<br>
+            Bitte haben Sie einen Moment Geduld.
+        </p>
+
+        <div class="info-box">
+            <strong>Geschätzte Dauer: ca. 5 Minuten</strong>
+            Diese Seite aktualisiert sich automatisch alle 30 Sekunden.
+        </div>
+
+        <div class="progress-bar"></div>
+
+        <p class="footer">
+            eRechnung &mdash; ZUGFeRD/Factur-X Rechnungssystem
+        </p>
+    </div>
+</body>
+</html>

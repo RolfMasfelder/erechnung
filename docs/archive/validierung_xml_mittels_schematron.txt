@@ -1,0 +1,46 @@
+Die Validierung läuft typischerweise in zwei Schritten ab:
+
+1. **XSD-Validierung (syntaktische Prüfung):**
+   Mit der XSD-Datei überprüfst du, ob das XML-Dokument die korrekte Struktur und die richtigen Datentypen verwendet. Dazu lädst du die XSD in einen XML-Parser (zum Beispiel mit der Python-Bibliothek **lxml**) und lässt dein XML-Dokument dagegen validieren. Tritt dabei ein Fehler auf, liefert der Validator Hinweise, welche Teile der XML-Struktur nicht den Vorgaben entsprechen.
+
+2. **Schematron-Validierung (semantische Prüfung):**
+   Während die XSD vor allem strukturelle Aspekte kontrolliert, greifen Schematron-Regeln inhaltlich und logische Anforderungen ab – etwa, dass bestimmte Felder nicht leer sein dürfen oder numerische Werte in einem sinnvollen Verhältnis stehen.
+   Üblicherweise wird das Schematron-Dokument zunächst in ein XSLT-Stylesheet transformiert (das kann mit Tools wie **iso-schematron** oder **schxslt** geschehen). Anschließend wendest du dieses XSLT-Stylesheet mit einem XSLT-Prozessor (z. B. wieder mit **lxml** in Python) auf dein XML-Dokument an. Das Ergebnis ist dann ein Bericht, der alle Verletzungen der definierten Regeln aufzeigt.
+
+### Beispiel in Python (mit lxml):
+
+```python
+from lxml import etree
+
+# XML-Dokument laden
+xml_doc = etree.parse('invoice.xml')
+
+# --- XSD-Validierung ---
+with open('invoice.xsd', 'rb') as f:
+    xsd_doc = etree.parse(f)
+xmlschema = etree.XMLSchema(xsd_doc)
+if xmlschema.validate(xml_doc):
+    print("XSD-Validierung erfolgreich!")
+else:
+    print("XSD-Validierung fehlgeschlagen!")
+    print(xmlschema.error_log)
+
+# --- Schematron-Validierung ---
+# Schematron-Dokument laden (direkt, wenn lxml-Schematron unterstützt wird)
+with open('invoice.sch', 'rb') as f:
+    schematron_doc = etree.parse(f)
+schematron = etree.Schematron(schematron_doc)
+if schematron.validate(xml_doc):
+    print("Schematron-Validierung erfolgreich!")
+else:
+    print("Schematron-Validierung fehlgeschlagen!")
+    for error in schematron.error_log:
+        print(error.message)
+```
+
+### Zusammenfassung
+
+- **XSD-Validierung:** Sichert die korrekte XML-Struktur ab.
+- **Schematron-Validierung:** Ergänzt die Prüfung um semantische Regeln, die sich nicht allein in der XSD ausdrücken lassen.
+
+In Python kannst du beide Prüfungen beispielsweise mit der Bibliothek **lxml** durchführen. Alternativ bieten viele andere Programmiersprachen und Tools ähnliche Möglichkeiten, sodass du je nach Umgebung flexibel bist.

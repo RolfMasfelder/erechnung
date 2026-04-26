@@ -1,0 +1,6 @@
+# SSL Certificates - regenerate with generate-certs.sh
+*.key
+*.crt
+*.csr
+*.srl
+*.cnf

@@ -1,0 +1,286 @@
+{% comment %}
+   invoice_pdf.html – Rechnungs-Template für Browser-Vorschau UND WeasyPrint
+   ============================================================
+   Dieses Template wird an zwei Stellen genutzt:
+     1. Browser-Vorschau:  /invoices/<pk>/preview/   (InvoicePreviewView)
+     2. PDF-Erzeugung:     WeasyPrint rendert dieses Template zu PDF
+
+   Workflow:
+     a) Vorlage aus LibreOffice exportieren (*.ott → HTML)
+     b) CSS aus dem Export in den <style>-Block unten einfügen
+     c) Hardcodierte Werte durch Django-Template-Tags ersetzen (s.u.)
+     d) Im Browser /invoices/<pk>/preview/ aufrufen und visuell prüfen
+     e) WeasyPrint nutzt dasselbe Template ohne weitere Änderungen
+
+   KEIN extends 'base.html' – standalone für WeasyPrint!
+{% endcomment %}<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Rechnung {{ invoice.invoice_number }}</title>
+  <style>
+    /* ─── @page: Seitenformat für WeasyPrint / Druck ─────────────── */
+    @page {
+      size: A4;
+      margin: 20mm 15mm 25mm 20mm;
+    }
+
+    /* ─── Basis-Reset ─────────────────────────────────────────────── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10pt;
+      color: #000;
+      background: #fff;
+    }
+
+    /* ─── Vorschau-Banner (nur im Browser sichtbar, nicht im PDF) ─── */
+    .preview-banner {
+      background: #1d4ed8;
+      color: #fff;
+      text-align: center;
+      padding: 8px 16px;
+      font-size: 11pt;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+    .preview-banner a {
+      color: #bfdbfe;
+      margin-left: 20px;
+      font-weight: normal;
+      font-size: 9pt;
+    }
+    @media print {
+      .preview-banner { display: none; }
+    }
+
+    /* ─── Seitenumbruch-Hilfe bei langen Positionslisten ──────────── */
+    .page-break { page-break-before: always; }
+
+    /* ============================================================
+       HIER: CSS aus LibreOffice-Export einfügen
+       Tipp: Klassen-Namen aus dem Export (P1, T3 ...) durch
+             semantische Namen ersetzen (z.B. .invoice-header,
+             .positions-table, .totals-block)
+       ============================================================ */
+
+    /* ─── Platzhalter-Styles (bis LibreOffice-CSS eingefügt wird) ── */
+    .invoice-page       { max-width: 210mm; margin: 0 auto; padding: 10mm; }
+    .sender-block       { font-size: 8pt; color: #555; margin-bottom: 4mm; }
+    .recipient-block    { margin-bottom: 10mm; min-height: 35mm; }
+    .invoice-meta       { display: flex; justify-content: space-between; margin-bottom: 8mm; }
+    .invoice-meta table { border-collapse: collapse; }
+    .invoice-meta td    { padding: 1mm 3mm; vertical-align: top; }
+    .invoice-meta td:first-child { font-weight: bold; }
+    .positions-table    { width: 100%; border-collapse: collapse; margin-bottom: 6mm; }
+    .positions-table th { background: #f0f0f0; padding: 2mm 2mm; text-align: left; border-bottom: 1px solid #999; font-size: 9pt; }
+    .positions-table td { padding: 1.5mm 2mm; border-bottom: 1px solid #ddd; font-size: 9pt; vertical-align: top; }
+    .positions-table .num { text-align: right; }
+    .totals-block       { float: right; width: 80mm; border-top: 2px solid #000; padding-top: 3mm; }
+    .totals-block table { width: 100%; border-collapse: collapse; }
+    .totals-block td    { padding: 1mm 2mm; font-size: 9pt; }
+    .totals-block td:last-child { text-align: right; font-weight: bold; }
+    .totals-block .grand-total td { font-size: 11pt; border-top: 1px solid #000; }
+    .notes-block        { clear: both; margin-top: 8mm; font-size: 9pt; }
+    .footer-block       { margin-top: 12mm; font-size: 7.5pt; color: #555; border-top: 1px solid #ccc; padding-top: 2mm; display: flex; justify-content: space-between; }
+    .logo               { max-height: 20mm; max-width: 60mm; }
+  </style>
+</head>
+<body>
+
+{# ── Vorschau-Banner (verschwindet im Druck/PDF automatisch) ── #}
+<div class="preview-banner">
+  Vorschau – Rechnung {{ invoice.invoice_number }}
+  <a href="{{ request.path|cut:'/preview/' }}">← zur Rechnungsdetailseite</a>
+</div>
+
+<div class="invoice-page">
+
+{# ── 1. KOPFBEREICH: Logo + Absender ──────────────────────────── #}
+  <table style="width:100%; margin-bottom:6mm;">
+    <tr>
+      <td style="width:60%;">
+        {# Logo: nach LibreOffice-Export als base64-Data-URI einbetten #}
+        {% if invoice.company.logo %}
+          <img class="logo" src="{{ invoice.company.logo.url }}" alt="Logo">
+        {% else %}
+          <div style="font-size:14pt; font-weight:bold;">{{ invoice.company.name }}</div>
+        {% endif %}
+      </td>
+      <td style="text-align:right; font-size:9pt; color:#555;">
+        {{ invoice.company.name }}<br>
+        {{ invoice.company.address_line1 }}<br>
+        {% if invoice.company.address_line2 %}{{ invoice.company.address_line2 }}<br>{% endif %}
+        {{ invoice.company.postal_code }} {{ invoice.company.city }}<br>
+        {{ invoice.company.country }}<br>
+        {% if invoice.company.phone %}Tel: {{ invoice.company.phone }}<br>{% endif %}
+        {% if invoice.company.email %}{{ invoice.company.email }}<br>{% endif %}
+        {% if invoice.company.vat_id %}USt-IdNr: {{ invoice.company.vat_id }}{% endif %}
+      </td>
+    </tr>
+  </table>
+
+  {# ── 2. EMPFÄNGERBLOCK: Absenderzeile + Anschrift ──────────────── #}
+  <div class="recipient-block">
+    <div class="sender-block">
+      {# DIN 5008 Absenderzeile #}
+      {{ invoice.company.name }} · {{ invoice.company.address_line1 }} · {{ invoice.company.postal_code }} {{ invoice.company.city }}
+    </div>
+    <div>
+      {% with bp=invoice.business_partner %}
+        {% if bp.company_name %}{{ bp.company_name }}<br>{% endif %}
+        {% if bp.legal_name and bp.legal_name != bp.company_name %}{{ bp.legal_name }}<br>{% endif %}
+        {% if bp.first_name or bp.last_name %}{{ bp.first_name }} {{ bp.last_name }}<br>{% endif %}
+        {{ bp.address_line1 }}<br>
+        {% if bp.address_line2 %}{{ bp.address_line2 }}<br>{% endif %}
+        {{ bp.postal_code }} {{ bp.city }}<br>
+        {% if bp.country %}{{ bp.country.name }}{% endif %}
+      {% endwith %}
+    </div>
+  </div>
+
+  {# ── 3. RECHNUNGSKOPF: Nummer, Datum, Referenzen ──────────────── #}
+  <div class="invoice-meta">
+    <div>
+      {% if invoice.invoice_type == 'CREDIT_NOTE' %}
+      <h2 style="font-size:14pt; margin-bottom:3mm;">GUTSCHRIFT / STORNORECHNUNG</h2>
+      {% else %}
+      <h2 style="font-size:14pt; margin-bottom:3mm;">RECHNUNG</h2>
+      {% endif %}
+    </div>
+    <div>
+      <table>
+        <tr><td>Rechnungsnummer:</td><td>{{ invoice.invoice_number }}</td></tr>
+        <tr><td>Rechnungsdatum:</td><td>{{ invoice.issue_date|date:"d.m.Y" }}</td></tr>
+        <tr><td>Fälligkeitsdatum:</td><td>{{ invoice.due_date|date:"d.m.Y" }}</td></tr>
+        {% if invoice.delivery_date %}<tr><td>Lieferdatum:</td><td>{{ invoice.delivery_date|date:"d.m.Y" }}</td></tr>{% endif %}
+        {% if invoice.cancels_invoice %}<tr><td>Storno zu:</td><td>{{ invoice.cancels_invoice.invoice_number }} vom {{ invoice.cancels_invoice.issue_date|date:"d.m.Y" }}</td></tr>{% endif %}
+        {% if invoice.buyer_reference %}<tr><td>Ihr Zeichen:</td><td>{{ invoice.buyer_reference }}</td></tr>{% endif %}
+        {% if invoice.seller_reference %}<tr><td>Unser Zeichen:</td><td>{{ invoice.seller_reference }}</td></tr>{% endif %}
+        {% if invoice.payment_method %}<tr><td>Zahlungsart:</td><td>{{ invoice.payment_method }}</td></tr>{% endif %}
+        {% if invoice.payment_reference %}<tr><td>Verwendungszweck:</td><td>{{ invoice.payment_reference }}</td></tr>{% endif %}
+        <tr><td>Währung:</td><td>{{ invoice.currency }}</td></tr>
+      </table>
+    </div>
+  </div>
+
+  {# ── 4. POSITIONSTABELLE ───────────────────────────────────────── #}
+  <table class="positions-table">
+    <thead>
+      <tr>
+        <th style="width:5%;">#</th>
+        <th style="width:10%;">Art.-Nr.</th>
+        <th>Bezeichnung</th>
+        <th style="width:8%;" class="num">Menge</th>
+        <th style="width:6%;">Einh.</th>
+        <th style="width:12%;" class="num">Einzelpreis</th>
+        <th style="width:8%;" class="num">Rabatt</th>
+        <th style="width:8%;" class="num">MwSt.</th>
+        <th style="width:12%;" class="num">Gesamt</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for line in invoice.lines.all %}
+      {# Seitenumbruch-Schutz: bei mehr als ~25 Zeilen neue Seite #}
+      {% if forloop.counter == 25 %}<tr class="page-break"><td colspan="9"></td></tr>{% endif %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ line.product_code }}</td>
+        <td>
+          <strong>{{ line.description }}</strong>
+          {% if line.product %}
+            <div style="font-size:8pt; color:#666;">{{ line.product.name }}</div>
+          {% endif %}
+        </td>
+        <td class="num">{{ line.quantity }}</td>
+        <td>{{ line.get_unit_of_measure_display }}</td>
+        <td class="num">{{ line.unit_price|floatformat:2 }} {{ invoice.currency }}</td>
+        <td class="num">
+          {% if line.discount_percentage %}{{ line.discount_percentage|floatformat:1 }} %{% else %}–{% endif %}
+        </td>
+        <td class="num">{{ line.tax_rate|floatformat:1 }} %</td>
+        <td class="num">{{ line.line_total|floatformat:2 }} {{ invoice.currency }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9" style="text-align:center; color:#888;">Keine Positionen</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {# ── 5. SUMMENBLOCK ────────────────────────────────────────────── #}
+  <div class="totals-block">
+    <table>
+      {% with allowances=invoice.allowance_charges.all %}
+      {% if allowances %}
+        {# Jede Allowance/Charge einzeln aufführen #}
+        {% for ac in allowances %}
+          <tr>
+            <td>
+              {% if ac.is_charge %}Zuschlag{% else %}Rabatt{% endif %}
+              {% if ac.reason %}&nbsp;({{ ac.reason }}){% endif %}:
+            </td>
+            <td>
+              {% if ac.is_charge %}+{% else %}&minus;{% endif %}{{ ac.actual_amount|floatformat:2 }} {{ invoice.currency }}
+            </td>
+          </tr>
+        {% endfor %}
+        <tr style="border-top: 1px dashed #ccc; font-weight: 600;">
+          <td>Nettobetrag (nach Abzügen):</td>
+          <td>{{ invoice.subtotal|floatformat:2 }} {{ invoice.currency }}</td>
+        </tr>
+      {% else %}
+        <tr>
+          <td>Nettobetrag:</td>
+          <td>{{ invoice.subtotal|floatformat:2 }} {{ invoice.currency }}</td>
+        </tr>
+      {% endif %}
+      {% endwith %}
+      <tr>
+        <td>MwSt.:</td>
+        <td>{{ invoice.tax_amount|floatformat:2 }} {{ invoice.currency }}</td>
+      </tr>
+      <tr class="grand-total">
+        <td><strong>Gesamtbetrag:</strong></td>
+        <td><strong>{{ invoice.total_amount|floatformat:2 }} {{ invoice.currency }}</strong></td>
+      </tr>
+    </table>
+  </div>
+
+  {# ── 6. NOTIZEN / ZAHLUNGSHINWEISE ────────────────────────────── #}
+  <div class="notes-block">
+    {% if invoice.notes %}
+      <p><strong>Hinweise:</strong><br>{{ invoice.notes|linebreaksbr }}</p>
+    {% endif %}
+    {% if invoice.company.iban %}
+    <p style="margin-top:4mm;">
+      <strong>Bankverbindung:</strong><br>
+      {{ invoice.company.bank_name }}<br>
+      IBAN: {{ invoice.company.iban }}
+      {% if invoice.company.bic %} · BIC: {{ invoice.company.bic }}{% endif %}
+    </p>
+    {% endif %}
+    <br>
+    {% if invoice.payment_terms %}
+    <div style="font-size:9pt; color:#555;">
+      <p>Zahlungsbedingungen</p>
+      <p>Zahlungsziel: {{ invoice.payment_terms }} Kalendertage netto</p>
+    </div>
+    {% endif %}
+  </div>
+
+  {# ── 7. FUSSZEILE ─────────────────────────────────────────────── #}
+  <div class="footer-block">
+    <span>{{ invoice.company.name }}</span>
+    <span>
+      {% if invoice.company.commercial_register %}HRB {{ invoice.company.commercial_register }}{% endif %}
+    </span>
+    <span>
+      {% if invoice.company.tax_id %}Steuernr.: {{ invoice.company.tax_id }}{% endif %}
+      {% if invoice.company.vat_id %} · USt-IdNr: {{ invoice.company.vat_id }}{% endif %}
+    </span>
+    <span>Seite 1</span>
+  </div>
+
+</div>{# .invoice-page #}
+</body>
+</html>

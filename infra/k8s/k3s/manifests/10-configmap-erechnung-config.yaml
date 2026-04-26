@@ -1,0 +1,38 @@
+# ConfigMap für Environment-Variablen
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: erechnung-config
+  namespace: erechnung
+data:
+  DJANGO_ENV: "production"  # Phase 1: Enable HTTPS Security Settings
+  DJANGO_DEBUG: "False"
+  DJANGO_ALLOWED_HOSTS: "erechnung.local,api.erechnung.local,192.168.178.200,192.168.178.80,localhost,127.0.0.1,django-web-service"
+  # Python configuration
+  PYTHONPATH: "/app/project_root"
+  PYTHONUNBUFFERED: "1"
+  DJANGO_SETTINGS_MODULE: "invoice_project.settings"
+  # Database connection - use POSTGRES_* variables (primary in settings.py)
+  POSTGRES_HOST: "postgres-service"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "erechnung"
+  # PostgreSQL TLS - require encrypted connections
+  DATABASE_SSL_MODE: "verify-ca"
+  DATABASE_SSL_CA: "/etc/ssl/postgres/ca.crt"
+  # Fallback DB_* variables for compatibility
+  DB_HOST: "postgres-service"
+  DB_PORT: "5432"
+  DB_NAME: "erechnung"
+  # Redis
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  # Paths
+  GHOSTSCRIPT_PATH: "/usr/bin/gs"
+  MEDIA_ROOT: "/app/project_root/media"
+  STATIC_ROOT: "/app/static"
+  # Environment flags
+  IS_DOCKER: "true"
+  BEHIND_GATEWAY: "true"
+  # Init job bootstrap flags (disabled by default)
+  INIT_CREATE_ADMIN: "false"
+  INIT_CREATE_TEST_DATA: "true"

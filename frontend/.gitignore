@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+dist/
+dist-ssr/
+
+# Vite cache
+.vite/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Playwright test artifacts
+playwright-report/
+test-results/

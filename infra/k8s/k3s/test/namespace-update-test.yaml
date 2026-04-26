@@ -1,0 +1,19 @@
+# K3s Update Test Namespace
+# Isolated namespace for running K3s update integration tests (Phase 5).
+# Tests run here do NOT affect the production erechnung namespace.
+#
+# Usage:
+#   kubectl apply -k infra/k8s/k3s/test/
+#   # ... run tests ...
+#   kubectl delete namespace erechnung-update-test
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: erechnung-update-test
+  labels:
+    app.kubernetes.io/part-of: erechnung
+    purpose: update-testing
+    # baseline statt restricted: Postgres braucht root-UID
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted

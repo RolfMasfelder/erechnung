@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Attachment{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Delete Attachment</h1>
+        <a href="{% url 'invoice-detail' invoice.id %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Invoice
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="alert alert-danger">
+                <h4 class="alert-heading">Warning!</h4>
+                <p>Are you sure you want to delete the attachment <strong>"{{ object.description }}"</strong> from invoice <strong>"{{ invoice.invoice_number }}"</strong>?</p>
+                <p>This action cannot be undone and the file will be permanently deleted.</p>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <h5>Attachment Details:</h5>
+                    <dl class="row">
+                        <dt class="col-sm-3">Description:</dt>
+                        <dd class="col-sm-9">{{ object.description }}</dd>
+
+                        <dt class="col-sm-3">File:</dt>
+                        <dd class="col-sm-9">
+                            <a href="{{ object.file.url }}" target="_blank">
+                                {{ object.file.name|slice:"19:" }}
+                            </a>
+                        </dd>
+
+                        <dt class="col-sm-3">Uploaded:</dt>
+                        <dd class="col-sm-9">{{ object.uploaded_at|date:"d.m.Y H:i" }}</dd>
+                    </dl>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <a href="{% url 'invoice-detail' invoice.id %}" class="btn btn-secondary me-2">Cancel</a>
+                    <button type="submit" class="btn btn-danger">Confirm Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

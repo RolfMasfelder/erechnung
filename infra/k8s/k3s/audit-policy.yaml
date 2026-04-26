@@ -1,0 +1,121 @@
+# Kubernetes API Server Audit Policy for eRechnung
+# Applied to k3s via --kube-apiserver-arg flags
+#
+# Audit Levels:
+#   None       - don't log events
+#   Metadata   - log request metadata (user, timestamp, resource, verb)
+#   Request    - log event metadata + request body
+#   RequestResponse - log event metadata + request/response body
+
+apiVersion: audit.k8s.io/v1
+kind: Policy
+rules:
+
+  # ─── HIGH SENSITIVITY: Secrets ──────────────────────────────────────
+  # Log all access to secrets (creation, read, update, delete)
+  - level: Metadata
+    resources:
+    - group: ""
+      resources: ["secrets"]
+    namespaces: ["erechnung"]
+
+  # ─── HIGH SENSITIVITY: RBAC Changes ─────────────────────────────────
+  # Log all RBAC modifications (roles, bindings)
+  - level: RequestResponse
+    verbs: ["create", "update", "patch", "delete"]
+    resources:
+    - group: "rbac.authorization.k8s.io"
+      resources: ["roles", "rolebindings", "clusterroles", "clusterrolebindings"]
+
+  # ─── HIGH SENSITIVITY: Pod Exec/Attach ──────────────────────────────
+  # Log all exec/attach/portforward to pods (interactive access)
+  - level: Request
+    verbs: ["create"]
+    resources:
+    - group: ""
+      resources: ["pods/exec", "pods/attach", "pods/portforward"]
+    namespaces: ["erechnung"]
+
+  # ─── MEDIUM: Deployment Changes ─────────────────────────────────────
+  # Log creation/modification of workloads
+  - level: Request
+    verbs: ["create", "update", "patch", "delete"]
+    resources:
+    - group: "apps"
+      resources: ["deployments", "statefulsets", "daemonsets", "replicasets"]
+    namespaces: ["erechnung"]
+
+  # ─── MEDIUM: Service/Ingress Changes ────────────────────────────────
+  - level: Metadata
+    verbs: ["create", "update", "patch", "delete"]
+    resources:
+    - group: ""
+      resources: ["services"]
+    - group: "networking.k8s.io"
+      resources: ["ingresses", "networkpolicies"]
+    namespaces: ["erechnung"]
+
+  # ─── MEDIUM: ConfigMap Changes ──────────────────────────────────────
+  - level: Metadata
+    verbs: ["create", "update", "patch", "delete"]
+    resources:
+    - group: ""
+      resources: ["configmaps"]
+    namespaces: ["erechnung"]
+
+  # ─── MEDIUM: Namespace Changes ──────────────────────────────────────
+  - level: Metadata
+    verbs: ["create", "update", "patch", "delete"]
+    resources:
+    - group: ""
+      resources: ["namespaces"]
+
+  # ─── LOW: Read operations on sensitive resources ─────────────────────
+  # Only metadata for reads (to avoid excessive log volume)
+  - level: Metadata
+    verbs: ["get", "list", "watch"]
+    resources:
+    - group: ""
+      resources: ["secrets"]
+    namespaces: ["erechnung"]
+
+  # ─── NOISE REDUCTION ────────────────────────────────────────────────
+  # Skip logging for system resources that generate high volume
+  - level: None
+    users:
+    - "system:kube-proxy"
+    - "system:kube-scheduler"
+    - "system:kube-controller-manager"
+
+  # Skip watch/list on events (very noisy)
+  - level: None
+    verbs: ["watch", "list"]
+    resources:
+    - group: ""
+      resources: ["events"]
+
+  # Skip health checks and metrics
+  - level: None
+    nonResourceURLs:
+    - "/healthz*"
+    - "/readyz*"
+    - "/livez*"
+    - "/metrics"
+    - "/api/v1/namespaces/kube-system/configmaps"
+
+  # Skip node status updates (very frequent)
+  - level: None
+    resources:
+    - group: ""
+      resources: ["nodes/status"]
+    verbs: ["patch", "update"]
+
+  # Skip lease updates (leader election, very frequent)
+  - level: None
+    resources:
+    - group: "coordination.k8s.io"
+      resources: ["leases"]
+
+  # ─── CATCH-ALL: Log everything else at Metadata level ───────────────
+  - level: Metadata
+    namespaces: ["erechnung"]

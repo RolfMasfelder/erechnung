@@ -1,0 +1,50 @@
+# kind Cluster Configuration for eRechnung
+# This creates a single-node cluster with Ingress support
+#
+# TWO DEPLOYMENT MODES:
+# 1. HostPort Mode (Development): Uses extraPortMappings below
+#    - Direct localhost access without LoadBalancer
+#    - Not production-like but simpler setup
+# 2. MetalLB Mode (Production-like): Disable extraPortMappings
+#    - LoadBalancer services with dedicated IPs
+#    - Requires MetalLB installation (see docs/METALLB_MIGRATION.md)
+#
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: erechnung
+# Allow external access to API server (not just localhost)
+networking:
+  apiServerAddress: "0.0.0.0"
+  apiServerPort: 6443
+nodes:
+- role: control-plane
+  kubeadmConfigPatches:
+  - |
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        node-labels: "ingress-ready=true"
+  - |
+    kind: ClusterConfiguration
+    apiServer:
+      certSANs:
+      - "localhost"
+      - "127.0.0.1"
+      - "0.0.0.0"
+      - "192.168.178.80"
+  # Port mappings for Ingress Controller (HostPort Mode)
+  # Comment out for pure MetalLB setup (LoadBalancer Mode)
+  extraPortMappings:
+  - containerPort: 80
+    hostPort: 80
+    protocol: TCP
+  - containerPort: 443
+    hostPort: 443
+    protocol: TCP
+  # Optional: Extra mounts for persistent data outside kind container
+  # Uncomment and adjust paths as needed
+  # extraMounts:
+  # - hostPath: /tmp/kind-postgres-data
+  #   containerPath: /var/local-path-provisioner/postgres
+  # - hostPath: /tmp/kind-redis-data
+  #   containerPath: /var/local-path-provisioner/redis

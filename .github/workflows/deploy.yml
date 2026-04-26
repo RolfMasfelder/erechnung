@@ -1,0 +1,53 @@
+name: Deploy to Kubernetes
+
+on:
+  push:
+    tags: [ 'v*' ]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy-k8s:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    # environment: production  # Auskommentiert bis Environment in GitHub konfiguriert ist
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+
+    - name: Configure kubectl
+      uses: azure/k8s-set-context@v5
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.KUBECONFIG }}
+
+    - name: Deploy to Kubernetes
+      run: |
+        VERSION="${{ github.ref_name }}"
+        IMAGE_REGISTRY="ghcr.io/rolfmasfelder"
+
+        # Set image tags via kustomize (no sed hacks on manifest files)
+        cd infra/k8s/k3s
+        kustomize edit set image \
+          erechnung-django-app="${IMAGE_REGISTRY}/erechnung-django-app:${VERSION}" \
+          erechnung-api-gateway="${IMAGE_REGISTRY}/erechnung-api-gateway:${VERSION}"
+
+        # Apply manifests
+        kubectl apply -k .
+
+        # Wait for deployments to roll out
+        kubectl rollout status deployment/django-web -n erechnung --timeout=300s
+        kubectl rollout status deployment/api-gateway -n erechnung --timeout=300s
+
+        # Health check
+        kubectl wait --for=condition=ready pod -l app=api-gateway -n erechnung --timeout=300s
+
+    - name: Rollback on failure
+      if: failure()
+      run: |
+        kubectl rollout undo deployment/django-web -n erechnung || true
+        kubectl rollout undo deployment/api-gateway -n erechnung || true

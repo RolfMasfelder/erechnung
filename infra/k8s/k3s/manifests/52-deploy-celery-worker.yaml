@@ -1,0 +1,66 @@
+# Celery Worker Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-worker
+  namespace: erechnung
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  minReadySeconds: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: celery-worker
+  template:
+    metadata:
+      labels:
+        app: celery-worker
+    spec:
+      # Pod Security Context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1234
+        runAsGroup: 1234
+        fsGroup: 1234
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: celery-worker
+        image: 192.168.178.80:5000/erechnung-celery:KUSTOMIZE
+        imagePullPolicy: IfNotPresent
+        command: ["celery", "-A", "invoice_project", "worker", "-l", "info", "--concurrency=4"]
+        # Container Security Context
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false  # Celery needs write access
+        envFrom:
+        - configMapRef:
+            name: erechnung-config
+        - secretRef:
+            name: erechnung-secrets
+        volumeMounts:
+        - name: postgres-ca
+          mountPath: /etc/ssl/postgres
+          readOnly: true
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+      volumes:
+      - name: postgres-ca
+        secret:
+          secretName: postgres-tls-certs
+          items:
+          - key: ca.crt
+            path: ca.crt

@@ -1,0 +1,26 @@
+# Kubernetes manifests for eRechnung - k3s version
+# For k3s on 192.168.178.80 (cirrus7-neu)
+# Uses local container images transferred via setup-k3s-local.sh
+# MetalLB with real LAN IPs (192.168.178.200-210)
+
+# Local container image registry:
+# 192.168.178.80:5000
+
+# Namespace
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: erechnung
+  labels:
+    # Pod Security Standards (Phase 1 - Security Implementation)
+    # enforce: Violations will cause the pod to be rejected
+    # audit: Violations will trigger an audit annotation but allow the pod
+    # warn: Violations will trigger a user-facing warning but allow the pod
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+  annotations:
+    # Linkerd Service Mesh: Auto-inject sidecar proxies (Phase 2 - Security)
+    # Provides automatic mTLS for all service-to-service communication
+    linkerd.io/inject: enabled

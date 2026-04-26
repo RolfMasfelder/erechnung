@@ -1,0 +1,21 @@
+# Development Dockerfile für Vue.js Frontend
+# Use Node.js 20 LTS (Iron) - most stable for Vue/Vite ecosystem
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Package-Manager optimieren
+RUN npm config set registry https://registry.npmjs.org/
+
+# Dependencies installieren (wird gecacht wenn package.json unverändert)
+COPY package*.json ./
+RUN npm install
+
+# App-Code kopieren
+COPY . .
+
+# Port für Vite Dev-Server
+EXPOSE 5173
+
+# Dev-Server starten mit Hot Reload
+CMD ["npm", "run", "dev"]

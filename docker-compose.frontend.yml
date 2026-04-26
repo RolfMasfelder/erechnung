@@ -1,0 +1,48 @@
+services:
+  # API Gateway with HTTPS - Production-like setup for development
+  api-gateway:
+    build:
+      context: ./infra/api-gateway
+      dockerfile: Dockerfile
+    container_name: erechnung_api_gateway
+    ports:
+      - "80:80"    # HTTP (redirects to HTTPS)
+      - "443:443"  # HTTPS - Browser connects here
+    # web service must be running (start with: docker-compose up -d)
+    networks:
+      - erechnung-network
+    volumes:
+      - ./infra/api-gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/api-gateway/api-gateway-https.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./infra/api-gateway/logs:/var/log/nginx/api-gateway
+      - ./infra/api-gateway/certs:/etc/nginx/certs:ro
+      # Static and media files served directly by nginx
+      - ./project_root/static:/app/static:ro
+      - ./project_root/media:/app/project_root/media:ro
+    restart: unless-stopped
+    labels:
+      - "com.erechnung.service=api-gateway"
+      - "com.erechnung.environment=development"
+
+  # Vue.js Frontend - Development Server
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: erechnung_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules  # Prevent overwriting node_modules
+      - ./frontend/.env.development:/app/.env.development  # Override env file
+    environment:
+      - NODE_ENV=development
+      # Browser makes API calls from host, not from container
+      - VITE_API_BASE_URL=http://localhost:8000/api
+    networks:
+      - erechnung-network
+
+networks:
+  erechnung-network:
+    name: erechnung-network

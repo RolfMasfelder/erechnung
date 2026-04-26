@@ -1,0 +1,49 @@
+# =============================================================================
+# Test-Namespace Kustomization für K3s Update-Integrationstests
+# =============================================================================
+# Erstellt einen vollständigen, isolierten eRechnung-Stack in
+# einem eigenen Namespace (erechnung-update-test).
+#
+# Usage:
+#   kubectl apply -k infra/k8s/k3s/test/
+#   kubectl delete -k infra/k8s/k3s/test/
+# =============================================================================
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: erechnung-update-test
+
+resources:
+  - namespace-update-test.yaml
+  - configmap-test.yaml
+  - secret-test.yaml
+  - pvc-test.yaml
+  - deploy-postgres-test.yaml
+  - svc-postgres-test.yaml
+  - deploy-redis-test.yaml
+  - svc-redis-test.yaml
+  - job-django-init-test.yaml
+  - deploy-django-web-test.yaml
+  - svc-django-web-test.yaml
+  - deploy-celery-worker-test.yaml
+  - deploy-api-gateway-test.yaml
+  - svc-api-gateway-test.yaml
+  - configmap-nginx-test.yaml
+  - deploy-frontend-test.yaml
+  - svc-frontend-test.yaml
+  - pdb-django-web-test.yaml
+  - pdb-api-gateway-test.yaml
+
+images:
+  - name: 192.168.178.80:5000/erechnung-web
+    newTag: v0.0.1-7b4e0f0
+  - name: 192.168.178.80:5000/erechnung-celery
+    newTag: v0.0.1-7b4e0f0
+  - name: 192.168.178.80:5000/erechnung-api-gateway
+    newTag: v0.0.1-7b4e0f0
+  - name: 192.168.178.80:5000/erechnung-frontend
+    newTag: v0.0.1-7b4e0f0
+  - name: 192.168.178.80:5000/erechnung-init
+    newTag: v0.0.1-7b4e0f0
+  - name: 192.168.178.80:5000/erechnung-postgres
+    newTag: v0.0.1-7b4e0f0

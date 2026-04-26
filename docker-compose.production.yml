@@ -1,0 +1,275 @@
+# Production Docker Compose with API Gateway
+# Single exposed port through API Gateway
+#
+# Docker Secrets Support:
+#   Place secret files in ./secrets/ directory (one value per file):
+#     echo "my-secret-key" > secrets/django_secret_key
+#     echo "strong-password" > secrets/postgres_password
+#   The app reads from /run/secrets/<name> first, then falls back to .env.
+
+secrets:
+  django_secret_key:
+    file: ./secrets/django_secret_key
+  postgres_password:
+    file: ./secrets/postgres_password
+  postgres_user:
+    file: ./secrets/postgres_user
+  postgres_db:
+    file: ./secrets/postgres_db
+
+services:
+  # Init container for one-time setup tasks (migrations, superuser creation)
+  init:
+    build:
+      context: .
+      target: production
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    secrets:
+      - django_secret_key
+      - postgres_password
+      - postgres_user
+      - postgres_db
+    networks:
+      - erechnung-network
+    restart: "no"  # Only run once
+    command: ["./scripts/init_django.sh"]
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.50'
+        reservations:
+          memory: 256M
+          cpus: '0.10'
+    labels:
+      - "com.erechnung.service=init"
+      - "com.erechnung.environment=production"
+
+  # API Gateway - Single Entry Point with HTTPS
+  # Unterstützt zwei Modi:
+  #   1. Self-signed Zertifikate (default): api-gateway-https.conf
+  #   2. Let's Encrypt (Production): api-gateway-letsencrypt.conf
+  #      → Erst scripts/setup-letsencrypt.sh ausführen!
+  api-gateway:
+    build:
+      context: ./infra/api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"    # HTTP (redirects to HTTPS)
+      - "443:443"  # HTTPS
+    depends_on:
+      - web
+    networks:
+      - erechnung-network
+    volumes:
+      - ./infra/api-gateway/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
+      # Default: Self-signed certs (api-gateway-https.conf)
+      # Für Let's Encrypt: diese Zeile durch die auskommentierte ersetzen
+      - ./infra/api-gateway/api-gateway-https.conf:/etc/nginx/conf.d/default.conf:ro
+      # Let's Encrypt Konfiguration (statt Zeile oben einkommentieren):
+      # - ./infra/api-gateway/api-gateway-letsencrypt.conf:/etc/nginx/conf.d/default.conf.template:ro
+      - ./infra/api-gateway/logs:/var/log/nginx/api-gateway
+      - ./infra/api-gateway/certs:/etc/nginx/certs:ro
+      - ./infra/api-gateway/lua:/etc/nginx/lua:ro
+      # Let's Encrypt Volumes (benötigt für certbot)
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+      # Static and media files served directly by nginx
+      - ./project_root/static:/app/static:ro
+      - ./project_root/media:/app/project_root/media:ro
+    environment:
+      - NGINX_ENVSUBST_TEMPLATE_SUFFIX=.template
+      - LETSENCRYPT_DOMAIN=${LETSENCRYPT_DOMAIN:-localhost}
+      # JWT signing key for perimeter validation (Defense-in-Depth)
+      - JWT_SIGNING_KEY=${DJANGO_SECRET_KEY}
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.50'
+        reservations:
+          memory: 64M
+          cpus: '0.10'
+    restart: unless-stopped
+    labels:
+      - "com.erechnung.service=api-gateway"
+      - "com.erechnung.environment=production"
+
+  # Certbot - Automatische Let's Encrypt Zertifikatserneuerung
+  # Prüft alle 12 Stunden ob Erneuerung nötig (30 Tage vor Ablauf)
+  # Nur starten wenn Let's Encrypt aktiv (scripts/setup-letsencrypt.sh ausgeführt)
+  certbot:
+    image: certbot/certbot:v3.3.0
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --quiet; sleep 12h & wait $${!}; done;'"
+    networks:
+      - erechnung-network
+    restart: unless-stopped
+    profiles:
+      - letsencrypt  # Nur mit --profile letsencrypt starten
+    labels:
+      - "com.erechnung.service=certbot"
+      - "com.erechnung.environment=production"
+
+  # Django Application - Internal Only
+  web:
+    build:
+      context: .
+      target: production
+    # NO EXPOSED PORTS - Internal only
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - erechnung-network
+    env_file:
+      - .env
+    secrets:
+      - django_secret_key
+      - postgres_password
+      - postgres_user
+      - postgres_db
+    environment:
+      - BEHIND_GATEWAY=true
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+          cpus: '1.00'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD", "python", "project_root/manage.py", "check", "--database", "default"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "com.erechnung.service=django-backend"
+      - "com.erechnung.environment=production"
+
+  # Database - Internal Only
+  db:
+    image: postgres:17  # Updated to PostgreSQL 17
+    # NO EXPOSED PORTS - Internal only, accessed via Docker network
+    networks:
+      - erechnung-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+      - ./infra/backups:/backups
+    env_file:
+      - .env
+    secrets:
+      - postgres_password
+      - postgres_user
+      - postgres_db
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_USER_FILE: /run/secrets/postgres_user
+      POSTGRES_DB_FILE: /run/secrets/postgres_db
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+          cpus: '1.00'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $POSTGRES_DB -U $POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      - "com.erechnung.service=database"
+
+  # Redis Cache - Internal Only
+  redis:
+    image: redis:7-alpine
+    networks:
+      - erechnung-network
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 128M
+          cpus: '0.10'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    labels:
+      - "com.erechnung.service=cache"
+
+  # Celery Worker - Internal Only
+  celery:
+    build:
+      context: .
+      target: production
+    command: celery -A project_root.invoice_project worker -l info
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - erechnung-network
+    env_file:
+      - .env
+    secrets:
+      - django_secret_key
+      - postgres_password
+      - postgres_user
+      - postgres_db
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+          cpus: '1.00'
+        reservations:
+          memory: 512M
+          cpus: '0.20'
+    healthcheck:
+      test: ["CMD", "celery", "-A", "project_root.invoice_project", "inspect", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "com.erechnung.service=celery-worker"
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  erechnung-network:
+    driver: bridge
+    name: erechnung-network

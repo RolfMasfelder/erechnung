@@ -1,0 +1,55 @@
+---
+# Ingress Configuration for eRechnung Application
+# Routes:
+#   / → frontend-service (Vue.js static content)
+#   /api → api-gateway-service (Django REST API)
+# TLS: Enforced with automatic HTTP→HTTPS redirect
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: erechnung-ingress
+  namespace: erechnung
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: api.erechnung.local
+    http:
+      paths:
+      - backend:
+          service:
+            name: api-gateway-service
+            port:
+              number: 80
+        path: /api
+        pathType: Prefix
+      - backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+  - http:
+      paths:
+      - backend:
+          service:
+            name: api-gateway-service
+            port:
+              number: 80
+        path: /api
+        pathType: Prefix
+      - backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - api.erechnung.local
+    - 192.168.178.80
+    secretName: erechnung-tls-cert

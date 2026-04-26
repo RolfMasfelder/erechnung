@@ -1,0 +1,308 @@
+import { test, expect } from '@playwright/test'
+import { login } from '../fixtures/auth.js'
+
+/**
+ * Pagination Component Tests
+ *
+ * Testet Coverage-Gaps in BasePagination.vue:
+ * - Navigation (Next/Previous/GoToPage)
+ * - Boundary Conditions
+ * - Event Emissions
+ */
+test.describe('Pagination Component', () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page)
+    // Note: Tests use real backend data (create_test_data command creates 50 invoices)
+  })
+
+  test('should display pagination controls', async ({ page }) => {
+    await page.goto('/invoices')
+    await page.waitForLoadState('networkidle')
+    await page.waitForSelector('table tbody tr', { timeout: 10000 })
+
+    // Pagination should be visible - use nav role to be specific
+    const pagination = page.getByRole('navigation', { name: /pagination/i })
+    await expect(pagination).toBeVisible()
+
+    // Should show page info
+    const pageInfo = page.locator('.pagination-info')
+    await expect(pageInfo).toBeVisible()
+  })
+
+  test('should navigate to next page', async ({ page }) => {
+    await page.goto('/invoices')
+    await page.waitForSelector('table tbody tr')
+
+    // Get initial first invoice number/text
+    const firstInvoiceBefore = await page.locator('table tbody tr:first-child').textContent()
+
+    // Click next button using role-based selector
+    const nextButton = page.getByRole('button', { name: /nächste seite|next page/i })
+    await nextButton.click()
+
+    // Wait for new data to load
+    await page.waitForTimeout(500)
+
+    // First invoice should be different (data changed)
+    const firstInvoiceAfter = await page.locator('table tbody tr:first-child').textContent()
+    expect(firstInvoiceAfter).not.toBe(firstInvoiceBefore)
+
+    // Page info should show page 2
+    const pageInfo = await page.locator('.pagination-info').textContent()
+    expect(pageInfo).toMatch(/11.*20|21.*30/i) // Page 2 shows items 11-20 or 21-30
+  })
+
+  test('should navigate to previous page', async ({ page }) => {
+    await page.goto('/invoices')
+    await page.waitForSelector('table tbody tr')
+
+    // First navigate to page 2
+    const nextButton = page.getByRole('button', { name: /nächste seite|next page/i })
+    await nextButton.click()
+    await page.waitForTimeout(500)
+
+    // Verify we're on page 2
+    const pageInfoBefore = await page.locator('.pagination-info').textContent()
+    expect(pageInfoBefore).toMatch(/11.*20|21.*30/i)
+
+    // Get first invoice on page 2
+    const firstInvoiceBefore = await page.locator('table tbody tr:first-child').textContent()
+
+    // Click previous button to go back to page 1
+    const prevButton = page.getByRole('button', { name: /vorherige seite|previous page/i })
+    await prevButton.click()
+    await page.waitForTimeout(500)
+
+    // First invoice should be different
+    const firstInvoiceAfter = await page.locator('table tbody tr:first-child').textContent()
+    expect(firstInvoiceAfter).not.toBe(firstInvoiceBefore)
+
+    // Should be on page 1 (showing items 1-10)
+    const pageInfoAfter = await page.locator('.pagination-info').textContent()
+    expect(pageInfoAfter).toMatch(/1.*10/i)
+  })
+
+  test('should disable previous button on first page', async ({ page }) => {
+    await page.goto('/invoices')
+    await page.waitForSelector('table tbody tr')
+
+    // Previous button should be disabled
+    const prevButton = page.getByRole('button', { name: /vorherige seite|previous page/i })
+    await expect(prevButton).toBeDisabled()
+  })
+
+  test('should disable next button on last page', async ({ page }) => {
+    await page.goto('/invoices')
+    await page.waitForSelector('table tbody tr')
+
+    // Navigate to last page directly via last visible page number button
+    const nextButton = page.getByRole('button', { name: /nächste seite|next page/i })
+
+    // Click the last visible page number (e.g. "15" in "1 2 3 … 15") until we're on the last page.
+    // This handles any number of pages without a hard-coded click limit.
+    let clicks = 0
+    while (clicks < 100 && await nextButton.isEnabled()) {
+      // Prefer jumping directly to the last visible numeric page button
+      const pageButtons = page.locator('.pagination-page:not([disabled])')
+      const count = await pageButtons.count()
+      if (count > 0) {
+        const lastBtn = pageButtons.nth(count - 1)
+        const lastText = (await lastBtn.textContent() || '').trim()
+        if (lastText && lastText !== '...') {
+          await lastBtn.click()
+        } else {
+          await nextButton.click()
+        }
+      } else {
+        await nextButton.click()
+      }
+      await page.waitForTimeout(400)
+      clicks++
+    }
+
+    // Next button should now be disabled (we're on last page)
+    await expect(nextButton).toBeDisabled({ timeout: 2000 })
+  })
+
+  test('should navigate to specific page number', async ({ page }) => {
+    await page.goto('/invoices')
+    await page.waitForSelector('table tbody tr')
+
+    // Find and click page 3 button if page numbers are visible
+    const page3Button = page.locator('button:has-text("3")').first()
+
+    if (await page3Button.isVisible()) {
+      await page3Button.click()
+      await page.waitForTimeout(500)
+
+      // Should show page 3 data (items 21-30)
+      const pageInfo = await page.locator('.pagination-info').textContent()
+      expect(pageInfo).toMatch(/21.*30/i)
+    }
+  })
+
+  test('should show correct page info text', async ({ page }) => {
+    await page.goto('/invoices')
+    await page.waitForLoadState('networkidle')
+    await page.waitForSelector('table tbody tr', { timeout: 10000 })
+
+    // Should show "Zeige 1 bis 10 von X Einträgen" where X >= 10
+    const pageInfo = await page.locator('.pagination-info').textContent()
+    // Flexible pattern: accepts any total >= 10 (e.g., 46, 50, 100)
+    expect(pageInfo).toMatch(/1.*10.*\d{2,}/i)
+  })
+
+  test('should update page info when navigating', async ({ page }) => {
+    await page.goto('/invoices')
+    await page.waitForLoadState('networkidle')
+    await page.waitForSelector('table tbody tr', { timeout: 10000 })
+
+    // Click next
+    const nextButton = page.getByRole('button', { name: /nächste seite|next page/i })
+    await nextButton.click()
+    await page.waitForTimeout(500)
+    await page.waitForLoadState('networkidle')
+
+    // Should show "Zeige 11 bis 20 von X" where X >= 11 (at least one more page)
+    const pageInfo = await page.locator('.pagination-info').textContent()
+    // Flexible pattern: accepts any total >= 11 (e.g., 46, 50, 100)
+    expect(pageInfo).toMatch(/11.*20.*\d{2,}/i)
+  })
+
+  test('should handle empty results', async ({ page, context }) => {
+    // Mock empty results
+    await context.route('**/api/invoices/**', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          count: 0,
+          results: []
+        })
+      })
+    })
+
+    await page.goto('/invoices')
+    await page.waitForLoadState('networkidle')
+
+    // Pagination should not be visible or should show 0 items
+    const pageInfo = page.locator('.pagination, [class*="pagination"]')
+    const isEmpty = await page.locator('text=/keine.*rechnungen/i, text=/no.*invoices/i').isVisible()
+
+    // Either empty state or no pagination
+    expect(isEmpty || !(await pageInfo.isVisible())).toBe(true)
+  })
+
+  test('should reset pagination when using search', async ({ page }) => {
+    await page.goto('/invoices')
+    await page.waitForLoadState('networkidle')
+    await page.waitForSelector('table tbody tr', { timeout: 10000 })
+
+    // Navigate to page 2 first
+    const nextButton = page.getByRole('button', { name: /nächste seite|next page/i })
+    await nextButton.click()
+    await page.waitForTimeout(500)
+    await page.waitForLoadState('networkidle')
+
+    // Verify we're on page 2
+    const pageInfoBefore = await page.locator('.pagination-info').textContent()
+    expect(pageInfoBefore).toMatch(/11.*20|21.*30/i)
+
+    // Search for something - use multiple selector strategies
+    const searchInput = page.locator(
+      '[data-testid="invoice-search"], ' +
+      'input[placeholder*="Suchen"], ' +
+      'input[placeholder*="Suche"], ' +
+      'input[type="search"]'
+    ).first()
+    await searchInput.waitFor({ timeout: 5000 })
+    await searchInput.fill('INV-')
+
+    // Wait for search debounce + API call
+    await page.waitForTimeout(1000)
+    await page.waitForLoadState('networkidle')
+
+    // Should reset to page 1 (showing items 1-10 or similar)
+    // Use longer timeout and check if element exists first
+    await page.waitForSelector('.pagination-info', { timeout: 5000 }).catch(() => {})
+    const pageInfo = page.locator('.pagination-info')
+    if (await pageInfo.isVisible()) {
+      const pageInfoAfter = await pageInfo.textContent()
+      expect(pageInfoAfter).toMatch(/Zeige 1|Showing 1|^1|1.*10/i)
+    } else {
+      // If pagination not visible, search returned single result (acceptable)
+      const tableRows = page.locator('tbody tr')
+      const rowCount = await tableRows.count()
+      expect(rowCount).toBeGreaterThanOrEqual(1)
+    }
+  })
+})
+
+test.describe('Pagination Edge Cases', () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page)
+  })
+
+  test('should handle single page of results', async ({ page, context }) => {
+    // Mock only 5 items (less than page size)
+    await context.route('**/api/invoices/**', async route => {
+      await route.fulfill({
+        status: 200,
+        body: JSON.stringify({
+          count: 5,
+          results: Array.from({ length: 5 }, (_, i) => ({
+            id: i + 1,
+            invoice_number: `INV-${i + 1}`,
+            total_gross: 100
+          }))
+        })
+      })
+    })
+
+    await page.goto('/invoices')
+    await page.waitForLoadState('networkidle')
+
+    // Both next and previous should be disabled
+    const nextButton = page.getByRole('button', { name: /nächste seite|next page/i })
+    const prevButton = page.getByRole('button', { name: /vorherige seite|previous page/i })
+
+    if (await nextButton.isVisible()) {
+      await expect(nextButton).toBeDisabled()
+    }
+    if (await prevButton.isVisible()) {
+      await expect(prevButton).toBeDisabled()
+    }
+  })
+
+  test('should handle exactly one page of results', async ({ page, context }) => {
+    // Mock exactly 10 items (page size boundary)
+    await context.route('**/api/invoices/**', async route => {
+      await route.fulfill({
+        status: 200,
+        body: JSON.stringify({
+          count: 10,
+          results: Array.from({ length: 10 }, (_, i) => ({
+            id: i + 1,
+            invoice_number: `INV-${String(i + 1).padStart(4, '0')}`,
+            total_gross: 100 + i
+          }))
+        })
+      })
+    })
+
+    await page.goto('/invoices')
+    await page.waitForLoadState('networkidle')
+
+    // With exactly page size items (10), pagination should be hidden (totalPages = 1)
+    const paginationNav = page.getByRole('navigation', { name: /pagination/i })
+    const isVisible = await paginationNav.isVisible({ timeout: 1000 }).catch(() => false)
+
+    // Pagination nav may be hidden or disabled - either is acceptable
+    if (isVisible) {
+      const nextButton = page.getByRole('button', { name: /nächste seite|next page/i })
+      const prevButton = page.getByRole('button', { name: /vorherige seite|previous page/i })
+      await expect(nextButton).toBeDisabled()
+      await expect(prevButton).toBeDisabled()
+    }
+  })
+})

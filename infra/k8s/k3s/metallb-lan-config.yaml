@@ -1,0 +1,31 @@
+---
+# MetalLB IP Address Pool for k3s on LAN
+# Uses REAL LAN IPs (not Docker network like kind)
+#
+# ⚠️ IMPORTANT: Configure your router!
+# 1. Reserve IP range 192.168.178.200-210 (exclude from DHCP)
+# 2. Optionally add static DNS entries
+#
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: lan-pool
+  namespace: metallb-system
+spec:
+  addresses:
+  # LAN IP range - accessible from entire network!
+  - 192.168.178.200-192.168.178.210
+  # Provides 11 IPs for LoadBalancer services
+  # First IP (192.168.178.200) typically assigned to ingress-nginx-controller
+
+---
+# Layer 2 Advertisement
+# Announces LoadBalancer IPs via ARP in local network
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: lan-l2-advert
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+  - lan-pool

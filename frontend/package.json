@@ -1,0 +1,42 @@
+{
+  "name": "erechnung-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report"
+  },
+  "dependencies": {
+    "@rollup/rollup-linux-x64-musl": "^4.60.2",
+    "@vuepic/vue-datepicker": "^12.1.0",
+    "axios": "^1.15.1",
+    "date-fns": "^4.1.0",
+    "pinia": "^3.0.4",
+    "vue": "^3.5.32",
+    "vue-router": "^5.0.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@tailwindcss/postcss": "^4.2.2",
+    "@vitejs/plugin-vue": "^6.0.6",
+    "@vitest/coverage-v8": "^4.1.4",
+    "@vitest/ui": "^4.0.8",
+    "@vue/test-utils": "^2.4.6",
+    "autoprefixer": "^10.5.0",
+    "esbuild": "^0.28.0",
+    "happy-dom": "^20.9.0",
+    "postcss": "^8.5.10",
+    "tailwindcss": "^4.1.18",
+    "vite": "^8.0.9",
+    "vitest": "^4.1.4"
+  }
+}

@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ title }}</h1>
+        <a href="{% url 'invoice-list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" novalidate enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h3>Invoice Details</h3>
+                        <div class="mb-3">
+                            <label for="{{ form.invoice_number.id_for_label }}" class="form-label">{{ form.invoice_number.label }}</label>
+                            {{ form.invoice_number }}
+                            <small class="form-text text-muted">Leave blank for auto-generation</small>
+                            {% if form.invoice_number.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.invoice_number.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.invoice_type.id_for_label }}" class="form-label">{{ form.invoice_type.label }}</label>
+                            {{ form.invoice_type }}
+                            {% if form.invoice_type.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.invoice_type.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.currency.id_for_label }}" class="form-label">{{ form.currency.label }}</label>
+                            {{ form.currency }}
+                            {% if form.currency.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.currency.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h3>Company & Customer</h3>
+                        <div class="mb-3">
+                            <label for="{{ form.company.id_for_label }}" class="form-label">{{ form.company.label }}</label>
+                            {{ form.company }}
+                            {% if form.company.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.company.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.business_partner.id_for_label }}" class="form-label">{{ form.business_partner.label }}</label>
+                            {{ form.business_partner }}
+                            {% if form.business_partner.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.business_partner.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <h3>Dates</h3>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.issue_date.id_for_label }}" class="form-label">{{ form.issue_date.label }}</label>
+                                    {{ form.issue_date }}
+                                    {% if form.issue_date.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.issue_date.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.due_date.id_for_label }}" class="form-label">{{ form.due_date.label }}</label>
+                                    {{ form.due_date }}
+                                    {% if form.due_date.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.due_date.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.delivery_date.id_for_label }}" class="form-label">{{ form.delivery_date.label }}</label>
+                                    {{ form.delivery_date }}
+                                    {% if form.delivery_date.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.delivery_date.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h3>Payment Information</h3>
+                        <div class="mb-3">
+                            <label for="{{ form.payment_method.id_for_label }}" class="form-label">{{ form.payment_method.label }}</label>
+                            {{ form.payment_method }}
+                            {% if form.payment_method.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.payment_method.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.payment_reference.id_for_label }}" class="form-label">{{ form.payment_reference.label }}</label>
+                            {{ form.payment_reference }}
+                            {% if form.payment_reference.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.payment_reference.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.payment_terms.id_for_label }}" class="form-label">{{ form.payment_terms.label }}</label>
+                            {{ form.payment_terms }}
+                            {% if form.payment_terms.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.payment_terms.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h3>Additional Information</h3>
+                        <div class="mb-3">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">{{ form.notes.label }}</label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.notes.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'invoice-list' %}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">{{ action }} Invoice</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Add any custom styles if needed */
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Any JavaScript initialization if needed
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,446 @@
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: erechnung
+
+---
+# ConfigMap für Environment-Variablen
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: erechnung-config
+  namespace: erechnung
+data:
+  DJANGO_DEBUG: "False"
+  DJANGO_ALLOWED_HOSTS: "erechnung.example.com,localhost,127.0.0.1"
+  DB_HOST: "postgres-service"
+  DB_PORT: "5432"
+  DB_NAME: "erechnung"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  GHOSTSCRIPT_PATH: "/usr/bin/gs"
+  MEDIA_ROOT: "/app/project_root/media"
+  STATIC_ROOT: "/app/static"
+  IS_DOCKER: "true"
+  BEHIND_GATEWAY: "true"
+
+---
+# Secret für sensitive Daten
+apiVersion: v1
+kind: Secret
+metadata:
+  name: erechnung-secrets
+  namespace: erechnung
+type: Opaque
+data:
+  # Base64-encoded secrets - in Production durch echte Werte ersetzen
+  DJANGO_SECRET_KEY: ZGphbmdvLWluc2VjdXJlLWNoYW5nZS1tZS1pbi1wcm9kdWN0aW9u
+  DB_USER: cG9zdGdyZXM=
+  DB_PASSWORD: cG9zdGdyZXNfcGFzc3dvcmQ=
+  POSTGRES_USER: cG9zdGdyZXM=
+  POSTGRES_PASSWORD: cG9zdGdyZXNfcGFzc3dvcmQ=
+  POSTGRES_DB: ZXJlY2hudW5n
+
+---
+# PostgreSQL PersistentVolume
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: erechnung
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+# Redis PersistentVolume
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+  namespace: erechnung
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+# PostgreSQL Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: erechnung
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:17
+        envFrom:
+        - secretRef:
+            name: erechnung-secrets
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+            - -d
+            - erechnung
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+            - -d
+            - erechnung
+          initialDelaySeconds: 30
+          periodSeconds: 30
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+
+---
+# PostgreSQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: erechnung
+spec:
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP
+
+---
+# Redis Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: erechnung
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        command:
+        - redis-server
+        - --appendonly
+        - "yes"
+        - --maxmemory
+        - "256mb"
+        - --maxmemory-policy
+        - allkeys-lru
+        ports:
+        - containerPort: 6379
+        volumeMounts:
+        - name: redis-storage
+          mountPath: /data
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 30
+      volumes:
+      - name: redis-storage
+        persistentVolumeClaim:
+          claimName: redis-pvc
+
+---
+# Redis Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: erechnung
+spec:
+  selector:
+    app: redis
+  ports:
+  - port: 6379
+    targetPort: 6379
+  type: ClusterIP
+
+---
+# Django Init Job (Migrations)
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: django-init
+  namespace: erechnung
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: django-init
+        image: ghcr.io/rolfmasfelder/erechnung_django_app:KUSTOMIZE
+        command: ["./scripts/init_django.sh"]
+        envFrom:
+        - configMapRef:
+            name: erechnung-config
+        - secretRef:
+            name: erechnung-secrets
+      initContainers:
+      - name: wait-for-db
+        image: busybox:1.35
+        command: ['sh', '-c']
+        args:
+        - |
+          until nc -z postgres-service 5432; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+          echo "PostgreSQL is ready!"
+
+---
+# Django Web Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-web
+  namespace: erechnung
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: django-web
+  template:
+    metadata:
+      labels:
+        app: django-web
+    spec:
+      containers:
+      - name: django-web
+        image: ghcr.io/rolfmasfelder/erechnung_django_app:KUSTOMIZE
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - configMapRef:
+            name: erechnung-config
+        - secretRef:
+            name: erechnung-secrets
+        readinessProbe:
+          httpGet:
+            path: /health/readiness/
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health/
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+
+---
+# Django Web Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: django-web-service
+  namespace: erechnung
+spec:
+  selector:
+    app: django-web
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: ClusterIP
+
+---
+# Celery Worker Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-worker
+  namespace: erechnung
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: celery-worker
+  template:
+    metadata:
+      labels:
+        app: celery-worker
+    spec:
+      containers:
+      - name: celery-worker
+        image: ghcr.io/rolfmasfelder/erechnung_django_app:KUSTOMIZE
+        command: ["celery", "-A", "project_root.invoice_project", "worker", "-l", "info"]
+        envFrom:
+        - configMapRef:
+            name: erechnung-config
+        - secretRef:
+            name: erechnung-secrets
+        env:
+        - name: PYTHONPATH
+          value: "/app/project_root"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+
+---
+# Nginx API Gateway Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: erechnung
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d
+          readOnly: true
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: nginx-config
+
+---
+# Nginx ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: erechnung
+data:
+  default.conf: |
+    upstream django_backend {
+        server django-web-service:8000;
+    }
+
+    server {
+        listen 8080;
+        server_name _;
+
+        # Rate limiting
+        limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+        limit_req zone=api burst=20 nodelay;
+
+        # Security headers
+        add_header X-Frame-Options DENY;
+        add_header X-Content-Type-Options nosniff;
+        add_header X-XSS-Protection "1; mode=block";
+
+        location / {
+            proxy_pass http://django_backend;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+
+---
+# API Gateway Service (LoadBalancer)
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway-service
+  namespace: erechnung
+spec:
+  selector:
+    app: api-gateway
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+  type: LoadBalancer
+
+---
+# Ingress (Alternative zu LoadBalancer)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: erechnung-ingress
+  namespace: erechnung
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+  - hosts:
+    - erechnung.example.com
+    secretName: erechnung-tls
+  rules:
+  - host: erechnung.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: api-gateway-service
+            port:
+              number: 80

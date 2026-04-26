@@ -1,0 +1,91 @@
+# Prometheus ConfigMap — scrape config + alert rules for Kubernetes
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: monitoring
+  labels:
+    app: prometheus
+    component: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      scrape_timeout: 10s
+
+    rule_files:
+      - "/etc/prometheus/alert_rules.yml"
+
+    scrape_configs:
+      # Django application metrics (via django-prometheus)
+      # Scrape via Service to ensure Host header matches ALLOWED_HOSTS
+      - job_name: "django"
+        static_configs:
+          - targets: ["django-web-service.erechnung.svc:8000"]
+            labels:
+              service: "django-backend"
+              environment: "kubernetes"
+        metrics_path: /metrics
+
+      # kube-state-metrics (cluster-level metrics)
+      - job_name: "kube-state-metrics"
+        static_configs:
+          - targets: ["kube-state-metrics.kube-system.svc:8080"]
+
+      # Prometheus self-monitoring
+      - job_name: "prometheus"
+        metrics_path: /prometheus/metrics
+        static_configs:
+          - targets: ["localhost:9090"]
+
+  alert_rules.yml: |
+    groups:
+      - name: erechnung_health
+        rules:
+          - alert: DjangoDown
+            expr: up{job="django"} == 0
+            for: 2m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Django backend is down"
+              description: "The Django backend pod has been unreachable for more than 2 minutes."
+
+          - alert: HighErrorRate
+            expr: >
+              rate(django_http_responses_total_by_status_total{status=~"5.."}[5m])
+              / rate(django_http_responses_total_by_status_total[5m]) > 0.05
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High HTTP 5xx error rate (> 5%)"
+
+          - alert: PodCrashLooping
+            expr: rate(kube_pod_container_status_restarts_total{namespace="erechnung"}[15m]) > 0
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Pod {{ $labels.pod }} is crash-looping"
+
+      - name: erechnung_business
+        rules:
+          - alert: OverdueInvoicesHigh
+            expr: erechnung_invoices_overdue_count > 10
+            for: 1h
+            labels:
+              severity: warning
+            annotations:
+              summary: "Many overdue invoices ({{ $value }})"
+
+          - alert: PDFGenerationFailureRate
+            expr: >
+              rate(erechnung_pdf_generation_total{result="error"}[15m])
+              / rate(erechnung_pdf_generation_total[15m]) > 0.1
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "PDF generation failure rate > 10%"

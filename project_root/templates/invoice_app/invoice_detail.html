@@ -1,0 +1,355 @@
+{% extends 'base.html' %}
+
+{% block title %}Invoice {{ invoice.invoice_number }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Invoice: {{ invoice.invoice_number }}</h1>
+        <div>
+            <a href="{% url 'invoice-update' invoice.id %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{% url 'invoice-list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="row mb-4">
+        <!-- Status Card -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5>Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        {% if invoice.status == 'PAID' %}
+                            <span class="badge bg-success fs-5 me-2">{{ invoice.get_status_display }}</span>
+                        {% elif invoice.status == 'OVERDUE' %}
+                            <span class="badge bg-danger fs-5 me-2">{{ invoice.get_status_display }}</span>
+                        {% elif invoice.status == 'SENT' %}
+                            <span class="badge bg-info fs-5 me-2">{{ invoice.get_status_display }}</span>
+                        {% elif invoice.status == 'DRAFT' %}
+                            <span class="badge bg-warning fs-5 me-2">{{ invoice.get_status_display }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary fs-5 me-2">{{ invoice.get_status_display }}</span>
+                        {% endif %}
+
+                        <span>
+                            <strong>Type:</strong> {{ invoice.get_invoice_type_display }}
+                        </span>
+                    </div>
+
+                    <div class="mt-3">
+                        <strong>Created:</strong> {{ invoice.created_at|date:"d.m.Y H:i" }}<br>
+                        <strong>Last Updated:</strong> {{ invoice.updated_at|date:"d.m.Y H:i" }}
+                    </div>
+
+                    <div class="mt-3">
+                        {% if invoice.pdf_file %}
+                            <a href="{{ invoice.pdf_file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                <i class="fas fa-file-pdf"></i> View PDF
+                            </a>
+                        {% endif %}
+
+                        {% if invoice.xml_file %}
+                            <a href="{{ invoice.xml_file.url }}" class="btn btn-sm btn-outline-secondary" target="_blank">
+                                <i class="fas fa-file-code"></i> View XML
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dates Card -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5>Important Dates</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-5">Issue Date:</dt>
+                        <dd class="col-sm-7">{{ invoice.issue_date }}</dd>
+
+                        <dt class="col-sm-5">Due Date:</dt>
+                        <dd class="col-sm-7 {% if invoice.is_overdue %}text-danger fw-bold{% endif %}">
+                            {{ invoice.due_date }}
+                            {% if invoice.is_overdue %}
+                                <span class="badge bg-danger">Overdue</span>
+                            {% endif %}
+                        </dd>
+
+                        {% if invoice.delivery_date %}
+                            <dt class="col-sm-5">Delivery Date:</dt>
+                            <dd class="col-sm-7">{{ invoice.delivery_date }}</dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Financial Summary Card -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5>Financial Summary</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-5">Subtotal:</dt>
+                        <dd class="col-sm-7">{{ invoice.subtotal }} {{ invoice.currency }}</dd>
+
+                        <dt class="col-sm-5">Tax:</dt>
+                        <dd class="col-sm-7">{{ invoice.tax_amount }} {{ invoice.currency }}</dd>
+
+                        <dt class="col-sm-5">Total:</dt>
+                        <dd class="col-sm-7 fw-bold fs-5">{{ invoice.total_amount }} {{ invoice.currency }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <!-- Customer & Company Information -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Business Partner</h5>
+                </div>
+                <div class="card-body">
+                    <h6>{{ invoice.business_partner.name }}</h6>
+                    <address>
+                        {{ invoice.business_partner.address_line1 }}<br>
+                        {% if invoice.business_partner.address_line2 %}{{ invoice.business_partner.address_line2 }}<br>{% endif %}
+                        {{ invoice.business_partner.postal_code }} {{ invoice.business_partner.city }}<br>
+                        {{ invoice.business_partner.country }}
+                    </address>
+                    {% if invoice.business_partner.tax_id %}<strong>Tax ID:</strong> {{ invoice.business_partner.tax_id }}<br>{% endif %}
+                    {% if invoice.business_partner.vat_id %}<strong>VAT ID:</strong> {{ invoice.business_partner.vat_id }}<br>{% endif %}
+                    {% if invoice.business_partner.email %}<strong>Email:</strong> {{ invoice.business_partner.email }}<br>{% endif %}
+                    {% if invoice.business_partner.phone %}<strong>Phone:</strong> {{ invoice.business_partner.phone }}{% endif %}
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'business-partner-detail' invoice.business_partner.id %}" class="btn btn-sm btn-outline-primary">View Business Partner Details</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Company</h5>
+                </div>
+                <div class="card-body">
+                    <h6>{{ invoice.company.name }}</h6>
+                    <address>
+                        {{ invoice.company.address_line1 }}<br>
+                        {% if invoice.company.address_line2 %}{{ invoice.company.address_line2 }}<br>{% endif %}
+                        {{ invoice.company.postal_code }} {{ invoice.company.city }}<br>
+                        {{ invoice.company.country }}
+                    </address>
+                    {% if invoice.company.tax_id %}<strong>Tax ID:</strong> {{ invoice.company.tax_id }}<br>{% endif %}
+                    {% if invoice.company.vat_id %}<strong>VAT ID:</strong> {{ invoice.company.vat_id }}<br>{% endif %}
+                    {% if invoice.company.email %}<strong>Email:</strong> {{ invoice.company.email }}<br>{% endif %}
+                    {% if invoice.company.phone %}<strong>Phone:</strong> {{ invoice.company.phone }}{% endif %}
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'company-detail' invoice.company.id %}" class="btn btn-sm btn-outline-primary">View Company Details</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5>Invoice Lines</h5>
+            <a href="{% url 'invoice-line-create' invoice.id %}" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus"></i> Add Line Item
+            </a>
+        </div>
+        <div class="card-body">
+            {% if invoice.lines.all %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col">Description</th>
+                                <th scope="col">Product Code</th>
+                                <th scope="col">Quantity</th>
+                                <th scope="col">Unit</th>
+                                <th scope="col">Unit Price</th>
+                                <th scope="col">Tax Rate</th>
+                                <th scope="col">Line Total</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for line in invoice.lines.all %}
+                                <tr>
+                                    <td>{{ line.description }}</td>
+                                    <td>{{ line.product_code|default:"-" }}</td>
+                                    <td>{{ line.quantity }}</td>
+                                    <td>{{ line.get_unit_of_measure_display }}</td>
+                                    <td>{{ line.unit_price }} {{ invoice.currency }}</td>
+                                    <td>{{ line.tax_rate }}%</td>
+                                    <td>{{ line.line_total }} {{ invoice.currency }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'invoice-line-update' line.id %}" class="btn btn-outline-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'invoice-line-delete' line.id %}" class="btn btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th scope="row" colspan="6" class="text-end">Subtotal:</th>
+                                <th scope="col">{{ invoice.subtotal }} {{ invoice.currency }}</th>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <th scope="row" colspan="6" class="text-end">Tax Amount:</th>
+                                <th scope="col">{{ invoice.tax_amount }} {{ invoice.currency }}</th>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <th scope="row" colspan="6" class="text-end">Total:</th>
+                                <th scope="col">{{ invoice.total_amount }} {{ invoice.currency }}</th>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    No line items added yet. <a href="{% url 'invoice-line-create' invoice.id %}">Add your first line item</a>.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5>Attachments</h5>
+            <a href="{% url 'invoice-attachment-create' invoice.id %}" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus"></i> Add Attachment
+            </a>
+        </div>
+        <div class="card-body">
+            {% if invoice.attachments.all %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Description</th>
+                                <th>File</th>
+                                <th>Uploaded</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for attachment in invoice.attachments.all %}
+                                <tr>
+                                    <td>{{ attachment.description }}</td>
+                                    <td>
+                                        <a href="{{ attachment.file.url }}" target="_blank">
+                                            {{ attachment.file.name|slice:"19:" }}
+                                        </a>
+                                    </td>
+                                    <td>{{ attachment.uploaded_at|date:"d.m.Y H:i" }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ attachment.file.url }}" target="_blank" class="btn btn-outline-primary">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            <a href="{% url 'invoice-attachment-delete' attachment.id %}" class="btn btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    No attachments added yet. <a href="{% url 'invoice-attachment-create' invoice.id %}">Add your first attachment</a>.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if invoice.payment_terms or invoice.payment_method or invoice.payment_reference or invoice.notes %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Additional Information</h5>
+            </div>
+            <div class="card-body">
+                {% if invoice.payment_terms %}
+                    <div class="mb-3">
+                        <h6>Payment Terms</h6>
+                        <p>{{ invoice.payment_terms }}</p>
+                    </div>
+                {% endif %}
+
+                {% if invoice.payment_method %}
+                    <div class="mb-3">
+                        <h6>Payment Method</h6>
+                        <p>{{ invoice.payment_method }}</p>
+                    </div>
+                {% endif %}
+
+                {% if invoice.payment_reference %}
+                    <div class="mb-3">
+                        <h6>Payment Reference</h6>
+                        <p>{{ invoice.payment_reference }}</p>
+                    </div>
+                {% endif %}
+
+                {% if invoice.notes %}
+                    <div class="mb-3">
+                        <h6>Notes</h6>
+                        <p>{{ invoice.notes }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="d-flex justify-content-between mb-4">
+        <a href="{% url 'invoice-list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+        <div>
+            <a href="{% url 'invoice-update' invoice.id %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{% url 'invoice-delete' invoice.id %}" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Delete
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

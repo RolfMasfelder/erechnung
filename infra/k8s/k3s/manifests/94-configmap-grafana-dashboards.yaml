@@ -1,0 +1,73 @@
+# Grafana Dashboard ConfigMap — eRechnung Overview Dashboard (Business KPIs)
+apiVersion: v1
+data:
+  erechnung-overview.json: "{\n  \"annotations\": { \"list\": [] },\n  \"description\": \"Business KPIs and application health for eRechnung\",\n  \"editable\": true,\n  \"fiscalYearStartMonth\": 0,\n \
+    \ \"graphTooltip\": 1,\n  \"id\": null,\n  \"links\": [],\n  \"panels\": [\n    {\n      \"collapsed\": false,\n      \"gridPos\": { \"h\": 1, \"w\": 24, \"x\": 0, \"y\": 0 },\n      \"id\": 100,\n\
+    \      \"title\": \"\U0001F4CA Business KPIs\",\n      \"type\": \"row\"\n    },\n    {\n      \"datasource\": { \"type\": \"prometheus\", \"uid\": \"${DS_PROMETHEUS}\" },\n      \"fieldConfig\": {\n\
+    \        \"defaults\": {\n          \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\": [\n              { \"color\": \"green\", \"value\": null },\n              { \"color\"\
+    : \"#EAB839\", \"value\": 5 },\n              { \"color\": \"red\", \"value\": 10 }\n            ]\n          },\n          \"mappings\": []\n        }\n      },\n      \"gridPos\": { \"h\": 4, \"w\"\
+    : 4, \"x\": 0, \"y\": 1 },\n      \"id\": 1,\n      \"options\": { \"colorMode\": \"value\", \"graphMode\": \"none\", \"justifyMode\": \"auto\", \"textMode\": \"auto\", \"reduceOptions\": { \"calcs\"\
+    : [\"lastNotNull\"] } },\n      \"title\": \"Invoices (DRAFT)\",\n      \"type\": \"stat\",\n      \"targets\": [\n        { \"expr\": \"erechnung_invoices_by_status{status=\\\"DRAFT\\\"}\", \"legendFormat\"\
+    : \"Draft\" }\n      ]\n    },\n    {\n      \"datasource\": { \"type\": \"prometheus\", \"uid\": \"${DS_PROMETHEUS}\" },\n      \"fieldConfig\": { \"defaults\": { \"thresholds\": { \"mode\": \"absolute\"\
+    , \"steps\": [{ \"color\": \"blue\", \"value\": null }] } } },\n      \"gridPos\": { \"h\": 4, \"w\": 4, \"x\": 4, \"y\": 1 },\n      \"id\": 2,\n      \"options\": { \"colorMode\": \"value\", \"graphMode\"\
+    : \"none\", \"justifyMode\": \"auto\", \"textMode\": \"auto\", \"reduceOptions\": { \"calcs\": [\"lastNotNull\"] } },\n      \"title\": \"Invoices (SENT)\",\n      \"type\": \"stat\",\n      \"targets\"\
+    : [\n        { \"expr\": \"erechnung_invoices_by_status{status=\\\"SENT\\\"}\", \"legendFormat\": \"Sent\" }\n      ]\n    },\n    {\n      \"datasource\": { \"type\": \"prometheus\", \"uid\": \"${DS_PROMETHEUS}\"\
+    \ },\n      \"fieldConfig\": { \"defaults\": { \"thresholds\": { \"mode\": \"absolute\", \"steps\": [{ \"color\": \"green\", \"value\": null }] } } },\n      \"gridPos\": { \"h\": 4, \"w\": 4, \"x\"\
+    : 8, \"y\": 1 },\n      \"id\": 3,\n      \"options\": { \"colorMode\": \"value\", \"graphMode\": \"none\", \"justifyMode\": \"auto\", \"textMode\": \"auto\", \"reduceOptions\": { \"calcs\": [\"lastNotNull\"\
+    ] } },\n      \"title\": \"Invoices (PAID)\",\n      \"type\": \"stat\",\n      \"targets\": [\n        { \"expr\": \"erechnung_invoices_by_status{status=\\\"PAID\\\"}\", \"legendFormat\": \"Paid\"\
+    \ }\n      ]\n    },\n    {\n      \"datasource\": { \"type\": \"prometheus\", \"uid\": \"${DS_PROMETHEUS}\" },\n      \"fieldConfig\": { \"defaults\": { \"thresholds\": { \"mode\": \"absolute\", \"\
+    steps\": [{ \"color\": \"red\", \"value\": null }, { \"color\": \"dark-red\", \"value\": 5 }] } } },\n      \"gridPos\": { \"h\": 4, \"w\": 4, \"x\": 12, \"y\": 1 },\n      \"id\": 4,\n      \"options\"\
+    : { \"colorMode\": \"value\", \"graphMode\": \"none\", \"justifyMode\": \"auto\", \"textMode\": \"auto\", \"reduceOptions\": { \"calcs\": [\"lastNotNull\"] } },\n      \"title\": \"Overdue Invoices\"\
+    ,\n      \"type\": \"stat\",\n      \"targets\": [\n        { \"expr\": \"erechnung_invoices_overdue_count\", \"legendFormat\": \"Overdue\" }\n      ]\n    },\n    {\n      \"datasource\": { \"type\"\
+    : \"prometheus\", \"uid\": \"${DS_PROMETHEUS}\" },\n      \"fieldConfig\": { \"defaults\": { \"unit\": \"currencyEUR\", \"thresholds\": { \"mode\": \"absolute\", \"steps\": [{ \"color\": \"green\",\
+    \ \"value\": null }] } } },\n      \"gridPos\": { \"h\": 4, \"w\": 4, \"x\": 16, \"y\": 1 },\n      \"id\": 5,\n      \"options\": { \"colorMode\": \"value\", \"graphMode\": \"none\", \"justifyMode\"\
+    : \"auto\", \"textMode\": \"auto\", \"reduceOptions\": { \"calcs\": [\"lastNotNull\"] } },\n      \"title\": \"Total Revenue (PAID)\",\n      \"type\": \"stat\",\n      \"targets\": [\n        { \"\
+    expr\": \"erechnung_invoices_total_amount_eur{status=\\\"PAID\\\"}\", \"legendFormat\": \"Revenue\" }\n      ]\n    },\n    {\n      \"datasource\": { \"type\": \"prometheus\", \"uid\": \"${DS_PROMETHEUS}\"\
+    \ },\n      \"fieldConfig\": { \"defaults\": { \"thresholds\": { \"mode\": \"absolute\", \"steps\": [{ \"color\": \"purple\", \"value\": null }] } } },\n      \"gridPos\": { \"h\": 4, \"w\": 4, \"x\"\
+    : 20, \"y\": 1 },\n      \"id\": 6,\n      \"options\": { \"colorMode\": \"value\", \"graphMode\": \"none\", \"justifyMode\": \"auto\", \"textMode\": \"auto\", \"reduceOptions\": { \"calcs\": [\"lastNotNull\"\
+    ] } },\n      \"title\": \"Business Partners\",\n      \"type\": \"stat\",\n      \"targets\": [\n        { \"expr\": \"erechnung_business_partners_total\", \"legendFormat\": \"Partners\" }\n      ]\n\
+    \    },\n    {\n      \"datasource\": { \"type\": \"prometheus\", \"uid\": \"${DS_PROMETHEUS}\" },\n      \"fieldConfig\": { \"defaults\": { \"custom\": { \"drawStyle\": \"bars\", \"fillOpacity\": 80\
+    \ } } },\n      \"gridPos\": { \"h\": 8, \"w\": 12, \"x\": 0, \"y\": 5 },\n      \"id\": 7,\n      \"title\": \"Invoices Created (per hour)\",\n      \"type\": \"timeseries\",\n      \"targets\": [\n\
+    \        { \"expr\": \"increase(erechnung_invoices_created_total[1h])\", \"legendFormat\": \"Type {{invoice_type}}\" }\n      ]\n    },\n    {\n      \"datasource\": { \"type\": \"prometheus\", \"uid\"\
+    : \"${DS_PROMETHEUS}\" },\n      \"fieldConfig\": { \"defaults\": { \"unit\": \"currencyEUR\" } },\n      \"gridPos\": { \"h\": 8, \"w\": 12, \"x\": 12, \"y\": 5 },\n      \"id\": 8,\n      \"title\"\
+    : \"Invoice Amount by Status\",\n      \"type\": \"timeseries\",\n      \"targets\": [\n        { \"expr\": \"erechnung_invoices_total_amount_eur\", \"legendFormat\": \"{{status}}\" }\n      ]\n   \
+    \ },\n    {\n      \"collapsed\": false,\n      \"gridPos\": { \"h\": 1, \"w\": 24, \"x\": 0, \"y\": 13 },\n      \"id\": 200,\n      \"title\": \"\U0001F3E5 Application Health\",\n      \"type\": \"\
+    row\"\n    },\n    {\n      \"datasource\": { \"type\": \"prometheus\", \"uid\": \"${DS_PROMETHEUS}\" },\n      \"fieldConfig\": { \"defaults\": { \"unit\": \"reqps\" } },\n      \"gridPos\": { \"h\"\
+    : 8, \"w\": 12, \"x\": 0, \"y\": 14 },\n      \"id\": 9,\n      \"title\": \"Request Rate by Status Code\",\n      \"type\": \"timeseries\",\n      \"targets\": [\n        { \"expr\": \"sum(rate(django_http_responses_total_by_status_total[5m]))\
+    \ by (status)\", \"legendFormat\": \"HTTP {{status}}\" }\n      ]\n    },\n    {\n      \"datasource\": { \"type\": \"prometheus\", \"uid\": \"${DS_PROMETHEUS}\" },\n      \"fieldConfig\": { \"defaults\"\
+    : { \"unit\": \"s\" } },\n      \"gridPos\": { \"h\": 8, \"w\": 12, \"x\": 12, \"y\": 14 },\n      \"id\": 10,\n      \"title\": \"Request Latency (p50 / p95 / p99)\",\n      \"type\": \"timeseries\"\
+    ,\n      \"targets\": [\n        { \"expr\": \"histogram_quantile(0.50, sum(rate(django_http_requests_latency_seconds_by_view_method_bucket[5m])) by (le))\", \"legendFormat\": \"p50\" },\n        {\
+    \ \"expr\": \"histogram_quantile(0.95, sum(rate(django_http_requests_latency_seconds_by_view_method_bucket[5m])) by (le))\", \"legendFormat\": \"p95\" },\n        { \"expr\": \"histogram_quantile(0.99,\
+    \ sum(rate(django_http_requests_latency_seconds_by_view_method_bucket[5m])) by (le))\", \"legendFormat\": \"p99\" }\n      ]\n    },\n    {\n      \"datasource\": { \"type\": \"prometheus\", \"uid\"\
+    : \"${DS_PROMETHEUS}\" },\n      \"fieldConfig\": { \"defaults\": { \"unit\": \"s\" } },\n      \"gridPos\": { \"h\": 8, \"w\": 12, \"x\": 0, \"y\": 22 },\n      \"id\": 11,\n      \"title\": \"PDF\
+    \ Generation Duration (p50 / p95)\",\n      \"type\": \"timeseries\",\n      \"targets\": [\n        { \"expr\": \"histogram_quantile(0.50, rate(erechnung_pdf_generation_duration_seconds_bucket[5m]))\"\
+    , \"legendFormat\": \"p50\" },\n        { \"expr\": \"histogram_quantile(0.95, rate(erechnung_pdf_generation_duration_seconds_bucket[5m]))\", \"legendFormat\": \"p95\" }\n      ]\n    },\n    {\n  \
+    \    \"datasource\": { \"type\": \"prometheus\", \"uid\": \"${DS_PROMETHEUS}\" },\n      \"fieldConfig\": { \"defaults\": { \"unit\": \"short\" } },\n      \"gridPos\": { \"h\": 8, \"w\": 12, \"x\"\
+    : 12, \"y\": 22 },\n      \"id\": 12,\n      \"title\": \"PDF & XML Operations (per 5m)\",\n      \"type\": \"timeseries\",\n      \"targets\": [\n        { \"expr\": \"rate(erechnung_pdf_generation_total{result=\\\
+    \"success\\\"}[5m])\", \"legendFormat\": \"PDF success\" },\n        { \"expr\": \"rate(erechnung_pdf_generation_total{result=\\\"error\\\"}[5m])\", \"legendFormat\": \"PDF error\" },\n        { \"\
+    expr\": \"rate(erechnung_xml_validation_total{result=\\\"valid\\\"}[5m])\", \"legendFormat\": \"XML valid\" },\n        { \"expr\": \"rate(erechnung_xml_validation_total{result=\\\"invalid\\\"}[5m])\"\
+    , \"legendFormat\": \"XML invalid\" }\n      ]\n    },\n    {\n      \"collapsed\": false,\n      \"gridPos\": { \"h\": 1, \"w\": 24, \"x\": 0, \"y\": 30 },\n      \"id\": 300,\n      \"title\": \"\U0001F5C4\
+    ️ Infrastructure\",\n      \"type\": \"row\"\n    },\n    {\n      \"datasource\": { \"type\": \"prometheus\", \"uid\": \"${DS_PROMETHEUS}\" },\n      \"fieldConfig\": { \"defaults\": { \"unit\": \"\
+    short\" } },\n      \"gridPos\": { \"h\": 8, \"w\": 8, \"x\": 0, \"y\": 31 },\n      \"id\": 13,\n      \"title\": \"Database Connections\",\n      \"type\": \"timeseries\",\n      \"targets\": [\n\
+    \        { \"expr\": \"pg_stat_activity_count\", \"legendFormat\": \"Active connections\" }\n      ]\n    },\n    {\n      \"datasource\": { \"type\": \"prometheus\", \"uid\": \"${DS_PROMETHEUS}\" },\n\
+    \      \"fieldConfig\": { \"defaults\": { \"unit\": \"bytes\" } },\n      \"gridPos\": { \"h\": 8, \"w\": 8, \"x\": 8, \"y\": 31 },\n      \"id\": 14,\n      \"title\": \"Redis Memory Usage\",\n   \
+    \   \"type\": \"timeseries\",\n      \"targets\": [\n        { \"expr\": \"redis_memory_used_bytes\", \"legendFormat\": \"Used\" },\n        { \"expr\": \"redis_memory_max_bytes\", \"legendFormat\"\
+    : \"Max\" }\n      ]\n    },\n    {\n      \"datasource\": { \"type\": \"prometheus\", \"uid\": \"${DS_PROMETHEUS}\" },\n      \"fieldConfig\": { \"defaults\": { \"unit\": \"ops\" } },\n      \"gridPos\"\
+    : { \"h\": 8, \"w\": 8, \"x\": 16, \"y\": 31 },\n      \"id\": 15,\n      \"title\": \"Redis Operations/sec\",\n      \"type\": \"timeseries\",\n      \"targets\": [\n        { \"expr\": \"rate(redis_commands_processed_total[5m])\"\
+    , \"legendFormat\": \"Commands/s\" }\n      ]\n    },\n    {\n      \"datasource\": { \"type\": \"prometheus\", \"uid\": \"${DS_PROMETHEUS}\" },\n      \"fieldConfig\": { \"defaults\": { \"unit\": \"\
+    short\" } },\n      \"gridPos\": { \"h\": 8, \"w\": 12, \"x\": 0, \"y\": 39 },\n      \"id\": 16,\n      \"title\": \"Django DB Query Duration\",\n      \"type\": \"timeseries\",\n      \"targets\"\
+    : [\n        { \"expr\": \"rate(django_db_execute_total[5m])\", \"legendFormat\": \"Queries/s\" }\n      ]\n    },\n    {\n      \"datasource\": { \"type\": \"prometheus\", \"uid\": \"${DS_PROMETHEUS}\"\
+    \ },\n      \"fieldConfig\": { \"defaults\": { \"unit\": \"short\" } },\n      \"gridPos\": { \"h\": 8, \"w\": 12, \"x\": 12, \"y\": 39 },\n      \"id\": 17,\n      \"title\": \"Active Users (30d)\"\
+    ,\n      \"type\": \"stat\",\n      \"options\": { \"colorMode\": \"value\", \"graphMode\": \"area\", \"reduceOptions\": { \"calcs\": [\"lastNotNull\"] } },\n      \"targets\": [\n        { \"expr\"\
+    : \"erechnung_active_users\", \"legendFormat\": \"Active Users\" }\n      ]\n    }\n  ],\n  \"schemaVersion\": 39,\n  \"tags\": [\"erechnung\", \"django\", \"invoicing\"],\n  \"templating\": {\n   \
+    \ \"list\": [\n      {\n        \"current\": { \"selected\": false, \"text\": \"Prometheus\", \"value\": \"Prometheus\" },\n        \"hide\": 0,\n        \"includeAll\": false,\n        \"multi\": false,\n\
+    \        \"name\": \"DS_PROMETHEUS\",\n        \"options\": [],\n        \"query\": \"prometheus\",\n        \"refresh\": 1,\n        \"regex\": \"\",\n        \"skipUrlSync\": false,\n        \"type\"\
+    : \"datasource\"\n      }\n    ]\n  },\n  \"time\": { \"from\": \"now-6h\", \"to\": \"now\" },\n  \"timepicker\": {},\n  \"timezone\": \"Europe/Berlin\",\n  \"title\": \"eRechnung - Overview\",\n  \"\
+    uid\": \"erechnung-overview\",\n  \"version\": 1\n}\n"
+kind: ConfigMap
+metadata:
+  labels:
+    app: grafana
+    component: monitoring
+  name: grafana-dashboards
+  namespace: monitoring

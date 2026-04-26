@@ -1,0 +1,105 @@
+# Development Docker Compose - Direct Access
+# Django app exposed directly for faster development
+
+services:
+  # Init container for one-time setup tasks (migrations, superuser creation)
+  init:
+    build:
+      context: .
+      target: development
+    volumes:
+      - ./:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    networks:
+      - erechnung-dev-network
+    restart: "no"  # Only run once
+    command: ["./scripts/init_django.sh"]
+    labels:
+      - "com.erechnung.service=init"
+      - "com.erechnung.environment=development"
+
+  # Django Application - Direct Access for Development
+  web:
+    build:
+      context: .
+      target: development
+    container_name: erechnung_dev_web
+    ports:
+      - "8000:8000"  # Direct access for development
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - erechnung-dev-network
+    volumes:
+      - ./:/app
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "project_root/manage.py", "check", "--database", "default"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "com.erechnung.service=django-dev"
+      - "com.erechnung.environment=development"
+
+  # Database - Development
+  db:
+    image: postgres:17  # Updated to PostgreSQL 17
+    container_name: erechnung_dev_db
+    ports:
+      - "5432:5432"  # Exposed for direct DB access in dev
+    networks:
+      - erechnung-dev-network
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data/
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $POSTGRES_DB -U $POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache - Development
+  redis:
+    image: redis:7-alpine
+    container_name: erechnung_dev_redis
+    ports:
+      - "6379:6379"  # Exposed for direct access in dev
+    networks:
+      - erechnung-dev-network
+    volumes:
+      - redis_dev_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+
+networks:
+  erechnung-dev-network:
+    driver: bridge
+    name: erechnung-dev-network

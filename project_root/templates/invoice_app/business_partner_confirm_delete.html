@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Business Partner{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Delete Business Partner</h1>
+        <a href="{% url 'business-partner-list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="alert alert-danger">
+                <h4><i class="fas fa-exclamation-triangle"></i> Warning</h4>
+                <p>Are you sure you want to delete the business partner <strong>"{{ partner.display_name }}"</strong>?</p>
+                <p>This action cannot be undone. If this business partner is related to any invoices, this operation may fail.</p>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Business Partner Details:</h5>
+                    <dl class="row">
+                        <dt class="col-sm-4">Name:</dt>
+                        <dd class="col-sm-8">{{ partner.display_name }}</dd>
+
+                        <dt class="col-sm-4">Type:</dt>
+                        <dd class="col-sm-8">{{ partner.get_partner_type_display }}</dd>
+
+                        {% if partner.partner_number %}
+                        <dt class="col-sm-4">Partner Number:</dt>
+                        <dd class="col-sm-8">{{ partner.partner_number }}</dd>
+                        {% endif %}
+
+                        <dt class="col-sm-4">Address:</dt>
+                        <dd class="col-sm-8">
+                            {{ partner.address_line1 }}
+                            {% if partner.address_line2 %}
+                                <br>{{ partner.address_line2 }}
+                            {% endif %}
+                            <br>{{ partner.postal_code }}, {{ partner.city }}
+                            <br>{{ partner.country }}
+                        </dd>
+
+                        <dt class="col-sm-4">Contact:</dt>
+                        <dd class="col-sm-8">
+                            {% if partner.phone %}Phone: {{ partner.phone }}<br>{% endif %}
+                            {% if partner.email %}Email: {{ partner.email }}{% endif %}
+                        </dd>
+
+                        {% if partner.tax_id %}
+                        <dt class="col-sm-4">Tax ID:</dt>
+                        <dd class="col-sm-8">{{ partner.tax_id }}</dd>
+                        {% endif %}
+
+                        {% if partner.vat_id %}
+                        <dt class="col-sm-4">VAT ID:</dt>
+                        <dd class="col-sm-8">{{ partner.vat_id }}</dd>
+                        {% endif %}
+                    </dl>
+                </div>
+
+                <div class="col-md-6">
+                    <!-- Related Data Warning -->
+                    {% if partner.invoices.exists %}
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-exclamation-circle"></i> Related Data Found</h6>
+                            <p>This business partner has {{ partner.invoices.count }} related invoice{{ partner.invoices.count|pluralize }}:</p>
+                            <ul class="mb-0">
+                                {% for invoice in partner.invoices.all|slice:":5" %}
+                                    <li>{{ invoice.invoice_number }} ({{ invoice.issue_date }})</li>
+                                {% endfor %}
+                                {% if partner.invoices.count > 5 %}
+                                    <li><em>... and {{ partner.invoices.count|add:"-5" }} more</em></li>
+                                {% endif %}
+                            </ul>
+                            <p class="mt-2 mb-0"><strong>Warning:</strong> Deleting this business partner may cause issues with related invoices.</p>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle"></i> No Related Data</h6>
+                            <p class="mb-0">This business partner has no related invoices and can be safely deleted.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <form method="post" class="mt-4">
+                {% csrf_token %}
+                <div class="d-flex justify-content-end">
+                    <a href="{% url 'business-partner-detail' partner.id %}" class="btn btn-secondary me-2">Cancel</a>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Delete Business Partner
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

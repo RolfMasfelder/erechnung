@@ -1,0 +1,33 @@
+# E2E Test Dockerfile für Vue.js Frontend mit Playwright
+# Basiert auf offiziellem Microsoft Playwright Image mit Ubuntu 24.04 LTS
+# Enthält Chromium, Firefox, WebKit + alle System-Dependencies
+
+FROM mcr.microsoft.com/playwright:v1.59.1-noble
+
+# Arbeitsverzeichnis setzen
+WORKDIR /app
+
+# Sicherstellen dass curl verfügbar ist (für Health-Checks)
+RUN apt-get update && apt-get install -y curl && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Node.js Version prüfen (Playwright Image hat Node.js vorinstalliert)
+RUN node --version && npm --version
+
+# Package-Manager optimieren
+RUN npm config set registry https://registry.npmjs.org/
+
+# Dependencies installieren (wird gecacht wenn package.json unverändert)
+COPY package*.json ./
+RUN npm ci
+
+# App-Code kopieren
+COPY . .
+
+# Port für Vite Dev-Server
+EXPOSE 5173
+
+# Playwright Browser Cache Location (bereits im Image vorhanden)
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+# Standard Command: Vite Dev-Server
+CMD ["npm", "run", "dev"]

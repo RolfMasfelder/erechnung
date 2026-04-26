@@ -1,0 +1,36 @@
+# API Gateway Service for eRechnung
+#
+# Deployment-Varianten:
+# 1. LoadBalancer (mit MetalLB): Produktionsnahe Konfiguration
+#    - Service erhält dedizierte externe IP (z.B. 192.168.178.201)
+#    - Direkter Zugriff via LoadBalancer IP möglich
+#    - Funktioniert identisch zu Cloud-Providern (AWS ELB, GCP LB)
+#
+# 2. ClusterIP (Standard): Nur über Ingress erreichbar
+#    - Service nur intern erreichbar (im Cluster)
+#    - Zugriff ausschließlich über Ingress-Controller
+#    - Empfohlen, wenn Ingress als einziger Einstiegspunkt gewünscht
+#
+# Aktuell: ClusterIP (Standard-Setup)
+# Für direkten Zugriff: type: LoadBalancer verwenden
+#
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway-service
+  namespace: erechnung
+  labels:
+    app: api-gateway
+spec:
+  selector:
+    app: api-gateway
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+    protocol: TCP
+  - name: https
+    port: 443
+    targetPort: 8443
+    protocol: TCP
+  type: ClusterIP  # ClusterIP = nur via Ingress | LoadBalancer = direkt erreichbar

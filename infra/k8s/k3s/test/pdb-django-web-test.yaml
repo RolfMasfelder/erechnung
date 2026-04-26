@@ -1,0 +1,11 @@
+# PDB Django Web für Test-Namespace
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: django-web-pdb
+  namespace: erechnung-update-test
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: django-web

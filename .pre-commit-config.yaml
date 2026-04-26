@@ -1,0 +1,51 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+fail_fast: false  # Don't stop on first failure, let all tools run
+default_stages: [pre-commit]
+
+repos:
+  # Ruff: linting with auto-fix
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: "v0.15.0"
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        types: [python]
+      - id: ruff-format
+        types: [python]
+
+  # Other hooks that don't conflict with formatting
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-docstring-first
+      - id: check-toml
+      - id: check-yaml
+        exclude: ^infra/k8s/.*\.yaml$  # Exclude Kubernetes files
+      - id: check-yaml
+        name: check-yaml-k8s
+        files: ^infra/k8s/.*\.yaml$
+        args: ['--allow-multiple-documents']
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=1024']
+        exclude: '^project_root/schemas/en16931-schematron/xslt/'
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: debug-statements
+#      - id: double-quote-string-fixer
+      - id: name-tests-test
+        args: [--django]
+        exclude: (conftest\.py|factories\.py)$
+      - id: requirements-txt-fixer
+
+  # dependency management
+  # - repo: local
+  #   hooks:
+  #     - id: check-requirements
+  #       name: Check requirements.txt
+  #       entry: python scripts/simple_requirements_check.py --docker
+  #       language: system
+  #       pass_filenames: false

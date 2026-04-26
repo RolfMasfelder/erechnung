@@ -1,0 +1,21 @@
+# Ingress Configuration for eRechnung
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: erechnung-ingress
+  namespace: erechnung
+  annotations:
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$binary_remote_addr"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+spec:
+  rules:
+  - host: api.erechnung.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: api-gateway-service
+            port:
+              number: 80

@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ partner.display_name }} - Business Partner Details{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ partner.display_name }}</h1>
+        <div>
+            <a href="{% url 'business-partner-list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+            <a href="{% url 'business-partner-update' partner.id %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{% url 'business-partner-delete' partner.id %}" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Delete
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Business Partner Information -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-user"></i> Business Partner Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Type:</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge bg-secondary">{{ partner.get_partner_type_display }}</span>
+                        </dd>
+
+                        <dt class="col-sm-4">Partner Number:</dt>
+                        <dd class="col-sm-8">{{ partner.partner_number|default:"-" }}</dd>
+
+                        {% if partner.partner_type == 'INDIVIDUAL' %}
+                            <dt class="col-sm-4">Name:</dt>
+                            <dd class="col-sm-8">{{ partner.first_name }} {{ partner.last_name }}</dd>
+                        {% else %}
+                            <dt class="col-sm-4">Company Name:</dt>
+                            <dd class="col-sm-8">{{ partner.company_name|default:"-" }}</dd>
+
+                            {% if partner.legal_name %}
+                            <dt class="col-sm-4">Legal Name:</dt>
+                            <dd class="col-sm-8">{{ partner.legal_name }}</dd>
+                            {% endif %}
+                        {% endif %}
+
+                        {% if partner.tax_id %}
+                        <dt class="col-sm-4">Tax ID:</dt>
+                        <dd class="col-sm-8">{{ partner.tax_id }}</dd>
+                        {% endif %}
+
+                        {% if partner.vat_id %}
+                        <dt class="col-sm-4">VAT ID:</dt>
+                        <dd class="col-sm-8">{{ partner.vat_id }}</dd>
+                        {% endif %}
+
+                        {% if partner.commercial_register %}
+                        <dt class="col-sm-4">Commercial Register:</dt>
+                        <dd class="col-sm-8">{{ partner.commercial_register }}</dd>
+                        {% endif %}
+
+                        <dt class="col-sm-4">Created:</dt>
+                        <dd class="col-sm-8">{{ partner.created_at|date:"M j, Y H:i" }}</dd>
+
+                        <dt class="col-sm-4">Last Updated:</dt>
+                        <dd class="col-sm-8">{{ partner.updated_at|date:"M j, Y H:i" }}</dd>
+
+                        <dt class="col-sm-4">Status:</dt>
+                        <dd class="col-sm-8">
+                            {% if partner.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Address Information -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-map-marker-alt"></i> Address</h5>
+                </div>
+                <div class="card-body">
+                    <address>
+                        {{ partner.address_line1 }}<br>
+                        {% if partner.address_line2 %}{{ partner.address_line2 }}<br>{% endif %}
+                        {{ partner.postal_code }} {{ partner.city }}<br>
+                        {% if partner.state_province %}{{ partner.state_province }}<br>{% endif %}
+                        {{ partner.country }}
+                    </address>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Contact Information -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-address-book"></i> Contact Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        {% if partner.email %}
+                        <dt class="col-sm-4">Email:</dt>
+                        <dd class="col-sm-8">
+                            <a href="mailto:{{ partner.email }}">{{ partner.email }}</a>
+                        </dd>
+                        {% endif %}
+
+                        {% if partner.phone %}
+                        <dt class="col-sm-4">Phone:</dt>
+                        <dd class="col-sm-8">{{ partner.phone }}</dd>
+                        {% endif %}
+
+                        {% if partner.fax %}
+                        <dt class="col-sm-4">Fax:</dt>
+                        <dd class="col-sm-8">{{ partner.fax }}</dd>
+                        {% endif %}
+
+                        {% if partner.website %}
+                        <dt class="col-sm-4">Website:</dt>
+                        <dd class="col-sm-8">
+                            <a href="{{ partner.website }}" target="_blank">{{ partner.website }}</a>
+                        </dd>
+                        {% endif %}
+
+                        {% if partner.contact_person %}
+                        <dt class="col-sm-4">Contact Person:</dt>
+                        <dd class="col-sm-8">{{ partner.contact_person }}</dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Business Settings -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-cog"></i> Business Settings</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-6">Payment Terms:</dt>
+                        <dd class="col-sm-6">{{ partner.payment_terms }} days</dd>
+
+                        <dt class="col-sm-6">Currency:</dt>
+                        <dd class="col-sm-6">{{ partner.preferred_currency }}</dd>
+
+                        {% if partner.credit_limit %}
+                        <dt class="col-sm-6">Credit Limit:</dt>
+                        <dd class="col-sm-6">{{ partner.credit_limit }} {{ partner.preferred_currency }}</dd>
+                        {% endif %}
+                    </dl>
+
+                    {% if partner.accounting_contact or partner.accounting_email %}
+                    <h6 class="mt-3">Accounting Contact</h6>
+                    <dl class="row">
+                        {% if partner.accounting_contact %}
+                        <dt class="col-sm-6">Contact:</dt>
+                        <dd class="col-sm-6">{{ partner.accounting_contact }}</dd>
+                        {% endif %}
+
+                        {% if partner.accounting_email %}
+                        <dt class="col-sm-6">Email:</dt>
+                        <dd class="col-sm-6">
+                            <a href="mailto:{{ partner.accounting_email }}">{{ partner.accounting_email }}</a>
+                        </dd>
+                        {% endif %}
+                    </dl>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Invoices -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5><i class="fas fa-file-invoice"></i> Related Invoices</h5>
+            <a href="{% url 'invoice-create' %}" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus"></i> Create Invoice
+            </a>
+        </div>
+        <div class="card-body">
+            {% if partner.invoices.all %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Invoice Number</th>
+                                <th>Company</th>
+                                <th>Issue Date</th>
+                                <th>Total Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for invoice in partner.invoices.all|slice:":10" %}
+                                <tr>
+                                    <td><a href="{% url 'invoice-detail' invoice.id %}">{{ invoice.invoice_number }}</a></td>
+                                    <td>{{ invoice.company.name }}</td>
+                                    <td>{{ invoice.issue_date|date:"M j, Y" }}</td>
+                                    <td>{{ invoice.total_amount }} {{ invoice.currency }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ invoice.status|lower }}">{{ invoice.get_status_display }}</span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'invoice-detail' invoice.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if partner.invoices.count > 10 %}
+                    <p class="text-muted mt-2">Showing 10 of {{ partner.invoices.count }} invoices. <a href="{% url 'invoice-list' %}?partner={{ partner.id }}">View all invoices for this business partner</a></p>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-3">
+                    <i class="fas fa-file-invoice fa-2x text-muted mb-2"></i>
+                    <p class="text-muted">No invoices found for this business partner.</p>
+                    <a href="{% url 'invoice-create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create First Invoice
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

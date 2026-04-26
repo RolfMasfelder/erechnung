@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ title }}</h1>
+        <a href="{% url 'invoice-detail' invoice.id %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Invoice
+        </a>
+    </div>
+
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Invoice Information</h5>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Invoice Number:</dt>
+                <dd class="col-sm-9">{{ invoice.invoice_number }}</dd>
+
+                <dt class="col-sm-3">Business Partner:</dt>
+                <dd class="col-sm-9">{{ invoice.business_partner.name }}</dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" novalidate enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label for="{{ form.file.id_for_label }}" class="form-label">{{ form.file.label }}</label>
+                    {{ form.file }}
+                    {% if form.file.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.file.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="form-text">
+                        Accepted file types: PDF, DOC, DOCX, XLS, XLSX, CSV, JPG, PNG, etc.
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.description.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'invoice-detail' invoice.id %}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">{{ action }} Attachment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

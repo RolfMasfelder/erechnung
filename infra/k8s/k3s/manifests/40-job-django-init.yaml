@@ -1,0 +1,69 @@
+# Django Init Job
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: django-init
+  namespace: erechnung
+spec:
+  template:
+    metadata:
+      labels:
+        app: django-web
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+      - name: wait-for-db
+        image: 192.168.178.80:5000/busybox:1.35
+        imagePullPolicy: IfNotPresent
+        command: ['sh', '-c', 'until nc -z postgres-service 5432; do echo waiting for db; sleep 2; done;']
+      containers:
+      - name: django-init
+        image: 192.168.178.80:5000/erechnung-init:KUSTOMIZE
+        imagePullPolicy: IfNotPresent
+        command: ["sh", "-c"]
+        args:
+          - |
+            set -e
+            echo "Running migrations..."
+            python project_root/manage.py migrate --noinput
+            echo "Collecting static files..."
+            python project_root/manage.py collectstatic --noinput
+
+            if [ "${INIT_CREATE_ADMIN:-false}" = "true" ]; then
+              echo "Creating admin user (INIT_CREATE_ADMIN=true)..."
+              python project_root/manage.py shell << 'EOF'
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+
+            if not User.objects.filter(username="admin").exists():
+                User.objects.create_superuser("admin", "admin@example.com", "admin")
+                print("✓ Superuser created: admin/admin")
+            else:
+                print("✓ Superuser already exists")
+            EOF
+            else
+              echo "Skipping admin bootstrap (INIT_CREATE_ADMIN=false)"
+            fi
+
+            if [ "${INIT_CREATE_TEST_DATA:-false}" = "true" ]; then
+              echo "Creating test data (INIT_CREATE_TEST_DATA=true)..."
+              python project_root/manage.py create_test_data --count 60
+            else
+              echo "Skipping test data bootstrap (INIT_CREATE_TEST_DATA=false)"
+            fi
+        envFrom:
+        - configMapRef:
+            name: erechnung-config
+        - secretRef:
+            name: erechnung-secrets
+        volumeMounts:
+        - name: postgres-ca
+          mountPath: /etc/ssl/postgres
+          readOnly: true
+      volumes:
+      - name: postgres-ca
+        secret:
+          secretName: postgres-tls-certs
+          items:
+          - key: ca.crt
+            path: ca.crt

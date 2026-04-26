@@ -1,0 +1,36 @@
+# Django Init Job für Test-Namespace
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: django-init
+  namespace: erechnung-update-test
+spec:
+  template:
+    metadata:
+      labels:
+        app: django-web
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+      - name: wait-for-db
+        image: 192.168.178.80:5000/busybox:1.35
+        imagePullPolicy: IfNotPresent
+        command: ['sh', '-c', 'until nc -z postgres-service 5432; do echo waiting for db; sleep 2; done;']
+      containers:
+      - name: django-init
+        image: 192.168.178.80:5000/erechnung-init:KUSTOMIZE
+        imagePullPolicy: IfNotPresent
+        command: ["sh", "-c"]
+        args:
+          - |
+            set -e
+            echo "Running migrations..."
+            python project_root/manage.py migrate --noinput
+            echo "Collecting static files..."
+            python project_root/manage.py collectstatic --noinput
+            echo "Test-Init abgeschlossen."
+        envFrom:
+        - configMapRef:
+            name: erechnung-config
+        - secretRef:
+            name: erechnung-secrets

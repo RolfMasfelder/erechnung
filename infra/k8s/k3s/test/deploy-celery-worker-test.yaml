@@ -1,0 +1,53 @@
+# Celery Worker Deployment für Test-Namespace
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-worker
+  namespace: erechnung-update-test
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  minReadySeconds: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: celery-worker
+  template:
+    metadata:
+      labels:
+        app: celery-worker
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1234
+        runAsGroup: 1234
+        fsGroup: 1234
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: celery-worker
+        image: 192.168.178.80:5000/erechnung-celery:KUSTOMIZE
+        imagePullPolicy: IfNotPresent
+        command: ["celery", "-A", "invoice_project", "worker", "-l", "info", "--concurrency=2"]
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+        envFrom:
+        - configMapRef:
+            name: erechnung-config
+        - secretRef:
+            name: erechnung-secrets
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"

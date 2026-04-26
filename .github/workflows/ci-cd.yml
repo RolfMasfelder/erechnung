@@ -1,0 +1,354 @@
+name: eRechnung CI/CD Pipeline
+
+# Only run on GitHub pushes, not on local development
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Ermöglicht manuelles Auslösen über GitHub UI
+    inputs:
+      run_all_tests:
+        description: 'Run all tests including E2E'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Fast linting — runs in parallel, no Docker needed
+  lint:
+    name: Lint (ruff + frontend)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+
+    # ── Python Linting (ruff) ──
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.13'
+
+    - name: Install ruff
+      run: pip install ruff
+
+    - name: Ruff lint check
+      run: ruff check project_root/
+
+    - name: Ruff format check
+      run: ruff format --check project_root/
+
+    # ── Frontend Linting + Unit Tests ──
+    - name: Set up Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: '22'
+
+    - name: Install frontend dependencies
+      working-directory: frontend
+      run: npm ci
+
+    - name: Run Vitest unit tests
+      working-directory: frontend
+      run: npx vitest run --reporter=verbose
+
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: lint
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+
+    - name: Setup CI environment
+      run: |
+        # Use template .env.ci file for consistent CI configuration
+        cp .env.ci .env
+        echo "✅ Environment configuration loaded from .env.ci"
+
+        # Force UID/GID to match container build (app_user is 1234:1234)
+        # Note: These values are not actually used anymore since we removed user: directives
+        # from docker-compose.yml. The container now uses the app_user defined in Dockerfile.
+        echo "UID=1234" >> .env
+        echo "GID=1234" >> .env
+        echo "🔧 Container will use app_user (UID 1234) defined in Dockerfile"
+
+        # Create media directories with correct permissions for volume mount
+        # These must exist before container starts, as the volume mount overlays the container filesystem
+        mkdir -p project_root/media/invoices project_root/media/xml
+        chmod -R 777 project_root/media
+        echo "📁 Media directories created with write permissions"
+
+        # Create logs directory with write permissions for volume mount
+        # docker-compose.yml mounts ./logs:/app/logs — must be writable by app_user (UID 1234)
+        mkdir -p logs
+        chmod -R 777 logs
+        echo "📁 Logs directory created with write permissions"
+
+    - name: Generate PostgreSQL TLS certificates
+      run: |
+        bash scripts/generate-pg-certs.sh
+        echo "🔒 PostgreSQL TLS certificates generated for CI"
+
+    - name: Build and start services
+      run: |
+        echo "🏗️ Building and starting all services..."
+        docker compose --env-file .env up -d --build
+        echo "✅ All services started"
+
+    - name: Wait for services to be ready
+      run: |
+        echo "⏳ Waiting for all services to be healthy..."
+        ./scripts/wait_for_services.sh
+
+    - name: Service health verification
+      continue-on-error: true
+      run: |
+        echo "📊 Final service status verification:"
+        docker compose ps
+        echo ""
+        echo "🏥 Health endpoint verification:"
+        curl -s http://localhost:8000/health/ | jq . || echo "❌ Basic health check failed"
+        curl -s http://localhost:8000/health/detailed/ | jq .status || echo "❌ Detailed health check failed"
+        curl -s http://localhost:8000/health/readiness/ | jq .status || echo "❌ Readiness check failed"
+
+    - name: Check for missing migrations
+      run: |
+        echo "🔍 Checking if all migrations are committed..."
+        docker compose exec -T web bash -lc 'cd /app && set -a; [ -f ./.env ] && . ./.env; set +a; python project_root/manage.py makemigrations --check --dry-run'
+        echo "✅ All migrations are present"
+
+    - name: Run database migrations
+      run: |
+        echo "🔄 Running database migrations..."
+        docker compose exec -T web bash -lc 'cd /app && set -a; [ -f ./.env ] && . ./.env; set +a; python project_root/manage.py migrate'
+
+    - name: Create test data for E2E tests
+      run: |
+        echo "📊 Creating test data (25 partners, 25 products, 50 invoices)..."
+        docker compose exec -T web bash -lc 'cd /app && set -a; [ -f ./.env ] && . ./.env; set +a; python project_root/manage.py create_test_data --count=25'
+        echo "✅ Test data created successfully"
+
+    - name: Run comprehensive test suite with coverage
+      run: |
+        docker compose exec -T web bash -lc 'cd /app && set -a; [ -f ./.env ] && . ./.env; set +a; coverage run --source=project_root/invoice_app project_root/manage.py test invoice_app --pattern="test_*.py" --exclude-tag=pgtap --verbosity=2'
+
+    - name: Generate coverage report
+      run: |
+        docker compose exec -T web bash -lc 'cd /app && set -a; [ -f ./.env ] && . ./.env; set +a; coverage report --show-missing --fail-under=50'
+        docker compose exec -T web bash -lc 'cd /app && set -a; [ -f ./.env ] && . ./.env; set +a; coverage xml -o coverage.xml'
+        docker cp "$(docker compose ps -q web)":/app/coverage.xml ./coverage.xml
+
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v7
+      if: always()
+      with:
+        name: coverage-report
+        path: coverage.xml
+        retention-days: 30
+
+    - name: Run pgTAP database tests (Schema + Constraints + Business Logic)
+      run: |
+        docker compose exec -T web bash -lc 'cd /app && set -a; [ -f ./.env ] && . ./.env; set +a; python project_root/manage.py test invoice_app.tests.test_pgtap_db --verbosity=2'
+
+    - name: Test Django endpoints
+      run: |
+        echo "🧪 Testing Django health endpoints on running services..."
+
+        # Test Django health endpoint directly (already running on port 8000)
+        curl -fsS --retry 10 --retry-delay 2 --retry-connrefused -o /dev/null http://localhost:8000/health/ || exit 1
+        echo "✅ Django basic health endpoint working"
+
+        # Generate JWT token for protected endpoints
+        echo "🔑 Generating JWT token for authenticated endpoints..."
+        TOKEN=$(curl -fsS -X POST http://localhost:8000/api/auth/token/ \
+          -H "Content-Type: application/json" \
+          -d '{"username":"testuser","password":"testpass123"}' | jq -r '.access')
+
+        if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+          echo "❌ Failed to generate JWT token"
+          exit 1
+        fi
+        echo "✅ JWT token generated successfully"
+
+        # Test detailed health endpoint using jq for robust JSON parsing
+        echo "🔍 Testing detailed health endpoint (with JWT)..."
+        detailed_status=$(curl -fsS --retry 5 --retry-delay 2 --retry-connrefused \
+          -H "Authorization: Bearer $TOKEN" \
+          http://localhost:8000/health/detailed/ 2>/dev/null | jq -r '.status // "error"')
+        case "$detailed_status" in
+            "healthy")
+                echo "✅ Django detailed health endpoint: HEALTHY"
+                ;;
+            "unhealthy")
+                echo "⚠️ Django detailed health endpoint: UNHEALTHY (but responding)"
+                ;;
+            "error"|"null"|"")
+                echo "❌ Django detailed health endpoint: Invalid JSON or missing status"
+                exit 1
+                ;;
+            *)
+                echo "❌ Django detailed health endpoint: Unknown status '$detailed_status'"
+                exit 1
+                ;;
+        esac
+
+        # Test readiness endpoint using jq for robust JSON parsing
+        echo "🔍 Testing readiness endpoint..."
+        readiness_status=$(curl -fsS --retry 5 --retry-delay 2 --retry-connrefused http://localhost:8000/health/readiness/ 2>/dev/null | jq -r '.status // "error"')
+        case "$readiness_status" in
+            "ready")
+                echo "✅ Django readiness endpoint: READY"
+                ;;
+            "not_ready")
+                echo "⚠️ Django readiness endpoint: NOT_READY (but responding)"
+                ;;
+            "error"|"null"|"")
+                echo "❌ Django readiness endpoint: Invalid JSON or missing status"
+                exit 1
+                ;;
+            *)
+                echo "❌ Django readiness endpoint: Unknown status '$readiness_status'"
+                exit 1
+                ;;
+        esac
+    - name: Run security checks
+      run: |
+        docker compose exec -T web bash -lc 'cd /app && set -a; [ -f ./.env ] && . ./.env; set +a; python project_root/manage.py check --deploy'
+
+    - name: Test ZUGFeRD XML generation and validation
+      run: |
+        docker compose exec -T web bash -lc 'cd /app && set -a; [ -f ./.env ] && . ./.env; set +a; python project_root/manage.py shell -c "from invoice_app.utils.xml import ZugferdXmlGenerator; from invoice_app.models import Company, BusinessPartner, Invoice; xml_gen = ZugferdXmlGenerator(enable_validation=True); print(\"✅ ZUGFeRD XML validation working\")"'
+
+    - name: Cleanup
+      if: always()
+      run: docker compose down -v --remove-orphans || true
+
+  # Security scanning: SAST (bandit) + Dependency Audit (pip-audit) + Trivy
+  security-scan:
+    name: Security Scanning (SAST + Dependencies)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: test  # Run after tests pass
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.13'
+
+    - name: Install security tools
+      run: |
+        pip install bandit pip-audit
+
+    # ── SAST: Bandit (Static Application Security Testing) ──
+    - name: Run Bandit SAST analysis
+      run: |
+        echo "🔍 Running Bandit static security analysis..."
+        bandit -r project_root/invoice_app \
+          --exclude project_root/invoice_app/tests,project_root/invoice_app/migrations \
+          --severity-level medium \
+          --confidence-level medium \
+          -f json -o bandit-results.json \
+          --skip B101 || true
+
+        # Parse results for summary
+        python3 -c "
+        import json, sys
+        with open('bandit-results.json') as f:
+            data = json.load(f)
+        results = data.get('results', [])
+        metrics = data.get('metrics', {}).get('_totals', {})
+        high = metrics.get('SEVERITY.HIGH', 0)
+        medium = metrics.get('SEVERITY.MEDIUM', 0)
+        print(f'Bandit: {len(results)} findings (High: {high}, Medium: {medium})')
+        if high > 0:
+            print('::error::Bandit found HIGH severity security issues!')
+            for r in results:
+                if r.get('issue_severity') == 'HIGH':
+                    print(f'  - {r[\"test_id\"]}: {r[\"issue_text\"]} ({r[\"filename\"]}:{r[\"line_number\"]})')
+            sys.exit(1)
+        print('✅ No high-severity issues found')
+        "
+
+    - name: Upload Bandit results
+      uses: actions/upload-artifact@v7
+      if: always()
+      with:
+        name: bandit-sast-report
+        path: bandit-results.json
+        retention-days: 30
+
+    # ── Dependency Vulnerability Scanning (pip-audit) ──
+    - name: Run pip-audit dependency scan
+      run: |
+        echo "🔍 Scanning Python dependencies for known vulnerabilities..."
+        pip-audit \
+          --requirement requirements.txt \
+          --format json \
+          --output pip-audit-results.json || true
+
+        # Parse and report
+        python3 -c "
+        import json, sys
+        with open('pip-audit-results.json') as f:
+            data = json.load(f)
+        deps = data if isinstance(data, list) else data.get('dependencies', [])
+        vulns = [d for d in deps if d.get('vulns')]
+        total_vulns = sum(len(d.get('vulns', [])) for d in vulns)
+        if total_vulns > 0:
+            print(f'⚠️  pip-audit: {total_vulns} vulnerabilities in {len(vulns)} packages')
+            for d in vulns:
+                for v in d.get('vulns', []):
+                    fix = v.get('fix_versions', ['unknown'])
+                    print(f'  - {d[\"name\"]} {d[\"version\"]}: {v[\"id\"]} (fix: {\", \".join(fix) if isinstance(fix, list) else fix})')
+        else:
+            print('✅ No known vulnerabilities in Python dependencies')
+        "
+
+    - name: Upload pip-audit results
+      uses: actions/upload-artifact@v7
+      if: always()
+      with:
+        name: pip-audit-report
+        path: pip-audit-results.json
+        retention-days: 30
+
+    # ── Semgrep (Multi-Language SAST: Python + JavaScript/Vue) ──
+    - name: Run Semgrep SAST analysis
+      run: |
+        pip install semgrep
+        semgrep scan \
+          --config p/python \
+          --config p/django \
+          --config p/javascript \
+          --config p/owasp-top-ten \
+          --error \
+          --exclude='*/migrations/*' \
+          --exclude='*/tests/*' \
+          project_root/ frontend/src/
+      # Fails pipeline on any findings (replaces archived semgrep/semgrep-action)
+
+    # ── Container Image Scanning (Trivy) ──
+    - name: Run Trivy filesystem scan
+      uses: aquasecurity/trivy-action@v0.35.0
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        severity: 'CRITICAL'
+        format: 'table'
+        exit-code: '1'  # Fail on CRITICAL vulnerabilities

@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Business Partners{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Business Partners</h1>
+        <a href="{% url 'business-partner-create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create Business Partner
+        </a>
+    </div>
+
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-body">
+            {% if partners %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Business Partner</th>
+                                <th>Type</th>
+                                <th>Partner Number</th>
+                                <th>City</th>
+                                <th>Country</th>
+                                <th>Email</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for partner in partners %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'business-partner-detail' partner.id %}">{{ partner.display_name }}</a>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ partner.get_partner_type_display }}</span>
+                                    </td>
+                                    <td>{{ partner.partner_number|default:"-" }}</td>
+                                    <td>{{ partner.city }}</td>
+                                    <td>{{ partner.country }}</td>
+                                    <td>{{ partner.email|default:"-" }}</td>
+                                    <td>
+                                        <a href="{% url 'business-partner-detail' partner.id %}" class="btn btn-sm btn-outline-primary" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'business-partner-update' partner.id %}" class="btn btn-sm btn-outline-warning" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'business-partner-delete' partner.id %}" class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <small class="text-muted">{{ partners|length }} business partner{{ partners|length|pluralize }} found</small>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No business partners found</h4>
+                    <p class="text-muted mb-4">Get started by creating your first business partner.</p>
+                    <a href="{% url 'business-partner-create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create Business Partner
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

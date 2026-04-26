@@ -1,0 +1,184 @@
+# Docker Compose override for monitoring stack (Prometheus + Grafana + Loki)
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.monitoring.yml up -d
+#
+# Endpoints:
+#   Prometheus:  http://127.0.0.1:9090  (nur lokal erreichbar)
+#   Grafana:     http://127.0.0.1:3000  (admin / erechnung, nur lokal)
+#   Loki:        http://127.0.0.1:3100  (log aggregation, nur lokal)
+#   Django metrics: http://localhost:8000/metrics  (internal)
+#
+# Sicherheitshinweis:
+#   Alle Monitoring-Ports sind an 127.0.0.1 gebunden und nur vom
+#   lokalen Host erreichbar. Exporter-Ports (9121, 9187) werden nicht
+#   auf den Host gemappt — Prometheus greift intern via Docker-Netzwerk zu.
+
+services:
+  # -----------------------------------------------------------------------
+  # Web — add service labels so Promtail discovers container logs
+  # -----------------------------------------------------------------------
+  web:
+    labels:
+      - "com.erechnung.service=django"
+      - "com.erechnung.environment=development"
+
+  # -----------------------------------------------------------------------
+  # Prometheus — Time-series metrics store & alerting engine
+  # -----------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v3.11.1
+    container_name: erechnung_prometheus
+    volumes:
+      - ./infra/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro,z
+      - ./infra/monitoring/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro,z
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--web.enable-lifecycle"
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks:
+      - erechnung-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "com.erechnung.service=prometheus"
+      - "com.erechnung.environment=monitoring"
+
+  # -----------------------------------------------------------------------
+  # Grafana — Dashboards & visualization
+  # -----------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:12.4.2
+    container_name: erechnung_grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infra/monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro,z
+      - ./infra/monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro,z
+      - ./infra/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro,z
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=erechnung
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/erechnung-overview.json
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - erechnung-network
+    restart: unless-stopped
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "com.erechnung.service=grafana"
+      - "com.erechnung.environment=monitoring"
+
+  # -----------------------------------------------------------------------
+  # Redis Exporter — Exposes Redis metrics for Prometheus
+  # -----------------------------------------------------------------------
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.82.0
+    container_name: erechnung_redis_exporter
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    # Kein Port-Mapping nötig — Prometheus scrapt intern via Docker-Netzwerk
+    networks:
+      - erechnung-network
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    labels:
+      - "com.erechnung.service=redis-exporter"
+      - "com.erechnung.environment=monitoring"
+
+  # -----------------------------------------------------------------------
+  # PostgreSQL Exporter — Exposes PostgreSQL metrics for Prometheus
+  # -----------------------------------------------------------------------
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.19.1
+    container_name: erechnung_postgres_exporter
+    environment:
+      - DATA_SOURCE_URI=db:5432/${POSTGRES_DB:-erechnung}?sslmode=disable
+      - DATA_SOURCE_USER=${POSTGRES_USER:-erechnung}
+      - DATA_SOURCE_PASS=${POSTGRES_PASSWORD:-erechnung}
+    # Kein Port-Mapping nötig — Prometheus scrapt intern via Docker-Netzwerk
+    networks:
+      - erechnung-network
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    labels:
+      - "com.erechnung.service=postgres-exporter"
+      - "com.erechnung.environment=monitoring"
+
+  # -----------------------------------------------------------------------
+  # Loki — Log aggregation backend (queried by Grafana)
+  # -----------------------------------------------------------------------
+  loki:
+    image: grafana/loki:3.7.1
+    container_name: erechnung_loki
+    volumes:
+      - ./infra/monitoring/loki/loki-config.yml:/etc/loki/local-config.yaml:ro,z
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "127.0.0.1:3100:3100"
+    networks:
+      - erechnung-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3100/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    labels:
+      - "com.erechnung.service=loki"
+      - "com.erechnung.environment=monitoring"
+
+  # -----------------------------------------------------------------------
+  # Promtail — Log shipper (scrapes Docker container logs → Loki)
+  # -----------------------------------------------------------------------
+  promtail:
+    image: grafana/promtail:3.7.1
+    container_name: erechnung_promtail
+    user: "0:0"                   # root — needed for Docker socket + log access
+    security_opt:
+      - label:disable             # bypass SELinux for Docker socket access
+    volumes:
+      - ./infra/monitoring/promtail/promtail-config.yml:/etc/promtail/config.yml:ro,z
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - erechnung-network
+    restart: unless-stopped
+    depends_on:
+      loki:
+        condition: service_healthy
+    labels:
+      - "com.erechnung.service=promtail"
+      - "com.erechnung.environment=monitoring"
+
+volumes:
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  loki_data:
+    driver: local

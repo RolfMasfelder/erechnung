@@ -1,0 +1,12 @@
+# Monitoring Namespace — separate from erechnung for security isolation
+# Promtail requires hostPath volumes (privileged PodSecurity)
+# which must not be allowed in the application namespace.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+  labels:
+    # Privileged: Promtail needs hostPath for /var/log/pods
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: baseline
+    pod-security.kubernetes.io/warn: baseline

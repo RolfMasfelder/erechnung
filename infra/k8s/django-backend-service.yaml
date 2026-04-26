@@ -1,0 +1,14 @@
+# Django Backend Service for eRechnung (Internal)
+apiVersion: v1
+kind: Service
+metadata:
+  name: django-backend-service
+  namespace: erechnung
+spec:
+  selector:
+    app: django-backend
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+  type: ClusterIP  # Internal only

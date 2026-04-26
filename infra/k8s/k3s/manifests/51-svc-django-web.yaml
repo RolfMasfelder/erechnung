@@ -1,0 +1,13 @@
+# Django Web Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: django-web-service
+  namespace: erechnung
+spec:
+  selector:
+    app: django-web
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: ClusterIP

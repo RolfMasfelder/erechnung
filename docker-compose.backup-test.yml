@@ -1,0 +1,35 @@
+# =============================================================================
+# docker-compose.backup-test.yml
+# =============================================================================
+# Override file for backup restore testing.
+# Adds a temporary PostgreSQL instance for restore verification
+# without touching the production/development database.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.backup-test.yml up -d db-restore-test
+#   ./scripts/backup_restore_test.sh
+#   docker compose -f docker-compose.yml -f docker-compose.backup-test.yml down db-restore-test
+# =============================================================================
+
+services:
+  db-restore-test:
+    image: postgres:17
+    tmpfs:
+      - /var/lib/postgresql/data  # RAM-disk: no persistent storage needed
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-erechnung_ci}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-ci_dummy_password}
+    networks:
+      - erechnung-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $POSTGRES_DB -U $POSTGRES_USER"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    # Resource limits to keep restore test lightweight
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    restart: "no"

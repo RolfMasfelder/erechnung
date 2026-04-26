@@ -1,0 +1,78 @@
+# Django Web Deployment für Test-Namespace
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-web
+  namespace: erechnung-update-test
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  minReadySeconds: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: django-web
+  template:
+    metadata:
+      labels:
+        app: django-web
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1234
+        runAsGroup: 1234
+        fsGroup: 1234
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: django-web
+        image: 192.168.178.80:5000/erechnung-web:KUSTOMIZE
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - configMapRef:
+            name: erechnung-config
+        - secretRef:
+            name: erechnung-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "100m"
+          limits:
+            memory: "1536Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health/
+            port: 8000
+            scheme: HTTP
+            httpHeaders:
+            - name: Host
+              value: erechnung.local
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health/
+            port: 8000
+            scheme: HTTP
+            httpHeaders:
+            - name: Host
+              value: erechnung.local
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3

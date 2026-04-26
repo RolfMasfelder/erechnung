@@ -1,0 +1,360 @@
+---
+# Network Policies for eRechnung Application
+# Part of Phase 1 Security Implementation
+# Requires Calico or another Network Policy provider
+#
+# Policy Overview:
+# 1. Default Deny All - Block all traffic by default
+# 2. Allow API Gateway -> Django Web (Port 8000)
+# 3. Allow Django/Celery -> PostgreSQL (Port 5432)
+# 4. Allow Django/Celery -> Redis (Port 6379)
+# 5. Allow All -> DNS (Port 53)
+# 6. Allow Ingress Controller -> API Gateway (Port 80)
+
+---
+# 1. Default Deny All Traffic
+# This policy denies all ingress and egress traffic by default
+# All other policies will explicitly allow specific traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: erechnung
+spec:
+  podSelector: {}  # Applies to all pods in namespace
+  policyTypes:
+  - Ingress
+  - Egress
+
+---
+# 2. Allow API Gateway -> Django Web (Port 8000)
+# API Gateway needs to forward requests to Django backend
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-gateway-to-django
+  namespace: erechnung
+spec:
+  podSelector:
+    matchLabels:
+      app: django-web
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: api-gateway
+    ports:
+    - protocol: TCP
+      port: 8000
+
+---
+# 3. Allow Django/Celery -> PostgreSQL (Port 5432)
+# Both Django web and Celery workers need database access
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-django-celery-to-postgres
+  namespace: erechnung
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: django-web
+    - podSelector:
+        matchLabels:
+          app: celery-worker
+    ports:
+    - protocol: TCP
+      port: 5432
+
+---
+# 4. Allow Django/Celery -> Redis (Port 6379)
+# Django session storage and Celery broker use Redis
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-django-celery-to-redis
+  namespace: erechnung
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: django-web
+    - podSelector:
+        matchLabels:
+          app: celery-worker
+    ports:
+    - protocol: TCP
+      port: 6379
+
+---
+# 5. Allow All Pods -> DNS (Port 53)
+# All pods need DNS resolution for service discovery
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-access
+  namespace: erechnung
+spec:
+  podSelector: {}  # Applies to all pods
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+
+---
+# 6. Allow Ingress Controller -> API Gateway (Port 80)
+# nginx-ingress needs to reach API Gateway service
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-api-gateway
+  namespace: erechnung
+spec:
+  podSelector:
+    matchLabels:
+      app: api-gateway
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 8080
+
+---
+# 7. Allow Django Web Egress (DB, Redis, DNS, External HTTPS)
+# Django needs to connect to PostgreSQL, Redis, DNS, and external APIs
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-django-egress-https
+  namespace: erechnung
+spec:
+  podSelector:
+    matchLabels:
+      app: django-web
+  policyTypes:
+  - Egress
+  egress:
+  # Allow DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # Allow PostgreSQL
+  - to:
+    - podSelector:
+        matchLabels:
+          app: postgres
+    ports:
+    - protocol: TCP
+      port: 5432
+  # Allow Redis
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+  # Allow External HTTPS
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443
+
+---
+# 8. Allow Celery Worker Egress (DB, Redis, DNS)
+# Celery needs to connect to Redis (broker) and PostgreSQL
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-celery-egress
+  namespace: erechnung
+spec:
+  podSelector:
+    matchLabels:
+      app: celery-worker
+  policyTypes:
+  - Egress
+  egress:
+  # Allow DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # Allow PostgreSQL
+  - to:
+    - podSelector:
+        matchLabels:
+          app: postgres
+    ports:
+    - protocol: TCP
+      port: 5432
+  # Allow Redis
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+
+---
+# 9. Allow API Gateway Egress (Django, DNS)
+# API Gateway needs to forward requests to Django backend
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-gateway-egress
+  namespace: erechnung
+spec:
+  podSelector:
+    matchLabels:
+      app: api-gateway
+  policyTypes:
+  - Egress
+  egress:
+  # Allow DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # Allow Django Web
+  - to:
+    - podSelector:
+        matchLabels:
+          app: django-web
+    ports:
+    - protocol: TCP
+      port: 8000
+
+---
+# 10. Allow Frontend -> API Gateway
+# Frontend pods need to reach API Gateway (for SSR)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-api-gateway
+  namespace: erechnung
+spec:
+  podSelector:
+    matchLabels:
+      app: api-gateway
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: frontend
+    ports:
+    - protocol: TCP
+      port: 80
+
+---
+# 11. Allow Frontend Egress (DNS, API Gateway)
+# Frontend needs DNS and API Gateway access
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-egress
+  namespace: erechnung
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+  policyTypes:
+  - Egress
+  egress:
+  # Allow DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # Allow API Gateway
+  - to:
+    - podSelector:
+        matchLabels:
+          app: api-gateway
+    ports:
+    - protocol: TCP
+      port: 80
+
+---
+# 12. Allow Ingress Controller -> Frontend (Port 80)
+# nginx-ingress needs to reach Frontend service for static content
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-frontend
+  namespace: erechnung
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 80

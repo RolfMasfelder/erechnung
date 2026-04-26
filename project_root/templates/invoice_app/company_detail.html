@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ company.name }} - Company Details{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ company.name }}</h1>
+        <div>
+            <a href="{% url 'company-list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+            <a href="{% url 'company-update' company.id %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{% url 'company-delete' company.id %}" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Delete
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Company Information -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-building"></i> Company Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Company Name:</dt>
+                        <dd class="col-sm-8">{{ company.name }}</dd>
+
+                        {% if company.legal_name %}
+                        <dt class="col-sm-4">Legal Name:</dt>
+                        <dd class="col-sm-8">{{ company.legal_name }}</dd>
+                        {% endif %}
+
+                        {% if company.tax_id %}
+                        <dt class="col-sm-4">Tax ID:</dt>
+                        <dd class="col-sm-8">{{ company.tax_id }}</dd>
+                        {% endif %}
+
+                        {% if company.vat_id %}
+                        <dt class="col-sm-4">VAT ID:</dt>
+                        <dd class="col-sm-8">{{ company.vat_id }}</dd>
+                        {% endif %}
+
+                        {% if company.commercial_register %}
+                        <dt class="col-sm-4">Commercial Register:</dt>
+                        <dd class="col-sm-8">{{ company.commercial_register }}</dd>
+                        {% endif %}
+
+                        <dt class="col-sm-4">Created:</dt>
+                        <dd class="col-sm-8">{{ company.created_at|date:"M j, Y H:i" }}</dd>
+
+                        <dt class="col-sm-4">Last Updated:</dt>
+                        <dd class="col-sm-8">{{ company.updated_at|date:"M j, Y H:i" }}</dd>
+
+                        <dt class="col-sm-4">Status:</dt>
+                        <dd class="col-sm-8">
+                            {% if company.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Address Information -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-map-marker-alt"></i> Address</h5>
+                </div>
+                <div class="card-body">
+                    <address>
+                        {{ company.address_line1 }}<br>
+                        {% if company.address_line2 %}{{ company.address_line2 }}<br>{% endif %}
+                        {{ company.postal_code }} {{ company.city }}<br>
+                        {% if company.state_province %}{{ company.state_province }}<br>{% endif %}
+                        {{ company.country }}
+                    </address>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Contact Information -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-address-book"></i> Contact Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Email:</dt>
+                        <dd class="col-sm-8">
+                            {% if company.email %}
+                                <a href="mailto:{{ company.email }}">{{ company.email }}</a>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </dd>
+
+                        {% if company.phone %}
+                        <dt class="col-sm-4">Phone:</dt>
+                        <dd class="col-sm-8">{{ company.phone }}</dd>
+                        {% endif %}
+
+                        {% if company.fax %}
+                        <dt class="col-sm-4">Fax:</dt>
+                        <dd class="col-sm-8">{{ company.fax }}</dd>
+                        {% endif %}
+
+                        {% if company.website %}
+                        <dt class="col-sm-4">Website:</dt>
+                        <dd class="col-sm-8">
+                            <a href="{{ company.website }}" target="_blank">{{ company.website }}</a>
+                        </dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Business Settings -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-cog"></i> Business Settings</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-6">Default Currency:</dt>
+                        <dd class="col-sm-6">{{ company.default_currency }}</dd>
+
+                        <dt class="col-sm-6">Payment Terms:</dt>
+                        <dd class="col-sm-6">{{ company.default_payment_terms }} days</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if company.bank_name or company.iban or company.bic %}
+    <div class="row">
+        <!-- Banking Information -->
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-university"></i> Banking Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        {% if company.bank_name %}
+                        <dt class="col-sm-2">Bank Name:</dt>
+                        <dd class="col-sm-4">{{ company.bank_name }}</dd>
+                        {% endif %}
+
+                        {% if company.iban %}
+                        <dt class="col-sm-2">IBAN:</dt>
+                        <dd class="col-sm-4">{{ company.iban }}</dd>
+                        {% endif %}
+
+                        {% if company.bic %}
+                        <dt class="col-sm-2">BIC/SWIFT:</dt>
+                        <dd class="col-sm-4">{{ company.bic }}</dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Related Invoices -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5><i class="fas fa-file-invoice"></i> Related Invoices</h5>
+            <a href="{% url 'invoice-create' %}" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus"></i> Create Invoice
+            </a>
+        </div>
+        <div class="card-body">
+            {% if company.invoices.all %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Invoice Number</th>
+                                <th>Customer</th>
+                                <th>Issue Date</th>
+                                <th>Total Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for invoice in company.invoices.all|slice:":10" %}
+                                <tr>
+                                    <td><a href="{% url 'invoice-detail' invoice.id %}">{{ invoice.invoice_number }}</a></td>
+                                    <td>{{ invoice.business_partner.display_name }}</td>
+                                    <td>{{ invoice.issue_date|date:"M j, Y" }}</td>
+                                    <td>{{ invoice.total_amount }} {{ invoice.currency }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ invoice.status|lower }}">{{ invoice.get_status_display }}</span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'invoice-detail' invoice.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if company.invoices.count > 10 %}
+                    <p class="text-muted mt-2">Showing 10 of {{ company.invoices.count }} invoices. <a href="{% url 'invoice-list' %}?company={{ company.id }}">View all invoices for this company</a></p>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-3">
+                    <i class="fas fa-file-invoice fa-2x text-muted mb-2"></i>
+                    <p class="text-muted">No invoices found for this company.</p>
+                    <a href="{% url 'invoice-create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create First Invoice
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

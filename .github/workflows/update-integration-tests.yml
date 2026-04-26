@@ -1,0 +1,75 @@
+name: Update Integration Tests
+
+# Trigger on release tags and manual dispatch
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      old_version:
+        description: 'Old version to update from (e.g. v1.0.0)'
+        required: false
+        default: ''
+        type: string
+      new_version:
+        description: 'New version to update to (e.g. v1.1.0)'
+        required: false
+        default: ''
+        type: string
+
+env:
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  update-tests:
+    name: Update Integration Tests (Docker)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+
+    - name: Setup CI environment
+      run: |
+        cp .env.ci .env
+        echo "UID=1234" >> .env
+        echo "GID=1234" >> .env
+        mkdir -p project_root/media/invoices project_root/media/xml logs
+        chmod -R 777 project_root/media logs
+        mkdir -p test-artifacts/update-tests/logs
+
+    - name: Build Docker images
+      run: |
+        docker compose -f docker-compose.update-test.yml build
+
+    - name: Run update integration tests (Docker-only)
+      run: |
+        ./scripts/run-update-tests.sh --all --docker-only
+      env:
+        CI: true
+
+    - name: Upload test reports
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: update-test-reports
+        path: |
+          test-artifacts/update-tests/
+        retention-days: 30
+
+    - name: Upload test logs
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: update-test-logs
+        path: |
+          test-artifacts/update-tests/logs/
+        retention-days: 14
+
+    - name: Cleanup
+      if: always()
+      run: |
+        docker compose -f docker-compose.update-test.yml down -v --remove-orphans || true

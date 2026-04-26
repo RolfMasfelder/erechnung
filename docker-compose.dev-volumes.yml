@@ -1,0 +1,27 @@
+# Docker Compose override für Entwicklung mit Volume-Mounts
+# Verwendung: docker-compose -f docker-compose.yml -f docker-compose.dev-volumes.yml up -d
+
+services:
+  web:
+    volumes:
+      # Mount the entire project for development hot-reload
+      - ./project_root:/app/project_root
+      # Mount scripts directory
+      - ./scripts:/app/scripts
+      # Mount requirements for dependency changes
+      - ./requirements.txt:/app/requirements.txt
+      # Mount pyproject.toml for dependency and tool config
+      - ./pyproject.toml:/app/pyproject.toml
+
+  init:
+    volumes:
+      # Mount the entire project for development
+      - ./project_root:/app/project_root
+      - ./scripts:/app/scripts
+
+  celery:
+    volumes:
+      # Mount the entire project for development hot-reload
+      - ./project_root:/app/project_root
+      # Mount scripts directory
+      - ./scripts:/app/scripts

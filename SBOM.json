@@ -1,0 +1,833 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:8a7c8a8b-5c2d-4e3f-9a1b-2c3d4e5f6789",
+  "version": 3,
+  "metadata": {
+    "timestamp": "2026-03-25T11:22:04Z",
+    "tools": [
+      {
+        "vendor": "GitHub Copilot",
+        "name": "Automated SBOM Update (update_sbom.py)",
+        "version": "2.0.0"
+      }
+    ],
+    "component": {
+      "type": "application",
+      "bom-ref": "erechnung-django-app",
+      "name": "eRechnung Django App",
+      "version": "1.1.0",
+      "description": "German e-invoicing system implementing ZUGFeRD/Factur-X standards with PDF/A-3 + embedded XML, Vue.js 3 frontend, and E2E testing",
+      "supplier": {
+        "name": "RolfMasfelder",
+        "url": [
+          "https://github.com/RolfMasfelder/eRechnung_Django_App"
+        ]
+      },
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "project:type",
+          "value": "full-stack-application"
+        },
+        {
+          "name": "project:backend:language",
+          "value": "python"
+        },
+        {
+          "name": "project:backend:framework",
+          "value": "django"
+        },
+        {
+          "name": "project:frontend:language",
+          "value": "javascript"
+        },
+        {
+          "name": "project:frontend:framework",
+          "value": "vue.js"
+        },
+        {
+          "name": "project:deployment",
+          "value": "docker"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "framework",
+      "bom-ref": "django-5.2.12",
+      "name": "Django",
+      "version": "5.2.12",
+      "description": "High-level Python web framework",
+      "supplier": {
+        "name": "Django Software Foundation"
+      },
+      "purl": "pkg:pypi/django@5.2.12",
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "framework",
+      "bom-ref": "djangorestframework-3.16.1",
+      "name": "Django REST Framework",
+      "version": "3.16.1",
+      "description": "Web APIs for Django",
+      "purl": "pkg:pypi/djangorestframework@3.16.1",
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-2-Clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "psycopg2-binary-2.9.11",
+      "name": "psycopg2-binary",
+      "version": "2.9.11",
+      "description": "PostgreSQL database adapter for Python",
+      "purl": "pkg:pypi/psycopg2-binary@2.9.11",
+      "licenses": [
+        {
+          "license": {
+            "name": "LGPL-3.0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "celery-5.6.2",
+      "name": "Celery",
+      "version": "5.6.2",
+      "description": "Distributed Task Queue",
+      "purl": "pkg:pypi/celery@5.6.2",
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "redis-7.3.0",
+      "name": "Redis",
+      "version": "7.3.0",
+      "description": "Python client for Redis key-value store",
+      "purl": "pkg:pypi/redis@7.3.0",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "factur-x-3.16",
+      "name": "factur-x",
+      "version": "3.16",
+      "description": "ZUGFeRD/Factur-X e-invoice generation library",
+      "purl": "pkg:pypi/factur-x@3.16",
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-2-Clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "pypdf",
+      "version": "6.9.0",
+      "description": "Pure Python PDF library (successor to PyPDF2/PyPDF4); used for PDF/A-3 ZUGFeRD generation",
+      "bom-ref": "pypdf-6.9.0",
+      "purl": "pkg:pypi/pypdf@6.9.0",
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "WeasyPrint",
+      "version": "68.1",
+      "description": "HTML/CSS to PDF converter (used in PDF generation pipeline)",
+      "bom-ref": "weasyprint-68.1",
+      "purl": "pkg:pypi/weasyprint@68.1",
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "drf-spectacular",
+      "version": "0.29.0",
+      "description": "OpenAPI 3 schema generator for DRF (replaces drf-yasg)",
+      "bom-ref": "drf-spectacular-0.29.0",
+      "purl": "pkg:pypi/drf-spectacular@0.29.0",
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "lxml-6.0.2",
+      "name": "lxml",
+      "version": "6.0.2",
+      "description": "XML and HTML processing library",
+      "purl": "pkg:pypi/lxml@6.0.2",
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "xmlschema-4.3.1",
+      "name": "xmlschema",
+      "version": "4.3.1",
+      "description": "XML Schema validation library",
+      "purl": "pkg:pypi/xmlschema@4.3.1",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pikepdf-10.5.0",
+      "name": "pikepdf",
+      "version": "10.5.0",
+      "description": "PDF manipulation library",
+      "purl": "pkg:pypi/pikepdf@10.5.0",
+      "licenses": [
+        {
+          "license": {
+            "name": "MPL-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pillow-12.1.1",
+      "name": "Pillow",
+      "version": "12.1.1",
+      "description": "Python Imaging Library",
+      "purl": "pkg:pypi/pillow@12.1.1",
+      "licenses": [
+        {
+          "license": {
+            "name": "HPND"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "gunicorn-25.1.0",
+      "name": "Gunicorn",
+      "version": "25.1.0",
+      "description": "WSGI HTTP Server",
+      "purl": "pkg:pypi/gunicorn@25.1.0",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "whitenoise-6.12.0",
+      "name": "WhiteNoise",
+      "version": "6.12.0",
+      "description": "Static file serving for Django",
+      "purl": "pkg:pypi/whitenoise@6.12.0",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "sentry-sdk-2.54.0",
+      "name": "Sentry SDK",
+      "version": "2.54.0",
+      "description": "Error tracking and performance monitoring",
+      "purl": "pkg:pypi/sentry-sdk@2.54.0",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "django-allauth-65.15.0",
+      "name": "django-allauth",
+      "version": "65.15.0",
+      "description": "Django authentication system",
+      "purl": "pkg:pypi/django-allauth@65.15.0",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "django-axes-8.3.1",
+      "name": "django-axes",
+      "version": "8.3.1",
+      "description": "Brute force protection for Django",
+      "purl": "pkg:pypi/django-axes@8.3.1",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "django-cors-headers-4.9.0",
+      "name": "django-cors-headers",
+      "version": "4.9.0",
+      "description": "CORS handling for Django",
+      "purl": "pkg:pypi/django-cors-headers@4.9.0",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "django-csp-4.0",
+      "name": "django-csp",
+      "version": "4.0",
+      "description": "Content Security Policy for Django",
+      "purl": "pkg:pypi/django-csp@4.0",
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "django-redis-6.0.0",
+      "name": "django-redis",
+      "version": "6.0.0",
+      "description": "Redis cache backend for Django",
+      "purl": "pkg:pypi/django-redis@6.0.0",
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "djangorestframework-simplejwt-5.5.1",
+      "name": "djangorestframework-simplejwt",
+      "version": "5.5.1",
+      "description": "JWT authentication for Django REST Framework",
+      "purl": "pkg:pypi/djangorestframework-simplejwt@5.5.1",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "operating-system",
+      "bom-ref": "python-3.13-slim-bookworm",
+      "name": "Python Base Image",
+      "version": "3.13-slim-bookworm",
+      "description": "Python 3.13 on Debian Bookworm (slim)",
+      "supplier": {
+        "name": "Python Software Foundation"
+      },
+      "properties": [
+        {
+          "name": "docker:image",
+          "value": "python:3.13-slim-bookworm"
+        }
+      ]
+    },
+    {
+      "type": "operating-system",
+      "bom-ref": "nginx-alpine",
+      "name": "Nginx Alpine",
+      "version": "alpine",
+      "description": "Nginx on Alpine Linux",
+      "supplier": {
+        "name": "Nginx Inc"
+      },
+      "properties": [
+        {
+          "name": "docker:image",
+          "value": "nginx:alpine"
+        }
+      ]
+    },
+    {
+      "type": "platform",
+      "bom-ref": "postgresql-17",
+      "name": "PostgreSQL",
+      "version": "17",
+      "description": "PostgreSQL database system",
+      "supplier": {
+        "name": "PostgreSQL Global Development Group"
+      },
+      "properties": [
+        {
+          "name": "docker:image",
+          "value": "postgres:17"
+        }
+      ]
+    },
+    {
+      "type": "platform",
+      "bom-ref": "redis-7-alpine",
+      "name": "Redis",
+      "version": "7-alpine",
+      "description": "Redis in-memory data structure store",
+      "supplier": {
+        "name": "Redis Ltd"
+      },
+      "properties": [
+        {
+          "name": "docker:image",
+          "value": "redis:7-alpine"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "ghostscript",
+      "name": "Ghostscript",
+      "version": "latest",
+      "description": "PostScript and PDF interpreter",
+      "supplier": {
+        "name": "Artifex Software"
+      },
+      "properties": [
+        {
+          "name": "system:package",
+          "value": "ghostscript"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "erechnung-django-app",
+      "dependsOn": [
+        "django-5.2.12",
+        "djangorestframework-3.16.1",
+        "psycopg2-binary-2.9.11",
+        "celery-5.6.2",
+        "factur-x-3.16",
+        "lxml-6.0.2",
+        "xmlschema-4.3.1",
+        "pikepdf-10.5.0",
+        "pillow-12.1.1",
+        "gunicorn-25.1.0",
+        "whitenoise-6.12.0",
+        "sentry-sdk-2.54.0",
+        "django-allauth-65.15.0",
+        "django-axes-8.3.1",
+        "django-cors-headers-4.9.0",
+        "django-csp-4.0",
+        "django-redis-6.0.0",
+        "djangorestframework-simplejwt-5.5.1",
+        "python-3.13-slim-bookworm",
+        "nginx-alpine",
+        "postgresql-17",
+        "redis-7-alpine",
+        "ghostscript",
+        "pypdf-6.9.0",
+        "weasyprint-68.1",
+        "drf-spectacular-0.29.0"
+      ]
+    }
+  ],
+  "services": [
+    {
+      "bom-ref": "erechnung-web-service",
+      "provider": {
+        "name": "Internal"
+      },
+      "name": "Django Web Application",
+      "version": "1.0.0",
+      "description": "Main Django web application service",
+      "endpoints": [
+        "http://localhost:8000"
+      ],
+      "properties": [
+        {
+          "name": "docker:service",
+          "value": "web"
+        },
+        {
+          "name": "docker:port",
+          "value": "8000"
+        }
+      ]
+    },
+    {
+      "bom-ref": "erechnung-api-gateway",
+      "provider": {
+        "name": "Internal"
+      },
+      "name": "API Gateway",
+      "version": "1.0.0",
+      "description": "Nginx-based API Gateway with rate limiting",
+      "endpoints": [
+        "http://localhost:8080"
+      ],
+      "properties": [
+        {
+          "name": "docker:service",
+          "value": "api-gateway"
+        },
+        {
+          "name": "docker:port",
+          "value": "8080"
+        }
+      ]
+    },
+    {
+      "bom-ref": "erechnung-database",
+      "provider": {
+        "name": "Internal"
+      },
+      "name": "PostgreSQL Database",
+      "version": "17",
+      "description": "Primary application database",
+      "endpoints": [
+        "postgresql://localhost:5432"
+      ],
+      "properties": [
+        {
+          "name": "docker:service",
+          "value": "db"
+        },
+        {
+          "name": "docker:port",
+          "value": "5432"
+        }
+      ]
+    },
+    {
+      "bom-ref": "erechnung-cache",
+      "provider": {
+        "name": "Internal"
+      },
+      "name": "Redis Cache",
+      "version": "7",
+      "description": "Session cache and Celery broker",
+      "endpoints": [
+        "redis://localhost:6379"
+      ],
+      "properties": [
+        {
+          "name": "docker:service",
+          "value": "redis"
+        },
+        {
+          "name": "docker:port",
+          "value": "6379"
+        }
+      ]
+    },
+    {
+      "bom-ref": "erechnung-worker",
+      "provider": {
+        "name": "Internal"
+      },
+      "name": "Celery Worker",
+      "version": "5.6.2",
+      "description": "Background task processing",
+      "properties": [
+        {
+          "name": "docker:service",
+          "value": "celery"
+        }
+      ]
+    },
+    {
+      "bom-ref": "erechnung-frontend",
+      "provider": {
+        "name": "Internal"
+      },
+      "name": "Vue.js Frontend",
+      "version": "0.1.0",
+      "description": "Modern SPA frontend with Vite build system",
+      "properties": [
+        {
+          "name": "docker:service",
+          "value": "frontend"
+        },
+        {
+          "name": "framework",
+          "value": "vue.js-3"
+        },
+        {
+          "name": "build-tool",
+          "value": "vite"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "vue@3.5.27",
+      "group": "frontend",
+      "name": "vue",
+      "version": "3.5.27",
+      "purl": "pkg:npm/vue@3.5.27",
+      "description": "Progressive JavaScript Framework",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "vue-router@5.0.2",
+      "group": "frontend",
+      "name": "vue-router",
+      "version": "5.0.2",
+      "purl": "pkg:npm/vue-router@5.0.2",
+      "description": "Official router for Vue.js",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pinia@3.0.4",
+      "group": "frontend",
+      "name": "pinia",
+      "version": "3.0.4",
+      "purl": "pkg:npm/pinia@3.0.4",
+      "description": "State management for Vue.js",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "axios@1.13.6",
+      "group": "frontend",
+      "name": "axios",
+      "version": "1.13.6",
+      "purl": "pkg:npm/axios@1.13.6",
+      "description": "Promise based HTTP client",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "vite@7.3.1",
+      "group": "frontend-dev",
+      "name": "vite",
+      "version": "7.3.1",
+      "purl": "pkg:npm/vite@7.3.1",
+      "description": "Next generation frontend build tool",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "tailwindcss@4.1.18",
+      "group": "frontend-dev",
+      "name": "tailwindcss",
+      "version": "4.1.18",
+      "purl": "pkg:npm/tailwindcss@4.1.18",
+      "description": "Utility-first CSS framework",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "vitest@4.0.18",
+      "group": "frontend-dev",
+      "name": "vitest",
+      "version": "4.0.18",
+      "purl": "pkg:npm/vitest@4.0.18",
+      "description": "Unit testing framework for Vite",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "@playwright/test@1.58.1",
+      "group": "frontend-dev",
+      "name": "@playwright/test",
+      "version": "1.58.1",
+      "purl": "pkg:npm/%40playwright/test@1.58.1",
+      "description": "End-to-end testing framework",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "vue-test-utils@2.4.6",
+      "group": "frontend-dev",
+      "name": "@vue/test-utils",
+      "version": "2.4.6",
+      "purl": "pkg:npm/%40vue/test-utils@2.4.6",
+      "description": "Official unit testing utility library for Vue.js",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    }
+  ],
+  "vulnerabilities": [],
+  "annotations": [
+    {
+      "bom-ref": "erechnung-django-app",
+      "subjects": [
+        "erechnung-django-app"
+      ],
+      "annotationType": "review",
+      "annotator": "GitHub Copilot",
+      "timestamp": "2025-11-12T00:00:00Z",
+      "text": "SBOM generated for German e-invoicing system implementing ZUGFeRD/Factur-X standards. Full-stack system with Django backend, Vue.js 3 frontend, PostgreSQL database, Redis cache, Nginx API Gateway, and comprehensive E2E testing with Playwright."
+    }
+  ],
+  "properties": [
+    {
+      "name": "sbom:generation-method",
+      "value": "automated"
+    },
+    {
+      "name": "sbom:generation-date",
+      "value": "2026-03-25"
+    },
+    {
+      "name": "project:repository",
+      "value": "https://github.com/RolfMasfelder/eRechnung_Django_App"
+    },
+    {
+      "name": "project:standards",
+      "value": "ZUGFeRD, Factur-X, PDF/A-3"
+    },
+    {
+      "name": "project:architecture",
+      "value": "microservices, docker-compose, spa-frontend"
+    },
+    {
+      "name": "project:testing",
+      "value": "pytest, vitest, playwright"
+    },
+    {
+      "name": "security:rbac",
+      "value": "implemented"
+    },
+    {
+      "name": "security:api-gateway",
+      "value": "nginx with rate limiting"
+    },
+    {
+      "name": "compliance:german-e-invoicing",
+      "value": "zugferd-compliant"
+    }
+  ]
+}

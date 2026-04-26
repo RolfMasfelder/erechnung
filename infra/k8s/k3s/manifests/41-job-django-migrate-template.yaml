@@ -1,0 +1,79 @@
+# Django Migration Job Template
+# Used by update-k3s.sh to run database migrations BEFORE rolling out new pods.
+# The init job (40-job-django-init.yaml) also runs collectstatic + bootstrap;
+# this job is migration-only for update workflows.
+#
+# Usage (from update-k3s.sh):
+#   kubectl delete job django-migrate -n erechnung --ignore-not-found
+#   kubectl apply -f this-file.yaml
+#   kubectl wait --for=condition=complete job/django-migrate -n erechnung --timeout=300s
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: django-migrate
+  namespace: erechnung
+  labels:
+    app: django-web
+    component: migration
+spec:
+  backoffLimit: 3
+  activeDeadlineSeconds: 300
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app: django-web
+        component: migration
+    spec:
+      restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1234
+        runAsGroup: 1234
+        fsGroup: 1234
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+      - name: wait-for-db
+        image: 192.168.178.80:5000/busybox:1.35
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        command: ['sh', '-c', 'until nc -z postgres-service 5432; do echo "waiting for db..."; sleep 2; done;']
+      containers:
+      - name: django-migrate
+        image: 192.168.178.80:5000/erechnung-web:KUSTOMIZE
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+        command: ["python", "project_root/manage.py", "migrate", "--noinput"]
+        envFrom:
+        - configMapRef:
+            name: erechnung-config
+        - secretRef:
+            name: erechnung-secrets
+        volumeMounts:
+        - name: postgres-ca
+          mountPath: /etc/ssl/postgres
+          readOnly: true
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      volumes:
+      - name: postgres-ca
+        secret:
+          secretName: postgres-tls-certs
+          items:
+          - key: ca.crt
+            path: ca.crt

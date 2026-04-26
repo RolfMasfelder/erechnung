@@ -1,0 +1,13 @@
+# PodDisruptionBudget for Django Web
+# Ensures at least 1 pod remains available during voluntary disruptions
+# (node drain, rolling updates, cluster maintenance)
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: django-web-pdb
+  namespace: erechnung
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: django-web
