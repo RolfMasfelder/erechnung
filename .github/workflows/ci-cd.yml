@@ -63,6 +63,7 @@ jobs:
       run: npx vitest run --reporter=verbose
 
   test:
+    name: Test (backend + integration)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: lint
