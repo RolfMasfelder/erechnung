@@ -228,7 +228,38 @@ export const invoiceService = {
   async cancel(id, reason = '') {
     const response = await apiClient.post(`/invoices/${id}/cancel/`, { reason })
     return mapInvoiceFromApi(response.data)
-  }
+  },
+
+  // ── Concurrent Edit Lock ────────────────────────────────────────────────
+
+  /**
+   * Bearbeitungs-Lock anfordern.
+   * @param {number} id
+   * @returns {Promise<{message: string, editing_since: string}>}
+   * @throws {AxiosError} HTTP 423 wenn Lock von anderem User gehalten
+   */
+  async acquireEditLock(id) {
+    const response = await apiClient.post(`/invoices/${id}/acquire_edit_lock/`)
+    return response.data
+  },
+
+  /**
+   * Bearbeitungs-Lock freigeben.
+   * @param {number} id
+   * @returns {Promise<void>}
+   */
+  async releaseEditLock(id) {
+    await apiClient.post(`/invoices/${id}/release_edit_lock/`)
+  },
+
+  /**
+   * Heartbeat: Bearbeitungs-Lock verlängern (alle 60 s aufrufen).
+   * @param {number} id
+   * @returns {Promise<void>}
+   */
+  async refreshEditLock(id) {
+    await apiClient.post(`/invoices/${id}/refresh_edit_lock/`)
+  },
 }
 
 /**

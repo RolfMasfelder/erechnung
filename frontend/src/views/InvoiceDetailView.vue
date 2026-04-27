@@ -68,6 +68,17 @@
     </div>
 
     <div v-else-if="invoice" class="invoice-content">
+      <!-- Edit-Lock: Banner when locked by someone else -->
+      <div
+        v-if="invoice.editing_by_display"
+        class="edit-lock-banner"
+      >
+        ✏️ Wird gerade bearbeitet von
+        <strong>{{ invoice.editing_by_display }}</strong>
+        <span v-if="invoice.editing_since">
+          (seit {{ formatTime(invoice.editing_since) }})
+        </span>.
+      </div>
       <BaseCard title="Rechnungsdetails">
         <div class="details-grid">
           <div class="detail-item">
@@ -561,9 +572,25 @@ watch(() => route.params.id, (newId, oldId) => {
     loadInvoice()
   }
 })
+
+function formatTime(iso) {
+  if (!iso) return ''
+  return new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+}
 </script>
 
 <style scoped>
+/* Edit-Lock Banner */
+.edit-lock-banner {
+  padding: 0.75rem 1rem;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 0.375rem;
+  color: #92400e;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
 .page-header {
   display: flex;
   justify-content: space-between;
