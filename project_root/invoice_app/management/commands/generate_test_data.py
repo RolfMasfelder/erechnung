@@ -36,6 +36,7 @@ from invoice_app.tests.factories import (
     CountryFactory,
     EUPartnerFactory,
     FranceCountryFactory,
+    GovernmentPartnerFactory,
     IndividualPartnerFactory,
     InvoiceFactory,
     InvoiceLineFactory,
@@ -167,6 +168,9 @@ class Command(BaseCommand):
             partners.append(ThirdCountryPartnerFactory(country=switzerland))
         # Add one supplier
         partners.append(SupplierFactory(country=germany))
+        # Add GOVERNMENT partner for B2G / XRechnung tests
+        gov_partner = GovernmentPartnerFactory(country=germany)
+        partners.append(gov_partner)
         self._log(self.style.SUCCESS(f"  Partners: {len(partners)}"))
 
         # 5. Products (mix of types)
@@ -215,6 +219,26 @@ class Command(BaseCommand):
             invoices_created += 1
 
         self._log(self.style.SUCCESS(f"  Invoices: {invoices_created}"))
+
+        # 6b. B2G / XRechnung invoice (SENT so it appears in list with XR badge)
+        xr_invoice = InvoiceFactory(
+            company=company,
+            business_partner=gov_partner,
+            status="SENT",
+            created_by=testuser,
+        )
+        for _ in range(preset["lines_per_invoice"]):
+            product = random.choice(products)
+            InvoiceLineFactory(
+                invoice=xr_invoice,
+                description=product.name,
+                product_code=product.product_code,
+                quantity=Decimal("1"),
+                unit_price=product.base_price,
+                tax_rate=product.default_tax_rate,
+            )
+        invoices_created += 1
+        self._log(self.style.SUCCESS("  B2G (XRechnung) invoice: 1"))
 
         # 7. Edge-case specific data
         if preset.get("special_characters"):

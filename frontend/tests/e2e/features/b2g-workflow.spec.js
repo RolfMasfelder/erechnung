@@ -47,41 +47,7 @@ async function createGovernmentPartner(page, name) {
   await page.waitForLoadState('networkidle')
 }
 
-/**
- * Create an invoice for a given partner via the UI.
- * @param {import('@playwright/test').Page} page
- * @param {string} partnerName
- * @returns {Promise<void>}
- */
-async function createInvoiceForPartner(page, partnerName) {
-  await page.goto('/invoices')
-  await page.waitForLoadState('networkidle')
 
-  await page.getByRole('button', { name: /Neue Rechnung/i }).click()
-  await expect(page.getByText('Neue Rechnung erstellen')).toBeVisible()
-
-  // Select the GOVERNMENT partner as customer
-  await page.getByLabel('Kunde').selectOption({ label: partnerName })
-
-  // Fill dates
-  const today = new Date()
-  const issueDate = today.toISOString().split('T')[0]
-  const dueDate = new Date(today.getTime() + 30 * 86400000).toISOString().split('T')[0]
-
-  await page.locator('#issue_date input').fill(issueDate)
-  await page.locator('#due_date input').fill(dueDate)
-
-  // Fill first line item — select first product
-  const productSelect = page.locator('#product_0')
-  await productSelect.selectOption({ index: 1 }) // first real product (skip placeholder)
-
-  await page.locator('#quantity_0').fill('1')
-
-  // Submit
-  await page.getByRole('button', { name: 'Rechnung erstellen' }).click()
-  await expect(page.getByText('Neue Rechnung erstellen')).not.toBeVisible({ timeout: 10000 })
-  await page.waitForLoadState('networkidle')
-}
 
 test.describe('B2G-Workflow (XRechnung)', () => {
   test.beforeEach(async ({ page }) => {
@@ -167,16 +133,10 @@ test.describe('B2G-Workflow (XRechnung)', () => {
 
   test.describe('XRechnung in Rechnungsliste und Detailansicht', () => {
     test('XRechnung-Badge "XR" und XML-Button bei GOVERNMENT-Rechnung', async ({ page }) => {
-      const suffix = uniqueSuffix()
-      const partnerName = `B2G Testamt ${suffix}`
+      // Uses pre-generated test data: generate_test_data always creates one GOVERNMENT
+      // partner (GovernmentPartnerFactory) with a SENT invoice.
 
-      // Step 1: Create GOVERNMENT partner via UI
-      await createGovernmentPartner(page, partnerName)
-
-      // Step 2: Create invoice for GOVERNMENT partner via UI
-      await createInvoiceForPartner(page, partnerName)
-
-      // Step 3: Verify XR badge in invoice list
+      // Step 1: Verify XR badge exists in invoice list
       await page.goto('/invoices')
       await page.waitForLoadState('networkidle')
 
@@ -184,12 +144,12 @@ test.describe('B2G-Workflow (XRechnung)', () => {
       await expect(xrBadge.first()).toBeVisible({ timeout: 10000 })
       await expect(xrBadge.first()).toHaveText('XR')
 
-      // Step 4: Click on the XR invoice to go to detail view
+      // Step 2: Click on the XR invoice to go to detail view
       const xrRow = page.locator('table tbody tr', { has: page.locator('.type-xrechnung') }).first()
       await xrRow.locator('a.invoice-link').click()
       await page.waitForLoadState('networkidle')
 
-      // Step 5: XRechnung XML button should be visible
+      // Step 3: XRechnung XML button should be visible
       await expect(page.getByRole('button', { name: /XRechnung XML/i })).toBeVisible()
     })
 
