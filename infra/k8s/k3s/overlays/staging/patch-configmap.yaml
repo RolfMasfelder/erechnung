@@ -3,8 +3,12 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: erechnung-config
-  namespace: erechnung-staging
 data:
   INIT_CREATE_TEST_DATA: "true"
   INIT_CREATE_ADMIN: "true"
-  DJANGO_DEBUG: "True"
+  DJANGO_DEBUG: "False"
+  # Staging-Hostname + erechnung.local (k8s health probes senden Host: erechnung.local)
+  DJANGO_ALLOWED_HOSTS: "staging.erechnung.local,erechnung.local,192.168.178.200,192.168.178.80,localhost,127.0.0.1,django-web-service"
+  # Kein TLS zwischen Django und PostgreSQL innerhalb desselben Namespace (vereinfachtes Staging)
+  DATABASE_SSL_MODE: "disable"
+  DATABASE_SSL_CA: ""

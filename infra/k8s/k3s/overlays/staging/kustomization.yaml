@@ -25,6 +25,7 @@ resources:
   - ../../manifests/11-secret-erechnung-secrets.yaml
   - ../../manifests/20-pvc-postgres.yaml
   - ../../manifests/21-pvc-redis.yaml
+  - ../../manifests/22-pvc-media.yaml
   - ../../manifests/30-deploy-postgres.yaml
   - ../../manifests/31-svc-postgres.yaml
   - ../../manifests/32-deploy-redis.yaml
@@ -38,20 +39,40 @@ resources:
   - ../../manifests/70-deploy-frontend.yaml
   - ../../manifests/71-svc-frontend.yaml
   - ../../manifests/80-configmap-nginx.yaml
+  - ingress.yaml
 
 patches:
   - path: patch-configmap.yaml
+    target:
+      kind: ConfigMap
+      name: erechnung-config
+  - path: patch-postgres-no-tls.yaml
+    target:
+      kind: Deployment
+      name: postgres
+  - path: patch-init-no-tls.yaml
+    target:
+      kind: Job
+      name: django-init
+  - path: patch-django-no-tls.yaml
+    target:
+      kind: Deployment
+      name: django-web
+  - path: patch-celery-no-tls.yaml
+    target:
+      kind: Deployment
+      name: celery-worker
 
 images:
   - name: 192.168.178.80:5000/erechnung-web
-    newTag: KUSTOMIZE
+    newTag: v0.1.3-9ac3096
   - name: 192.168.178.80:5000/erechnung-init
-    newTag: KUSTOMIZE
+    newTag: v0.1.3-9ac3096
   - name: 192.168.178.80:5000/erechnung-celery
-    newTag: KUSTOMIZE
+    newTag: v0.1.3-9ac3096
   - name: 192.168.178.80:5000/erechnung-frontend
-    newTag: KUSTOMIZE
+    newTag: v0.1.3-9ac3096
   - name: 192.168.178.80:5000/erechnung-api-gateway
-    newTag: KUSTOMIZE
+    newTag: v0.1.3-9ac3096
   - name: 192.168.178.80:5000/erechnung-postgres
-    newTag: KUSTOMIZE
+    newTag: v0.1.3-9ac3096

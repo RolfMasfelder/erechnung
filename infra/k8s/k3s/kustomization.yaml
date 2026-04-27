@@ -46,14 +46,14 @@ resources:
 # Updated automatically by scripts/k3s-update-images.sh
 images:
   - name: 192.168.178.80:5000/erechnung-web
-    newTag: v0.1.2-7621c3d
+    newTag: v0.1.3-9ac3096
   - name: 192.168.178.80:5000/erechnung-init
-    newTag: v0.1.2-7621c3d
+    newTag: v0.1.3-9ac3096
   - name: 192.168.178.80:5000/erechnung-celery
-    newTag: v0.1.2-7621c3d
+    newTag: v0.1.3-9ac3096
   - name: 192.168.178.80:5000/erechnung-frontend
-    newTag: v0.1.2-7621c3d
+    newTag: v0.1.3-9ac3096
   - name: 192.168.178.80:5000/erechnung-api-gateway
-    newTag: v0.1.2-7621c3d
+    newTag: v0.1.3-9ac3096
   - name: 192.168.178.80:5000/erechnung-postgres
-    newTag: v0.1.2-7621c3d
+    newTag: v0.1.3-9ac3096

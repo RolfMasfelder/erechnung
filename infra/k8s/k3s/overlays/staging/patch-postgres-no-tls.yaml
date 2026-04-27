@@ -1,0 +1,20 @@
+# Remove postgres TLS volume/mount in staging (no postgres-tls-certs secret here)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  template:
+    spec:
+      containers:
+      - name: postgres
+        args:
+        - $patch: replace
+        - "-c"
+        - "shared_preload_libraries=pg_stat_statements"
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/certs-mounted
+          $patch: delete
+      volumes:
+      - name: postgres-tls
+        $patch: delete
