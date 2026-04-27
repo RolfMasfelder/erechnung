@@ -85,3 +85,4 @@ Two separate installations that must look and function identically.
 - **Deployment**: `skills/deployment_environments/SKILL.md`
 - **GitHub Actions**: `skills/github_actions/SKILL.md` (action versions & workflow conventions)
 - **Initial Start / Clone**: `skills/initial_start/SKILL.md` (Pflichtschritte nach erstem Clone: TLS-Certs, Verzeichnisse, SELinux, node_modules)
+- **Concurrent Access / Edit-Lock**: `skills/concurrent_access/SKILL.md` (Pflichtmuster für parallele Bearbeitung, 423-Fehler, Heartbeat)
