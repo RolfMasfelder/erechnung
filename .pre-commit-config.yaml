@@ -6,7 +6,7 @@ default_stages: [pre-commit]
 repos:
   # Ruff: linting with auto-fix
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.15.0"
+    rev: "v0.15.12"
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]

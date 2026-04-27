@@ -40,7 +40,7 @@ jobs:
         python-version: '3.13'
 
     - name: Install ruff
-      run: pip install ruff
+      run: pip install ruff==0.15.12
 
     - name: Ruff lint check
       run: ruff check project_root/
