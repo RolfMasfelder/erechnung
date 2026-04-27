@@ -9,6 +9,7 @@ import hashlib
 import json
 import logging
 import os
+from datetime import timedelta
 from decimal import Decimal
 
 from django.conf import settings
@@ -160,6 +161,17 @@ class Invoice(models.Model):
     created_at = models.DateTimeField(_("Created At"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Updated At"), auto_now=True)
 
+    # ── Concurrent Edit Lock (Pessimistic Application-Level Locking) ────────
+    editing_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="editing_invoices",
+        verbose_name=_("In Bearbeitung von"),
+    )
+    editing_since = models.DateTimeField(_("In Bearbeitung seit"), null=True, blank=True)
+
     # ── GoBD Compliance: Unveränderbarkeit ──────────────────────────────────
     is_locked = models.BooleanField(
         _("Gesperrt"),
@@ -249,6 +261,7 @@ class Invoice(models.Model):
             models.Index(fields=["company"]),
             models.Index(fields=["is_locked"]),
             models.Index(fields=["retention_until"]),
+            models.Index(fields=["editing_since"]),
         ]
 
     def __str__(self):
@@ -316,7 +329,7 @@ class Invoice(models.Model):
 
         # ── GoBD: Set retention period (10 years from issue_date) ──────────
         if not self.retention_until and self.issue_date:
-            from datetime import date, timedelta
+            from datetime import date
 
             issue = self.issue_date
             if isinstance(issue, str):
@@ -338,6 +351,57 @@ class Invoice(models.Model):
             if content_hash:
                 Invoice.objects.filter(pk=self.pk).update(content_hash=content_hash)
                 self.content_hash = content_hash
+
+    # ── Concurrent Edit Lock helpers ─────────────────────────────────────────
+
+    def is_edit_locked_by_other(self, user):
+        """Return True if locked by a different user and the lock has not expired."""
+        from django.conf import settings as django_settings
+
+        timeout = getattr(django_settings, "INVOICE_EDIT_LOCK_TIMEOUT_MINUTES", 30)
+        cutoff = timezone.now() - timedelta(minutes=timeout)
+        return (
+            self.editing_by_id is not None
+            and self.editing_by_id != user.pk
+            and self.editing_since is not None
+            and self.editing_since > cutoff
+        )
+
+    def acquire_edit_lock(self, user):
+        """Atomically acquire the edit lock. Returns (success: bool, holder: User|None).
+
+        Uses select_for_update() within a single DB transaction to prevent race
+        conditions when two users attempt to lock the same invoice simultaneously.
+        """
+        from django.conf import settings as django_settings
+        from django.db import transaction
+
+        timeout = getattr(django_settings, "INVOICE_EDIT_LOCK_TIMEOUT_MINUTES", 30)
+        now = timezone.now()
+        cutoff = now - timedelta(minutes=timeout)
+
+        with transaction.atomic():
+            fresh = Invoice.objects.select_for_update().get(pk=self.pk)
+            if (
+                fresh.editing_by_id is not None
+                and fresh.editing_by_id != user.pk
+                and fresh.editing_since is not None
+                and fresh.editing_since > cutoff
+            ):
+                return False, fresh.editing_by
+
+            Invoice.objects.filter(pk=self.pk).update(editing_by=user, editing_since=now)
+            self.editing_by = user
+            self.editing_since = now
+            return True, user
+
+    def release_edit_lock(self, user):
+        """Release the edit lock. Only the current lock holder can release it."""
+        if self.editing_by_id == user.pk:
+            Invoice.objects.filter(pk=self.pk).update(editing_by=None, editing_since=None)
+            self.editing_by = None
+            self.editing_by_id = None
+            self.editing_since = None
 
     def recalculate_totals(self):
         """Aggregate subtotal, tax_amount and total_amount from all related lines

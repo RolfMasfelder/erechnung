@@ -290,3 +290,61 @@ spec:
 - Proper archiving with tamper-evident storage
 - Complete documentation of data processing procedures
 - Regular compliance audits and reporting
+
+---
+
+## 8.9 Concurrent Access — Pessimistisches Bearbeitungs-Lock
+
+**Entscheidung:** ADR-024 — Pessimistisches Bearbeitungs-Lock für konkurrierende Zugriffe
+
+### 8.9.1 Muster (Checkout/Checkin)
+
+Wenn mehrere Benutzer denselben Datensatz gleichzeitig bearbeiten könnten, wird ein **Pessimistisches Application-Level Lock** verwendet:
+
+| Feld | Typ | Bedeutung |
+|---|---|---|
+| `editing_by` | FK → User (nullable) | Aktueller Lock-Inhaber |
+| `editing_since` | DateTimeField (nullable) | Zeitpunkt der Lock-Übernahme |
+
+**Lock-Lifecycle:**
+
+1. Benutzer öffnet Formular → `POST .../acquire_edit_lock/` → `200 OK` oder `423 Locked`
+2. Formular offen → Frontend sendet alle 60 s `POST .../refresh_edit_lock/` (Heartbeat)
+3. Benutzer speichert/abbricht → `POST .../release_edit_lock/`
+4. Browser-Absturz → Lock läuft nach `INVOICE_EDIT_LOCK_TIMEOUT_MINUTES` automatisch ab
+
+**Bei `PATCH`/`PUT` ohne Lock:** Prüfung auf fremden aktiven Lock → `HTTP 423 Locked` falls vorhanden.
+
+**Atomare Lock-Übernahme:** `acquire_edit_lock()` nutzt `select_for_update()` innerhalb einer DB-Transaktion. Das ist der einzige legitime Einsatz von `select_for_update()` im System.
+
+### 8.9.2 Fehlerformat (HTTP 423)
+
+```json
+{
+  "error": {
+    "code": "EDIT_LOCKED",
+    "message": "Diese Rechnung wird gerade von einem anderen Benutzer bearbeitet.",
+    "details": {
+      "editing_by": "Max Mustermann",
+      "editing_since": "2026-04-27T14:30:00Z"
+    }
+  }
+}
+```
+
+### 8.9.3 Konfiguration
+
+```
+INVOICE_EDIT_LOCK_TIMEOUT_MINUTES=30  # Default, via Umgebungsvariable
+```
+
+### 8.9.4 Anwendungsbereich
+
+Aktuell implementiert für: `Invoice`
+
+Für zukünftige Entitäten mit Mehrbenutzer-Konfliktpotenzial (`BusinessPartner`, `Company`, `Product`) ist dasselbe Muster (`editing_by` + `editing_since` + drei Lock-Endpunkte + Auto-Timeout) zu verwenden. Kein anderes Concurrency-Muster (kein Optimistic Locking, kein Status-Feld).
+
+### 8.9.5 Abgrenzung zum GoBD-Lock
+
+Der GoBD-Lock (`is_locked`) sperrt **abgeschlossene Dokumente** permanent gegen Änderungen (Compliance-Anforderung). Der Edit-Lock sperrt **Datensätze in Bearbeitung** temporär gegen gleichzeitige Bearbeitung (UX-Anforderung). Beide Mechanismen sind unabhängig.
+

@@ -94,6 +94,14 @@ class GoBDViolationError(BusinessLogicError):
     default_code = "GOBD_VIOLATION"
 
 
+class EditLockError(APIException):
+    """Rechnung wird gerade von einem anderen Benutzer bearbeitet (Pessimistic Edit Lock)."""
+
+    status_code = 423  # HTTP 423 Locked (RFC 4918)
+    default_detail = "Diese Rechnung wird gerade von einem anderen Benutzer bearbeitet."
+    default_code = "EDIT_LOCKED"
+
+
 # ─── Permissions ────────────────────────────────────────────────────────────
 
 
