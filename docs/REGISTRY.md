@@ -16,7 +16,7 @@ docker run -d \
   --restart=always \
   -p 5000:5000 \
   -v registry-data:/var/lib/registry \
-  -v /home/rolf/workspace/eRechnung/eRechnung_Django_App/api-gateway/certs:/certs \
+  -v /home/rolf/workspace/erechnung/infra/api-gateway/certs:/certs \
   -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/localhost.crt \
   -e REGISTRY_HTTP_TLS_KEY=/certs/localhost.key \
   -e REGISTRY_STORAGE_DELETE_ENABLED=true \

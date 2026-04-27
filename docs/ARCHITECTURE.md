@@ -89,7 +89,7 @@ High-level architecture of the eRechnung application. For detailed architecture 
 ## Project Directory Structure
 
 ```
-eRechnung_Django_App/
+erechnung/
 ├── .github/                    # CI/CD workflows, AI coding instructions
 ├── docs/                       # Documentation (this directory)
 │   ├── arc42/                  # Full arc42 architecture docs

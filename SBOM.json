@@ -21,7 +21,7 @@
       "supplier": {
         "name": "RolfMasfelder",
         "url": [
-          "https://github.com/RolfMasfelder/eRechnung_Django_App"
+          "https://github.com/RolfMasfelder/erechnung"
         ]
       },
       "licenses": [
@@ -826,7 +826,7 @@
     },
     {
       "name": "project:repository",
-      "value": "https://github.com/RolfMasfelder/eRechnung_Django_App"
+      "value": "https://github.com/RolfMasfelder/erechnung"
     },
     {
       "name": "project:standards",

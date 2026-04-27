@@ -292,7 +292,7 @@ else
 
     # Tag and push
     info "Tagge und pushe Images (Tag: $IMAGE_TAG)..."
-    COMPOSE_PROJECT_NAME=$(grep -oP '(?<=^name: ).*' docker-compose.yml 2>/dev/null || echo "erechnung_django_app")
+    COMPOSE_PROJECT_NAME=$(grep -oP '(?<=^name: ).*' docker-compose.yml 2>/dev/null || echo "erechnung")
 
     tag_and_push() {
         local name="$1" local_tag="$2"

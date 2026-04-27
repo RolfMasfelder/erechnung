@@ -22,6 +22,18 @@ Two separate installations that must look and function identically.
 - **Kubernetes**: `kubectl apply -k infra/k8s/k3s/` → http://192.168.178.80
 - **No cross-dependencies** — each environment has its own DB, Redis, backend
 
+## Documentation Language Policy — "Outside English, Inside German"
+
+| Document type | Language | Examples |
+|---|---|---|
+| Public-facing / GitHub entry points | **English** | `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, `openapi.json`, `ARCHITECTURE.md` |
+| Domain-specific / legal / tax content | **German** | `GOBD_*.md`, `ZUGFERD_*.md`, `USER_MANUAL.md`, `Zertifikate.md` |
+| Internal / operational | **German** | `PROGRESS_PROTOCOL.md`, `TODO*.md`, arc42 docs |
+| Code comments & docstrings | **English** | all source files |
+| Mixed documents | Fix language on next touch — no big-bang rewrites |
+
+**Rule for new content**: When creating or editing a document, follow the language of that document's category above. Never mix languages within a single document.
+
 ## Script Files
 - All shell scripts (*.sh, *.bat) must be placed in `scripts/` directory
 - Small utility python scripts (e.g., `extract_pdf_xml.py`) go to `scripts/`

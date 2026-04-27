@@ -15,8 +15,8 @@ Thank you for your interest in contributing to the eRechnung Django App! This do
 
 1. **Fork and Clone**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/eRechnung_Django_App.git
-   cd eRechnung_Django_App
+   git clone https://github.com/YOUR_USERNAME/erechnung.git
+   cd erechnung
    ```
 
 2. **Start Development Environment**

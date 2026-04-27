@@ -40,7 +40,7 @@ echo ""
 # Image definitions: image-name → build-source (compose service | Dockerfile)
 # ---------------------------------------------------------------------------
 # Format of IMAGES array:  "<registry-image-name>|<build-method>|<build-arg>"
-#   build-method = "compose"  → docker compose build <service>; local tag = erechnung_django_app-<service>
+#   build-method = "compose"  → docker compose build <service>; local tag = erechnung-<service>
 #   build-method = "docker"   → docker build -f <Dockerfile> -t <local-tag> <context>
 # ---------------------------------------------------------------------------
 declare -a IMAGES=(
@@ -113,7 +113,7 @@ tag_and_push() {
 }
 
 # compose-built images have this local name pattern
-COMPOSE_PROJECT_NAME=$(grep -oP '(?<=^name: ).*' docker-compose.yml 2>/dev/null || echo "erechnung_django_app")
+COMPOSE_PROJECT_NAME=$(grep -oP '(?<=^name: ).*' docker-compose.yml 2>/dev/null || echo "erechnung")
 
 tag_and_push "erechnung-web"         "${COMPOSE_PROJECT_NAME}-web:latest"
 tag_and_push "erechnung-init"        "${COMPOSE_PROJECT_NAME}-init:latest"

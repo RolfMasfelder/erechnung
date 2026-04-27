@@ -14,7 +14,7 @@ This file contains important context and guidelines for the eRechnung Django app
 - ✅ Use: `docker-compose exec web python project_root/manage.py shell`
 
 ### File Structure Context
-- Project root: `/home/rolf/workspace/eRechnung/eRechnung_Django_App/`
+- Project root: `/home/rolf/workspace/erechnung/`
 - Django project: `project_root/` (inside Docker container: `/app/project_root/`)
 - Models location: `project_root/invoice_app/models/` (modular structure)
 - Tests location: `project_root/invoice_app/tests/`

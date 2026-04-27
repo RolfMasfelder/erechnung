@@ -326,7 +326,7 @@ test_ec05_container_oom_migration() {
         local project
         project=$(docker compose -f "$COMPOSE_FILE" config --format json 2>/dev/null \
             | python3 -c "import sys,json; print(json.load(sys.stdin).get('name',''))" 2>/dev/null || true)
-        image="${project:-erechnung_django_app}-web-new:latest"
+        image="${project:-erechnung}-web-new:latest"
     fi
 
     # Get the network name

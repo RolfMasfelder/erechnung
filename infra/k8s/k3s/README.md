@@ -405,8 +405,8 @@ VERSION=$(grep '^version' pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\
 TAG="v${VERSION}-$(git rev-parse --short HEAD)"
 
 # Tag für Registry (NIEMALS :latest verwenden!)
-docker tag erechnung_django_app-web:latest 192.168.178.80:5000/erechnung-web:$TAG
-docker tag erechnung_django_app-frontend:latest 192.168.178.80:5000/erechnung-frontend:$TAG
+docker tag erechnung-web:latest 192.168.178.80:5000/erechnung-web:$TAG
+docker tag erechnung-frontend:latest 192.168.178.80:5000/erechnung-frontend:$TAG
 
 # Push zur Registry
 docker push 192.168.178.80:5000/erechnung-web:$TAG

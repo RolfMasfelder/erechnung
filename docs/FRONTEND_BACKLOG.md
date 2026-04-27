@@ -437,7 +437,7 @@
 
 **Problem:**
 
-- `target: 'https://erechnung_django_app-api-gateway-1'`
+- `target: 'https://erechnung-api-gateway-1'`
 - Nicht portabel für andere Environments
 
 **Lösung:**

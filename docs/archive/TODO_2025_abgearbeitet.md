@@ -1,4 +1,4 @@
-# TODO List for eRechnung_Django_App
+# TODO List for erechnung
 
 ## Project Structure and Setup
 

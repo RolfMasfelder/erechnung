@@ -362,14 +362,14 @@ Nach Code-Änderungen oder Dependency-Updates:
 
 ```bash
 # 1. Images neu bauen (auf Development-Maschine)
-cd /home/rolf/workspace/eRechnung/eRechnung_Django_App
+cd /home/rolf/workspace/erechnung
 docker-compose build --no-cache web celery init
 docker build -f frontend/Dockerfile.prod -t 192.168.178.80:5000/erechnung-frontend:latest frontend/
 
 # 2. Für Registry taggen
-docker tag erechnung_django_app-web:latest 192.168.178.80:5000/erechnung-web:latest
-docker tag erechnung_django_app-celery:latest 192.168.178.80:5000/erechnung-celery:latest
-docker tag erechnung_django_app-init:latest 192.168.178.80:5000/erechnung-init:latest
+docker tag erechnung-web:latest 192.168.178.80:5000/erechnung-web:latest
+docker tag erechnung-celery:latest 192.168.178.80:5000/erechnung-celery:latest
+docker tag erechnung-init:latest 192.168.178.80:5000/erechnung-init:latest
 
 # 3. In Registry pushen
 docker push 192.168.178.80:5000/erechnung-web:latest
