@@ -5,6 +5,64 @@ For template format, see: `docs/PROGRESS_PROTOCOL_TEMPLATE.md`
 
 ---
 
+## 2026-04-27 — ADR-024: Pessimistisches Edit-Locking (Concurrent Access) ✅
+
+### Summary
+
+Vollständige Implementierung eines pessimistischen Edit-Locks für DRAFT-Rechnungen (ADR-024). Verhindert parallele Bearbeitungskonflikte: erst Backend (Model, Migration, API), dann Frontend (Composable, Modal-Integration, Detail-Banner). Zusätzlich SKILL-Datei für zukünftige Nutzung durch den KI-Agenten erstellt.
+
+### Technical Achievements
+
+- **Backend (Django/DRF)**:
+  - Model-Felder `editing_by` (FK → User, nullable) + `editing_since` (DateTimeField, nullable) auf `Invoice`
+  - Migration `0011_invoice_editing_by_invoice_editing_since`
+  - Modell-Methoden `acquire_edit_lock()` / `release_edit_lock()` mit Timeout-Prüfung (`INVOICE_EDIT_LOCK_TIMEOUT_MINUTES=30`)
+  - `EditLockError` → HTTP 423 mit JSON-Body `{editing_by, editing_since}`
+  - Drei ViewSet-Actions: `acquire_edit_lock/`, `release_edit_lock/`, `refresh_edit_lock/`
+  - Serializer-Feld `editing_by_display` (SerializerMethodField)
+  - Settings-Key `INVOICE_EDIT_LOCK_TIMEOUT_MINUTES` in `config/settings.py`
+
+- **Frontend (Vue.js 3)**:
+  - `useEditLock(invoiceId)` Composable — acquire on mount, 60s Heartbeat (setInterval), release on unmount (onUnmounted)
+  - `InvoiceEditModal.vue` — Amber-Banner bei 423 (Bearbeiter + Uhrzeit), Formular ausgeblendet, Speichern-Button nur bei gehaltenen Lock, `handleClose` ruft `releaseLock()` auf, `onMounted` ruft `acquireLock()` auf
+  - `InvoiceDetailView.vue` — Amber-Banner mit ✏️-Icon wenn `invoice.editing_by_display` gesetzt
+  - `fieldMappings.js` — ACL-Einträge `editing_by_display`, `editing_since`
+  - `invoiceService.js` — drei neue Methoden `acquireEditLock()`, `releaseEditLock()`, `refreshEditLock()`
+
+- **Architektur & Dokumentation**:
+  - `docs/adr/ADR-024-pessimistic-edit-lock.md` erstellt
+  - `docs/arc42/08_concepts.md` §8.9 ergänzt
+  - `.github/skills/concurrent_access/SKILL.md` — Referenz-SKILL für KI-Agent
+  - `.github/copilot-instructions.md` — Concurrent-Access-Skill verlinkt
+
+- **CI/E2E (Vorarbeit)**: `workers=1` für Playwright gesetzt; `generate_test_data` um GOVERNMENT-Partner ergänzt; `networkidle`-Wait in Attachment-Tests stabilisiert — E2E-Suite 104 passed, 2 skipped
+
+### New Files
+
+- `frontend/src/composables/useEditLock.js`
+- `project_root/invoice_app/migrations/0011_invoice_editing_by_invoice_editing_since.py`
+- `docs/adr/ADR-024-pessimistic-edit-lock.md`
+- `.github/skills/concurrent_access/SKILL.md`
+
+### Modified Files
+
+- `project_root/invoice_app/models/invoice.py` — Lock-Felder + Methoden
+- `project_root/invoice_app/api/serializers.py` — `editing_by_display`
+- `project_root/invoice_app/api/views.py` — drei Lock-Actions
+- `project_root/config/settings.py` — `INVOICE_EDIT_LOCK_TIMEOUT_MINUTES`
+- `frontend/src/components/InvoiceEditModal.vue` — Lock-Integration
+- `frontend/src/views/InvoiceDetailView.vue` — Lock-Banner
+- `frontend/src/api/services/invoiceService.js` — Lock-Endpunkte
+- `frontend/src/api/fieldMappings.js` — ACL-Felder
+- `.github/copilot-instructions.md` — Skill-Verweis
+
+### Commits
+
+- `fb5b3dc` — feat: pessimistic edit lock for concurrent invoice editing (ADR-024)
+- `1df5c30` — feat: frontend pessimistic edit lock (ADR-024) — useEditLock composable, modal acquire/release/heartbeat, detail view banner
+
+---
+
 ## 2026-04-15 — TODO 3.9: Gutschrift / Rechnungs-Stornierung ✅
 
 ### Summary
