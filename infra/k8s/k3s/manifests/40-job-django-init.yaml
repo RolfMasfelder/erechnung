@@ -47,7 +47,7 @@ spec:
 
             if [ "${INIT_CREATE_TEST_DATA:-false}" = "true" ]; then
               echo "Creating test data (INIT_CREATE_TEST_DATA=true)..."
-              python project_root/manage.py create_test_data --count 60
+              python project_root/manage.py generate_test_data --preset standard
             else
               echo "Skipping test data bootstrap (INIT_CREATE_TEST_DATA=false)"
             fi

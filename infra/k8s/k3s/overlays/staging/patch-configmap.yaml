@@ -1,0 +1,10 @@
+# Patch: aktiviert Testdaten-Erstellung im Staging-Namespace
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: erechnung-config
+  namespace: erechnung-staging
+data:
+  INIT_CREATE_TEST_DATA: "true"
+  INIT_CREATE_ADMIN: "true"
+  DJANGO_DEBUG: "True"

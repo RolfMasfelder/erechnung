@@ -265,7 +265,7 @@ spec:
                 print("✓ Superuser already exists")
             EOF
             echo "Creating test data (DEVELOPMENT ONLY)..." &&
-            python project_root/manage.py create_test_data --count 10
+            python project_root/manage.py generate_test_data --preset minimal
         envFrom:
         - configMapRef:
             name: erechnung-config

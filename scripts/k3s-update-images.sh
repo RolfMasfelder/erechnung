@@ -9,6 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 REGISTRY="192.168.178.80:5000"
 KUSTOMIZATION="$PROJECT_ROOT/infra/k8s/k3s/kustomization.yaml"
+KUSTOMIZATION_STAGING="$PROJECT_ROOT/infra/k8s/k3s/overlays/staging/kustomization.yaml"
 SKIP_BUILD=false
 
 # Parse arguments
@@ -160,7 +161,37 @@ with open(kustomization_file, 'w') as f:
 print(f"  Updated kustomization.yaml → {new_tag}")
 PYEOF
 
-echo -e "${GREEN}✅ kustomization.yaml updated${NC}"
+# Same update for staging overlay
+python3 - "$KUSTOMIZATION_STAGING" "$TAG" <<'PYEOF'
+import sys, re
+
+kustomization_file = sys.argv[1]
+new_tag = sys.argv[2]
+
+with open(kustomization_file, 'r') as f:
+    content = f.read()
+
+self_built_images = [
+    'erechnung-web',
+    'erechnung-init',
+    'erechnung-celery',
+    'erechnung-frontend',
+    'erechnung-api-gateway',
+    'erechnung-postgres',
+]
+
+for img in self_built_images:
+    pattern = r'(- name: [^\n]*/{}[^\n]*\n    newTag: )[^\n]+'.format(re.escape(img))
+    replacement = r'\g<1>' + new_tag
+    content = re.sub(pattern, replacement, content)
+
+with open(kustomization_file, 'w') as f:
+    f.write(content)
+
+print(f"  Updated overlays/staging/kustomization.yaml → {new_tag}")
+PYEOF
+
+echo -e "${GREEN}✅ kustomization.yaml updated (production + staging)${NC}"
 
 # ---------------------------------------------------------------------------
 # Step 4: Apply kustomize config  →  kubectl apply -k
