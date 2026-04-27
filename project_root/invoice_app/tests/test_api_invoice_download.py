@@ -10,7 +10,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from invoice_app.models import BusinessPartner, Company, Country, Invoice
+from invoice_app.models import BusinessPartner, Company, Country, Invoice, InvoiceLine
 
 
 User = get_user_model()
@@ -79,9 +79,21 @@ class InvoiceDownloadAPITest(TestCase):
             issue_date="2026-02-10",
             due_date="2026-03-10",
             currency="EUR",
+            subtotal=Decimal("84.03"),
+            tax_amount=Decimal("15.97"),
             total_amount=Decimal("100.00"),
             status="sent",
             created_by=self.user,
+        )
+
+        # Add at least one invoice line (required by EN16931 BR-16)
+        InvoiceLine.objects.create(
+            invoice=self.invoice,
+            description="Test Service",
+            quantity=Decimal("1"),
+            unit_price=Decimal("84.03"),
+            tax_rate=Decimal("19.00"),
+            line_total=Decimal("84.03"),
         )
 
     def test_download_pdf_with_existing_file(self):
