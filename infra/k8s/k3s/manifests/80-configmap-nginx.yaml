@@ -120,10 +120,10 @@ data:
                 proxy_set_header Host $host;
             }
 
-            # Django Media Files
+            # Django Media Files - served directly from PVC (media-pvc mounted at /app/project_root/media)
             location /media/ {
-                proxy_pass http://django_backend;
-                proxy_set_header Host $host;
+                alias /app/project_root/media/;
+                add_header Cache-Control "public, max-age=3600";
             }
 
             # All other requests to Vue.js Frontend (SPA)

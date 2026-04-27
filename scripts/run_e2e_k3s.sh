@@ -13,7 +13,7 @@ K3S_URL="https://${K3S_HOSTNAME}"
 CURL_RESOLVE="--resolve ${K3S_HOSTNAME}:443:${K3S_HOST} --resolve ${K3S_HOSTNAME}:80:${K3S_HOST}"
 TEST_USER="testuser"
 TEST_PASS="testpass123"
-MIN_INVOICES=60  # Minimum für Pagination-Tests
+MIN_INVOICES=25  # Minimum für Pagination-Tests (generate_test_data --preset standard erzeugt ~30)
 E2E_NAMESPACE="${E2E_NAMESPACE:-erechnung}"
 E2E_IMAGE="${E2E_IMAGE:-mcr.microsoft.com/playwright:v1.59.1-noble}"
 E2E_WORKERS="${E2E_WORKERS:-1}"
@@ -122,7 +122,7 @@ if [ "$INVOICE_COUNT" -lt "$MIN_INVOICES" ]; then
     echo "  kubectl logs -n erechnung job/django-init"
     echo ""
     echo "  Manual fix (Django Shell in k3s):"
-    echo "  kubectl exec -n erechnung deploy/django-web -- python project_root/manage.py create_test_data --count=50"
+    echo "  kubectl exec -n erechnung deploy/django-web -- python project_root/manage.py generate_test_data --preset standard"
     echo ""
     read -p "  Trotzdem fortfahren? (y/N) " -n 1 -r
     echo ""

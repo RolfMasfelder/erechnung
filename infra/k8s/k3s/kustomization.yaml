@@ -9,6 +9,7 @@ resources:
   - manifests/11-secret-monitoring.yaml
   - manifests/20-pvc-postgres.yaml
   - manifests/21-pvc-redis.yaml
+  - manifests/22-pvc-media.yaml
   - manifests/30-deploy-postgres.yaml
   - manifests/31-svc-postgres.yaml
   - manifests/32-deploy-redis.yaml
@@ -45,14 +46,14 @@ resources:
 # Updated automatically by scripts/k3s-update-images.sh
 images:
   - name: 192.168.178.80:5000/erechnung-web
-    newTag: v0.1.1-8793228
+    newTag: v0.1.2-7621c3d
   - name: 192.168.178.80:5000/erechnung-init
-    newTag: v0.1.1-8793228
+    newTag: v0.1.2-7621c3d
   - name: 192.168.178.80:5000/erechnung-celery
-    newTag: v0.1.1-8793228
+    newTag: v0.1.2-7621c3d
   - name: 192.168.178.80:5000/erechnung-frontend
-    newTag: v0.1.1-8793228
+    newTag: v0.1.2-7621c3d
   - name: 192.168.178.80:5000/erechnung-api-gateway
-    newTag: v0.1.1-8793228
+    newTag: v0.1.2-7621c3d
   - name: 192.168.178.80:5000/erechnung-postgres
-    newTag: v0.1.1-8793228
+    newTag: v0.1.2-7621c3d

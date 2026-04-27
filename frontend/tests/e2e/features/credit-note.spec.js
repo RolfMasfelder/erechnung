@@ -22,7 +22,11 @@ async function goToSentInvoice(page) {
   await page.goto('/invoices')
   await page.waitForLoadState('networkidle')
 
-  const sentRow = page.locator('table tbody tr', { has: page.locator('.status-sent') }).first()
+  // Exclude credit note rows (.type-credit-note) — they have status SENT but can't be cancelled
+  const sentRow = page.locator('table tbody tr', {
+    has: page.locator('.status-sent'),
+    hasNot: page.locator('.type-credit-note'),
+  }).first()
   await expect(sentRow).toBeVisible({ timeout: 10000 })
 
   const invoiceNumber = await sentRow.locator('a.invoice-link').textContent() ?? ''
@@ -178,7 +182,11 @@ test.describe('Gutschrift / Stornierung', () => {
       await page.goto('/invoices')
       await page.waitForLoadState('networkidle')
 
-      const sentRow = page.locator('table tbody tr', { has: page.locator('.status-sent') }).first()
+      // Exclude credit note rows — they have status SENT but can't be cancelled
+      const sentRow = page.locator('table tbody tr', {
+        has: page.locator('.status-sent'),
+        hasNot: page.locator('.type-credit-note'),
+      }).first()
       await expect(sentRow).toBeVisible({ timeout: 10000 })
 
       const originalNumber = (await sentRow.locator('a.invoice-link').textContent() ?? '').trim()
@@ -238,7 +246,11 @@ test.describe('Gutschrift / Stornierung', () => {
       await page.goto('/invoices')
       await page.waitForLoadState('networkidle')
 
-      const sentRow = page.locator('table tbody tr', { has: page.locator('.status-sent') }).first()
+      // Exclude credit note rows — they have status SENT but can't be cancelled
+      const sentRow = page.locator('table tbody tr', {
+        has: page.locator('.status-sent'),
+        hasNot: page.locator('.type-credit-note'),
+      }).first()
       // If no SENT invoices left (all cancelled by previous test), skip
       const sentCount = await sentRow.count()
       if (sentCount === 0) {
@@ -293,7 +305,11 @@ test.describe('Gutschrift / Stornierung', () => {
       await page.goto('/invoices')
       await page.waitForLoadState('networkidle')
 
-      const sentRow = page.locator('table tbody tr', { has: page.locator('.status-sent') }).first()
+      // Exclude credit note rows — they have status SENT but can't be cancelled
+      const sentRow = page.locator('table tbody tr', {
+        has: page.locator('.status-sent'),
+        hasNot: page.locator('.type-credit-note'),
+      }).first()
       const sentCount = await sentRow.count()
       if (sentCount === 0) {
         test.skip()
