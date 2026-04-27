@@ -193,6 +193,26 @@ class Command(BaseCommand):
 
         invoices_created = self._create_invoices(preset, company, gov_partner, partners, products, testuser)
 
+        # 6b. B2G / XRechnung invoice (SENT so it appears in list with XR badge)
+        xr_invoice = InvoiceFactory(
+            company=company,
+            business_partner=gov_partner,
+            status="SENT",
+            created_by=testuser,
+        )
+        for _ in range(preset["lines_per_invoice"]):
+            product = random.choice(products)
+            InvoiceLineFactory(
+                invoice=xr_invoice,
+                description=product.name,
+                product_code=product.product_code,
+                quantity=Decimal("1"),
+                unit_price=product.base_price,
+                tax_rate=product.default_tax_rate,
+            )
+        invoices_created += 1
+        self._log(self.style.SUCCESS("  B2G (XRechnung) invoice: 1"))
+
         # 7. Edge-case specific data
         if preset.get("special_characters"):
             self._create_edge_data()

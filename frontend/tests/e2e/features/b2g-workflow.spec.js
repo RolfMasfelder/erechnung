@@ -49,6 +49,7 @@ async function createGovernmentPartner(page, name) {
 
 
 
+
 test.describe('B2G-Workflow (XRechnung)', () => {
   test.beforeEach(async ({ page }) => {
     page.on('console', msg => {
@@ -137,6 +138,10 @@ test.describe('B2G-Workflow (XRechnung)', () => {
       // partner (GovernmentPartnerFactory) with a SENT invoice.
 
       // Step 1: Verify XR badge exists in invoice list
+      // Uses pre-generated test data: generate_test_data always creates one GOVERNMENT
+      // partner (GovernmentPartnerFactory) with a SENT invoice.
+
+      // Step 1: Verify XR badge exists in invoice list
       await page.goto('/invoices')
       await page.waitForLoadState('networkidle')
 
@@ -145,12 +150,13 @@ test.describe('B2G-Workflow (XRechnung)', () => {
       await expect(xrBadge.first()).toHaveText('XR')
 
       // Step 2: Click on the XR invoice to go to detail view
+      // Step 2: Click on the XR invoice to go to detail view
       const xrRow = page.locator('table tbody tr', { has: page.locator('.type-xrechnung') }).first()
       await xrRow.locator('a.invoice-link').click()
       await page.waitForLoadState('networkidle')
 
-      // Step 3: Smart-Download button should show 'XML herunterladen' for B2G invoices
-      await expect(page.getByRole('button', { name: /XML herunterladen/i })).toBeVisible()
+      // Step 3: XRechnung XML button should be visible
+      await expect(page.getByRole('button', { name: /XRechnung XML/i })).toBeVisible()
     })
 
     test('XRechnung XML Button ist bei normaler Rechnung NICHT sichtbar', async ({ page }) => {
