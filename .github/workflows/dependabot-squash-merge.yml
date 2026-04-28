@@ -1,4 +1,4 @@
-name: Dependabot Auto-Merge
+name: Dependabot Squash-Merge
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   dependabot-auto-merge:
-    name: Auto-merge Dependabot PRs
+    name: Squash-merge Dependabot PRs
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]'
 
