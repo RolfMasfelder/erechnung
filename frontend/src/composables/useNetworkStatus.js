@@ -1,37 +1,36 @@
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
 import { useToast } from './useToast'
 
 /**
- * Composable für Online/Offline Status-Erkennung
- * Zeigt automatisch Toasts bei Verbindungsänderungen
+ * Composable für Online/Offline Status-Erkennung.
  *
- * @returns {Object} { isOnline: Ref<boolean> }
+ * Singleton-Pattern: Nutzt modul-globale State + Listener, sodass mehrere
+ * Komponenten (App.vue, OfflineBanner.vue, …) denselben `isOnline`-Ref
+ * teilen und Toasts nur einmal pro Statuswechsel ausgelöst werden.
+ *
+ * @returns {{ isOnline: import('vue').Ref<boolean> }}
  */
-export function useNetworkStatus() {
-  const isOnline = ref(navigator.onLine)
+const isOnline = ref(typeof navigator !== 'undefined' ? navigator.onLine : true)
+let initialized = false
+
+function initialize() {
+  if (initialized || typeof window === 'undefined') return
+  initialized = true
+
   const { success, warning } = useToast()
 
-  const handleOnline = () => {
+  window.addEventListener('online', () => {
     isOnline.value = true
     success('Verbindung wiederhergestellt')
-  }
+  })
 
-  const handleOffline = () => {
+  window.addEventListener('offline', () => {
     isOnline.value = false
     warning('Keine Internetverbindung')
-  }
-
-  onMounted(() => {
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
   })
+}
 
-  onUnmounted(() => {
-    window.removeEventListener('online', handleOnline)
-    window.removeEventListener('offline', handleOffline)
-  })
-
-  return {
-    isOnline
-  }
+export function useNetworkStatus() {
+  initialize()
+  return { isOnline }
 }
