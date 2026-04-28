@@ -311,7 +311,7 @@ webencodings==0.5.1
     #   cssselect2
     #   tinycss2
     #   tinyhtml5
-wheel==0.46.3
+wheel==0.47.0
     # via -r requirements.in
 whitenoise==6.12.0
     # via -r requirements.in
