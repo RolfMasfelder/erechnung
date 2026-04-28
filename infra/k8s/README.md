@@ -123,7 +123,7 @@ docker run -d \
   --name registry \
   --restart=always \
   -p 5000:5000 \
-  -v /home/rolf/workspace/eRechnung/eRechnung_Django_App/api-gateway/certs:/certs \
+  -v /home/rolf/workspace/erechnung/infra/api-gateway/certs:/certs \
   -e REGISTRY_HTTP_ADDR=0.0.0.0:5000 \
   -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/localhost.crt \
   -e REGISTRY_HTTP_TLS_KEY=/certs/localhost.key \
@@ -175,9 +175,9 @@ docker-compose build --no-cache web celery init
 docker build -f frontend/Dockerfile.prod -t 192.168.178.80:5000/erechnung-frontend:latest frontend/
 
 # 2. Tag for registry
-docker tag erechnung_django_app-web:latest 192.168.178.80:5000/erechnung-web:latest
-docker tag erechnung_django_app-celery:latest 192.168.178.80:5000/erechnung-celery:latest
-docker tag erechnung_django_app-init:latest 192.168.178.80:5000/erechnung-init:latest
+docker tag erechnung-web:latest 192.168.178.80:5000/erechnung-web:latest
+docker tag erechnung-celery:latest 192.168.178.80:5000/erechnung-celery:latest
+docker tag erechnung-init:latest 192.168.178.80:5000/erechnung-init:latest
 
 # 3. Push to registry
 docker push 192.168.178.80:5000/erechnung-web:latest

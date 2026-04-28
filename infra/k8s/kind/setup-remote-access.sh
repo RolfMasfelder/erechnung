@@ -82,7 +82,7 @@ check_remote_cluster() {
         echo -e "${YELLOW}⚠️  Cluster '${CLUSTER_NAME}' does not exist on remote host${NC}"
         echo ""
         echo "Please create the cluster first on $REMOTE_HOST:"
-        echo "  cd /path/to/eRechnung_Django_App"
+        echo "  cd /path/to/erechnung"
         echo "  ./k8s/kind/setup.sh"
         echo ""
         echo "Then run this script again."

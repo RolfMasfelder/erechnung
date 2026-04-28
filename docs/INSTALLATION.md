@@ -29,7 +29,7 @@ Both modes run the same application code and produce identical results.
 
 ```bash
 git clone <repository-url>
-cd eRechnung_Django_App
+cd erechnung
 
 # Generate secure secrets (recommended)
 cd scripts && ./generate-secrets.sh && cd ..

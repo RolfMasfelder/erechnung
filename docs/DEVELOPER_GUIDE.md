@@ -27,7 +27,7 @@ Für allgemeine Beitragsregeln siehe [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ```bash
 git clone <repo-url>
-cd eRechnung_Django_App
+cd erechnung
 
 # Beide Remotes setzen
 git remote set-url origin <local-mirror-url>
@@ -68,7 +68,7 @@ VITE_API_BASE_URL=http://localhost:8000/api
 ## 2. Projektstruktur
 
 ```
-eRechnung_Django_App/
+erechnung/
 ├── project_root/              # Django-Root (alles Manage-py-Bezogene)
 │   ├── manage.py
 │   ├── invoice_project/       # Django-Projektkonfiguration (settings, urls, wsgi)

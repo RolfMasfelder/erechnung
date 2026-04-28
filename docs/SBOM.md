@@ -8,7 +8,7 @@
 
 **eRechnung Django App** - German e-invoicing system implementing ZUGFeRD/Factur-X standards with PDF/A-3 + embedded XML, modern Vue.js 3 frontend, and comprehensive E2E testing.
 
-- **Repository:** https://github.com/RolfMasfelder/eRechnung_Django_App
+- **Repository:** https://github.com/RolfMasfelder/erechnung
 - **Version:** 1.1.0
 - **License:** MIT
 - **Architecture:** Full-stack Docker-based microservices with SPA frontend

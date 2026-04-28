@@ -1,0 +1,13 @@
+# Django Media PersistentVolumeClaim
+# Shared storage for uploaded files (attachments, PDFs, XML) across all django-web replicas
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: media-pvc
+  namespace: erechnung
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

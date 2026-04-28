@@ -35,13 +35,14 @@ async function goToDraftInvoice(page) {
   const draftRow = page.locator('table tbody tr', { has: page.locator('.status-draft') }).first()
   await expect(draftRow).toBeVisible({ timeout: 10000 })
 
-  // Wait for the attachment API response before capturing counts
+  // Wait for the attachment API response AND DOM render before capturing counts
   const attachmentResponsePromise = page.waitForResponse(
     res => res.url().includes('/invoice-attachments/') && res.status() === 200,
     { timeout: 10000 }
   )
   await draftRow.locator('a.invoice-link').click()
   await attachmentResponsePromise
+  await page.waitForLoadState('networkidle')
 }
 
 /**
@@ -61,6 +62,7 @@ async function goToSentInvoice(page) {
   )
   await sentRow.locator('a.invoice-link').click()
   await attachmentResponsePromise
+  await page.waitForLoadState('networkidle')
 }
 
 /**

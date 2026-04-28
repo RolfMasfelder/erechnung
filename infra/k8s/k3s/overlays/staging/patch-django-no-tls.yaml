@@ -1,0 +1,16 @@
+# Remove postgres CA cert volume/mount from django-web in staging
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-web
+spec:
+  template:
+    spec:
+      containers:
+      - name: django-web
+        volumeMounts:
+        - mountPath: /etc/ssl/postgres
+          $patch: delete
+      volumes:
+      - name: postgres-ca
+        $patch: delete

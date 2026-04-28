@@ -9,6 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 REGISTRY="192.168.178.80:5000"
 KUSTOMIZATION="$PROJECT_ROOT/infra/k8s/k3s/kustomization.yaml"
+KUSTOMIZATION_STAGING="$PROJECT_ROOT/infra/k8s/k3s/overlays/staging/kustomization.yaml"
 SKIP_BUILD=false
 
 # Parse arguments
@@ -40,7 +41,7 @@ echo ""
 # Image definitions: image-name → build-source (compose service | Dockerfile)
 # ---------------------------------------------------------------------------
 # Format of IMAGES array:  "<registry-image-name>|<build-method>|<build-arg>"
-#   build-method = "compose"  → docker compose build <service>; local tag = erechnung_django_app-<service>
+#   build-method = "compose"  → docker compose build <service>; local tag = erechnung-<service>
 #   build-method = "docker"   → docker build -f <Dockerfile> -t <local-tag> <context>
 # ---------------------------------------------------------------------------
 declare -a IMAGES=(
@@ -113,7 +114,7 @@ tag_and_push() {
 }
 
 # compose-built images have this local name pattern
-COMPOSE_PROJECT_NAME=$(grep -oP '(?<=^name: ).*' docker-compose.yml 2>/dev/null || echo "erechnung_django_app")
+COMPOSE_PROJECT_NAME=$(grep -oP '(?<=^name: ).*' docker-compose.yml 2>/dev/null || echo "erechnung")
 
 tag_and_push "erechnung-web"         "${COMPOSE_PROJECT_NAME}-web:latest"
 tag_and_push "erechnung-init"        "${COMPOSE_PROJECT_NAME}-init:latest"
@@ -160,12 +161,42 @@ with open(kustomization_file, 'w') as f:
 print(f"  Updated kustomization.yaml → {new_tag}")
 PYEOF
 
-echo -e "${GREEN}✅ kustomization.yaml updated${NC}"
+# Same update for staging overlay
+python3 - "$KUSTOMIZATION_STAGING" "$TAG" <<'PYEOF'
+import sys, re
+
+kustomization_file = sys.argv[1]
+new_tag = sys.argv[2]
+
+with open(kustomization_file, 'r') as f:
+    content = f.read()
+
+self_built_images = [
+    'erechnung-web',
+    'erechnung-init',
+    'erechnung-celery',
+    'erechnung-frontend',
+    'erechnung-api-gateway',
+    'erechnung-postgres',
+]
+
+for img in self_built_images:
+    pattern = r'(- name: [^\n]*/{}[^\n]*\n    newTag: )[^\n]+'.format(re.escape(img))
+    replacement = r'\g<1>' + new_tag
+    content = re.sub(pattern, replacement, content)
+
+with open(kustomization_file, 'w') as f:
+    f.write(content)
+
+print(f"  Updated overlays/staging/kustomization.yaml → {new_tag}")
+PYEOF
+
+echo -e "${GREEN}✅ kustomization.yaml updated (production + staging)${NC}"
 
 # ---------------------------------------------------------------------------
-# Step 4: Apply kustomize config  →  kubectl apply -k
+# Step 4a: Deploy production namespace (erechnung)
 # ---------------------------------------------------------------------------
-echo -e "\n${GREEN}Step 4: Applying kustomize config to k3s...${NC}"
+echo -e "\n${GREEN}Step 4a: Deploying production namespace (erechnung)...${NC}"
 
 # Jobs are immutable once created — delete first so the job is recreated with
 # the new image and migrations are actually applied.
@@ -175,19 +206,41 @@ kubectl delete job django-init -n erechnung --ignore-not-found=true
 kubectl apply -k "$PROJECT_ROOT/infra/k8s/k3s/"
 
 # Wait for init job to finish before checking deployments
-echo -e "\n${GREEN}  Waiting for django-init job to complete...${NC}"
+echo -e "\n${GREEN}  Waiting for django-init job (production) to complete...${NC}"
 kubectl wait --for=condition=complete job/django-init -n erechnung --timeout=120s \
-    || { echo -e "${RED}❌ Init job failed or timed out — check logs:"; \
+    || { echo -e "${RED}❌ Init job (production) failed or timed out — check logs:"; \
          kubectl logs -n erechnung -l job-name=django-init --tail=50; exit 1; }
+
+# ---------------------------------------------------------------------------
+# Step 4b: Deploy staging namespace (erechnung-staging)
+# ---------------------------------------------------------------------------
+echo -e "\n${GREEN}Step 4b: Deploying staging namespace (erechnung-staging)...${NC}"
+
+echo "  Deleting old init job in staging (will be recreated)..."
+kubectl delete job django-init -n erechnung-staging --ignore-not-found=true
+
+kubectl kustomize --load-restrictor=LoadRestrictionsNone "$PROJECT_ROOT/infra/k8s/k3s/overlays/staging/" | kubectl apply -f -
+
+# Wait for staging init job
+echo -e "\n${GREEN}  Waiting for django-init job (staging) to complete...${NC}"
+kubectl wait --for=condition=complete job/django-init -n erechnung-staging --timeout=180s \
+    || { echo -e "${YELLOW}⚠️  Staging init job timed out — check logs (non-fatal):"; \
+         kubectl logs -n erechnung-staging -l job-name=django-init --tail=30; }
 
 # ---------------------------------------------------------------------------
 # Step 5: Wait for rollouts
 # ---------------------------------------------------------------------------
-echo -e "\n${GREEN}Step 5: Waiting for rollouts...${NC}"
+echo -e "\n${GREEN}Step 5: Waiting for rollouts (production)...${NC}"
 kubectl rollout status deployment/django-web    -n erechnung --timeout=180s
 kubectl rollout status deployment/celery-worker -n erechnung --timeout=180s
 kubectl rollout status deployment/frontend      -n erechnung --timeout=180s
 kubectl rollout status deployment/api-gateway   -n erechnung --timeout=180s
+
+echo -e "\n${GREEN}Step 5b: Waiting for rollouts (staging)...${NC}"
+kubectl rollout status deployment/django-web    -n erechnung-staging --timeout=180s
+kubectl rollout status deployment/celery-worker -n erechnung-staging --timeout=180s
+kubectl rollout status deployment/frontend      -n erechnung-staging --timeout=180s
+kubectl rollout status deployment/api-gateway   -n erechnung-staging --timeout=180s
 
 echo -e "\n${GREEN}╔════════════════════════════════════════════════╗${NC}"
 echo -e "${GREEN}║           Images Successfully Updated!         ║${NC}"
@@ -196,9 +249,13 @@ echo ""
 echo -e "${BLUE}🏷️  Deployed tag: ${TAG}${NC}"
 echo ""
 
-echo -e "${BLUE}📊 Current Status:${NC}"
+echo -e "${BLUE}📊 Current Status (production):${NC}"
 kubectl get pods -n erechnung
+echo ""
+echo -e "${BLUE}📊 Current Status (staging):${NC}"
+kubectl get pods -n erechnung-staging
 echo ""
 
 echo -e "${BLUE}📝 View logs:${NC}"
 echo "  kubectl logs -n erechnung -l app=django-web --tail=20 -f"
+echo "  kubectl logs -n erechnung-staging -l app=django-web --tail=20 -f"

@@ -1,14 +1,27 @@
 <template>
-  <BaseModal :is-open="true" @close="$emit('close')">
+  <BaseModal :is-open="true" @close="handleClose">
     <template #title>
       Rechnung bearbeiten
     </template>
 
-    <div v-if="loading" class="loading-state">
+    <!-- Lock denied by another user -->
+    <div v-if="lockError" class="lock-denied-state">
+      <p class="lock-denied-message">
+        ⚠️ Diese Rechnung wird gerade von
+        <strong>{{ lockError.editing_by }}</strong> bearbeitet
+        <span v-if="lockError.editing_since">
+          (seit {{ formatLockTime(lockError.editing_since) }})
+        </span>.
+      </p>
+      <p class="lock-denied-hint">Bitte versuchen Sie es später erneut.</p>
+    </div>
+
+    <!-- Normal loading / form -->
+    <div v-else-if="loading" class="loading-state">
       <p>Lädt Rechnung...</p>
     </div>
 
-    <form v-else @submit.prevent="handleSubmit" class="invoice-form">
+    <form v-else-if="!lockError" @submit.prevent="handleSubmit" class="invoice-form">
       <!-- Status (nur anzeigen, falls bereits versendet) -->
       <div v-if="formData.status !== 'draft'" class="form-group">
         <span class="form-label">Status</span>
@@ -366,12 +379,13 @@
         <BaseButton
           type="button"
           variant="secondary"
-          @click="$emit('close')"
+          @click="handleClose"
           :disabled="saving"
         >
-          Abbrechen
+          {{ lockError ? 'Schließen' : 'Abbrechen' }}
         </BaseButton>
         <BaseButton
+          v-if="!lockError"
           type="submit"
           variant="primary"
           @click="handleSubmit"
@@ -388,6 +402,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { invoiceService } from '@/api/services/invoiceService'
+import { useEditLock } from '@/composables/useEditLock'
 import { businessPartnerService } from '@/api/services/businessPartnerService'
 import { productService } from '@/api/services/productService'
 import { companyService } from '@/api/services/companyService'
@@ -407,6 +422,9 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'updated'])
+
+// Edit lock (ADR-024)
+const { lockError, acquireLock, releaseLock } = useEditLock(props.invoiceId)
 
 // State
 const loading = ref(true)
@@ -573,6 +591,16 @@ function addAllowanceCharge() {
 
 function removeAllowanceCharge(index) {
   formData.allowance_charges.splice(index, 1)
+}
+
+async function handleClose() {
+  await releaseLock()
+  emit('close')
+}
+
+function formatLockTime(iso) {
+  if (!iso) return ''
+  return new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
 }
 
 function formatCurrency(value) {
@@ -764,6 +792,7 @@ async function handleSubmit() {
     }
 
     emit('updated', updated)
+    await releaseLock()
     emit('close')
   } catch (error) {
     console.error('Fehler beim Aktualisieren der Rechnung:', error)
@@ -793,10 +822,32 @@ async function handleSubmit() {
 
 onMounted(() => {
   loadData()
+  acquireLock()
 })
 </script>
 
 <style scoped>
+/* Edit-Lock: Blocked-by-other-user state */
+.lock-denied-state {
+  padding: 2rem 1.5rem;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.lock-denied-message {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  color: #92400e;
+}
+
+.lock-denied-hint {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #78350f;
+}
+
 /* Gleiche Styles wie InvoiceCreateModal */
 .modal-title {
   font-size: 1.5rem;

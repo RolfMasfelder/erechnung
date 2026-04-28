@@ -36,6 +36,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .exceptions import (
+    EditLockError,
     FileServingError,
     InsufficientPermissionError,
     InvalidDateFormatError,
@@ -367,6 +368,86 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         "due_date",
         "total_amount",
     ]
+
+    def perform_update(self, serializer):
+        """Block PATCH/PUT if the invoice is locked by a different user."""
+        instance = serializer.instance
+        if instance.is_edit_locked_by_other(self.request.user):
+            holder = instance.editing_by
+            raise EditLockError(
+                detail={
+                    "editing_by": holder.get_full_name() or holder.username,
+                    "editing_since": instance.editing_since.isoformat() if instance.editing_since else None,
+                }
+            )
+        serializer.save()
+
+    @extend_schema(
+        description="Acquire the edit lock for this invoice. Returns 423 if already locked by another user.",
+        responses={
+            200: inline_serializer(
+                name="AcquireEditLockResponse",
+                fields={"message": serializers.CharField(), "editing_since": serializers.DateTimeField()},
+            ),
+            423: OpenApiResponse(description="Invoice is currently being edited by another user"),
+        },
+    )
+    @action(detail=True, methods=["post"], url_path="acquire_edit_lock")
+    def acquire_edit_lock(self, request, pk=None):
+        """Acquire the pessimistic edit lock. Must be called before opening the edit form."""
+        invoice = self.get_object()
+        success, holder = invoice.acquire_edit_lock(request.user)
+        if not success:
+            raise EditLockError(
+                detail={
+                    "editing_by": holder.get_full_name() or holder.username,
+                    "editing_since": invoice.editing_since.isoformat() if invoice.editing_since else None,
+                }
+            )
+        return Response(
+            {"message": "Bearbeitungssperre gesetzt.", "editing_since": invoice.editing_since},
+            status=status.HTTP_200_OK,
+        )
+
+    @extend_schema(
+        description="Release the edit lock held by the current user.",
+        responses={
+            200: inline_serializer(name="ReleaseEditLockResponse", fields={"message": serializers.CharField()})
+        },
+    )
+    @action(detail=True, methods=["post"], url_path="release_edit_lock")
+    def release_edit_lock(self, request, pk=None):
+        """Release the edit lock. No-op if the current user does not hold the lock."""
+        invoice = self.get_object()
+        invoice.release_edit_lock(request.user)
+        return Response({"message": "Bearbeitungssperre freigegeben."}, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        description="Refresh (extend) the edit lock held by the current user. Call every ~60 s as a heartbeat.",
+        responses={
+            200: inline_serializer(
+                name="RefreshEditLockResponse",
+                fields={"message": serializers.CharField(), "editing_since": serializers.DateTimeField()},
+            ),
+            423: OpenApiResponse(description="Lock is held by another user — cannot refresh"),
+        },
+    )
+    @action(detail=True, methods=["post"], url_path="refresh_edit_lock")
+    def refresh_edit_lock(self, request, pk=None):
+        """Heartbeat: extend the edit lock for another timeout period."""
+        invoice = self.get_object()
+        success, holder = invoice.acquire_edit_lock(request.user)
+        if not success:
+            raise EditLockError(
+                detail={
+                    "editing_by": holder.get_full_name() or holder.username,
+                    "editing_since": invoice.editing_since.isoformat() if invoice.editing_since else None,
+                }
+            )
+        return Response(
+            {"message": "Bearbeitungssperre verl\u00e4ngert.", "editing_since": invoice.editing_since},
+            status=status.HTTP_200_OK,
+        )
 
     @extend_schema(
         description="Generate and download PDF for the invoice",

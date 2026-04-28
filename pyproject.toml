@@ -1,6 +1,6 @@
 [project]
 name = "erechnung"
-version = "0.1.1"
+version = "0.1.4"
 description = "ZUGFeRD/Factur-X Rechnungssystem"
 
 [tool.ruff]
@@ -59,6 +59,7 @@ max-args = 7
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**" = ["PLR0915"]              # Tests can have many statements
 "**/utils/xml/generator.py" = ["PLR0912", "PLR0915"]  # XML generation is inherently complex
+"**/management/commands/generate_test_data.py" = ["PLR0915"]  # Test data generation is inherently verbose
 
 [tool.ruff.format]
 quote-style = "double"

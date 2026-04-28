@@ -41,6 +41,9 @@ spec:
         - name: nginx-config
           mountPath: /usr/local/openresty/nginx/conf/nginx.conf
           subPath: nginx.conf
+        - name: media
+          mountPath: /app/project_root/media
+          readOnly: true
         livenessProbe:
           httpGet:
             path: /gateway-health
@@ -68,3 +71,6 @@ spec:
       - name: nginx-config
         configMap:
           name: nginx-config
+      - name: media
+        persistentVolumeClaim:
+          claimName: media-pvc

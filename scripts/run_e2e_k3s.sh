@@ -8,13 +8,13 @@ set -e
 
 # Konfiguration
 K3S_HOST="192.168.178.200"
-K3S_HOSTNAME="erechnung.local"
+K3S_HOSTNAME="staging.erechnung.local"
 K3S_URL="https://${K3S_HOSTNAME}"
 CURL_RESOLVE="--resolve ${K3S_HOSTNAME}:443:${K3S_HOST} --resolve ${K3S_HOSTNAME}:80:${K3S_HOST}"
 TEST_USER="testuser"
 TEST_PASS="testpass123"
-MIN_INVOICES=60  # Minimum für Pagination-Tests
-E2E_NAMESPACE="${E2E_NAMESPACE:-erechnung}"
+MIN_INVOICES=25  # Minimum für Pagination-Tests (generate_test_data --preset standard erzeugt ~30)
+E2E_NAMESPACE="${E2E_NAMESPACE:-erechnung-staging}"
 E2E_IMAGE="${E2E_IMAGE:-mcr.microsoft.com/playwright:v1.59.1-noble}"
 E2E_WORKERS="${E2E_WORKERS:-1}"
 E2E_RETRIES="${E2E_RETRIES:-2}"
@@ -52,7 +52,7 @@ if ! check_http "$K3S_URL/health" 5; then
     echo "  ❌ FEHLER: k3s Cluster nicht erreichbar!"
     echo ""
     echo "  Mögliche Ursachen:"
-    echo "  - k3s Cluster läuft nicht: ssh rolf@192.168.178.80 'sudo k3s kubectl get pods -n erechnung'"
+    echo "  - k3s Cluster läuft nicht: ssh rolf@192.168.178.80 'sudo k3s kubectl get pods -n erechnung-staging'"
     echo "  - LoadBalancer IP nicht zugewiesen: kubectl get svc -n erechnung"
     echo "  - Application nicht deployed: kubectl get ingress -n erechnung"
     echo ""
@@ -122,7 +122,7 @@ if [ "$INVOICE_COUNT" -lt "$MIN_INVOICES" ]; then
     echo "  kubectl logs -n erechnung job/django-init"
     echo ""
     echo "  Manual fix (Django Shell in k3s):"
-    echo "  kubectl exec -n erechnung deploy/django-web -- python project_root/manage.py create_test_data --count=50"
+    echo "  kubectl exec -n erechnung deploy/django-web -- python project_root/manage.py generate_test_data --preset standard"
     echo ""
     read -p "  Trotzdem fortfahren? (y/N) " -n 1 -r
     echo ""
@@ -235,9 +235,9 @@ echo "View detailed results:"
 echo "  ls -la $ARTIFACT_DIR"
 echo ""
 echo "Check k3s cluster status:"
-echo "  kubectl get pods -n erechnung"
-echo "  kubectl logs -n erechnung deploy/django-web"
-echo "  kubectl logs -n erechnung deploy/frontend"
+echo "  kubectl get pods -n erechnung-staging"
+echo "  kubectl logs -n erechnung-staging deploy/django-web"
+echo "  kubectl logs -n erechnung-staging deploy/frontend"
 echo ""
 
 exit $TEST_EXIT_CODE

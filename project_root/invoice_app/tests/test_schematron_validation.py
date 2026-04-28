@@ -37,6 +37,7 @@ class TestSchematronSaxonBackend(TestCase):
             "issuer": {
                 "name": "Schematron Test GmbH",
                 "tax_id": "DE123456789",
+                "vat_id": "DE123456789",
                 "street_name": "Teststraße 1",
                 "city_name": "Berlin",
                 "postcode_code": "10115",

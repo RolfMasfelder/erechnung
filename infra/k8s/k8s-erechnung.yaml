@@ -218,7 +218,7 @@ spec:
       restartPolicy: OnFailure
       containers:
       - name: django-init
-        image: ghcr.io/rolfmasfelder/erechnung_django_app:KUSTOMIZE
+        image: ghcr.io/rolfmasfelder/erechnung:KUSTOMIZE
         command: ["./scripts/init_django.sh"]
         envFrom:
         - configMapRef:
@@ -256,7 +256,7 @@ spec:
     spec:
       containers:
       - name: django-web
-        image: ghcr.io/rolfmasfelder/erechnung_django_app:KUSTOMIZE
+        image: ghcr.io/rolfmasfelder/erechnung:KUSTOMIZE
         ports:
         - containerPort: 8000
         envFrom:
@@ -318,7 +318,7 @@ spec:
     spec:
       containers:
       - name: celery-worker
-        image: ghcr.io/rolfmasfelder/erechnung_django_app:KUSTOMIZE
+        image: ghcr.io/rolfmasfelder/erechnung:KUSTOMIZE
         command: ["celery", "-A", "project_root.invoice_project", "worker", "-l", "info"]
         envFrom:
         - configMapRef:

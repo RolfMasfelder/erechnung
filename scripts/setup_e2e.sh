@@ -39,11 +39,11 @@ docker images | grep -E "erechnung.*frontend-e2e|REPOSITORY" | head -2
 # 4. Browser-Verfügbarkeit prüfen
 echo ""
 echo "→ Verifying Playwright Installation:"
-docker run --rm erechnung_django_app-frontend-e2e:latest npx playwright --version
+docker run --rm erechnung-frontend-e2e:latest npx playwright --version
 
 echo ""
 echo "→ Installed Browsers:"
-docker run --rm erechnung_django_app-frontend-e2e:latest ls -1 /ms-playwright/ | grep -v "^\."
+docker run --rm erechnung-frontend-e2e:latest ls -1 /ms-playwright/ | grep -v "^\."
 
 # 5. Anweisungen
 echo ""

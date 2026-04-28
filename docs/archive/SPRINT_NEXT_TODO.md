@@ -11,7 +11,7 @@
 
 | Task | Status | Branch | PR | Abgeschlossen |
 |------|--------|--------|----|--------------|
-| **Task 5** | ✅ Erledigt | `fix/frontend-test-fixes` | [#14](https://github.com/RolfMasfelder/eRechnung_Django_App/pull/14) | 2025-12-24 |
+| **Task 5** | ✅ Erledigt | `fix/frontend-test-fixes` | [#14](https://github.com/RolfMasfelder/erechnung/pull/14) | 2025-12-24 |
 | **Task 1** | 🔄 In Arbeit | `sprint_next` | - | - |
 | **Task 2** | ⏳ Geplant | `sprint_next` | - | - |
 
@@ -545,7 +545,7 @@ docker-compose -f docker-compose.frontend.yml exec frontend npm test -- --run
 ### ✅ Task 5 Abgeschlossen (2025-12-24)
 - Alle 5 Test-Failures behoben
 - 253/253 Tests bestanden
-- PR #14 erstellt: https://github.com/RolfMasfelder/eRechnung_Django_App/pull/14
+- PR #14 erstellt: https://github.com/RolfMasfelder/erechnung/pull/14
 
 ---
 

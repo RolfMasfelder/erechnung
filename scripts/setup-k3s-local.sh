@@ -200,7 +200,7 @@ if ! ssh "$REMOTE_HOST" "docker ps --filter name=registry --format '{{.Names}}' 
           --name registry \
           --restart=always \
           -p 5000:5000 \
-          -v /home/rolf/workspace/eRechnung/eRechnung_Django_App/infra/api-gateway/certs:/certs \
+          -v /home/rolf/workspace/erechnung/infra/api-gateway/certs:/certs \
           -e REGISTRY_HTTP_ADDR=0.0.0.0:5000 \
           -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/localhost.crt \
           -e REGISTRY_HTTP_TLS_KEY=/certs/localhost.key \
@@ -233,9 +233,9 @@ echo -e "${BLUE}🏷️  Image tag: ${TAG}${NC}"
 
 # Tag all images for registry (versioned tags only — no :latest)
 echo "Tagging images for registry (192.168.178.80:5000) with tag ${TAG}..."
-docker tag erechnung_django_app-web:latest 192.168.178.80:5000/erechnung-web:$TAG
-docker tag erechnung_django_app-init:latest 192.168.178.80:5000/erechnung-init:$TAG
-docker tag erechnung_django_app-web:latest 192.168.178.80:5000/erechnung-celery:$TAG
+docker tag erechnung-web:latest 192.168.178.80:5000/erechnung-web:$TAG
+docker tag erechnung-init:latest 192.168.178.80:5000/erechnung-init:$TAG
+docker tag erechnung-web:latest 192.168.178.80:5000/erechnung-celery:$TAG
 docker tag erechnung-frontend:build 192.168.178.80:5000/erechnung-frontend:$TAG
 docker tag erechnung-api-gateway:build 192.168.178.80:5000/erechnung-api-gateway:$TAG
 docker tag erechnung-postgres:build 192.168.178.80:5000/erechnung-postgres:$TAG

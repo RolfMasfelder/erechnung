@@ -51,7 +51,7 @@ jobs:
           # Django .env
           cat > .env << EOF
           DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY || 'django-insecure-ci-dummy-key-for-e2e-testing-only' }}
-          DJANGO_DEBUG=False
+          DJANGO_DEBUG=True
           DJANGO_ALLOWED_HOSTS=localhost,api-gateway,web
           BEHIND_GATEWAY=false
           DATABASE_URL=postgresql://erechnung:erechnung@db:5432/erechnung_db
@@ -175,8 +175,9 @@ jobs:
       - name: Load test fixtures
         run: |
           # Country fixtures are already loaded via migration 0002_load_countries
-          # Just create test data (50 invoices, 25 business partners)
-          docker compose -f docker-compose.yml -f docker-compose.e2e.yml exec -T web python project_root/manage.py create_test_data
+          # generate_test_data: factory-based, creates GOVERNMENT partner + SENT invoices,
+          # and correctly advances the PostgreSQL sequence counter.
+          docker compose -f docker-compose.yml -f docker-compose.e2e.yml exec -T web python project_root/manage.py generate_test_data --preset standard
 
       - name: Install Playwright in Frontend container
         run: |

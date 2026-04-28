@@ -33,6 +33,6 @@ kubectl get nodes -o wide
 
 echo ""
 echo "🔧 Next steps:"
-echo "1. Install Calico: cd /home/rolf/workspace/eRechnung/eRechnung_Django_App/k8s/kind && ./fix-calico-remote.sh"
+echo "1. Install Calico: cd /home/rolf/workspace/erechnung/infra/k8s/kind && ./fix-calico-remote.sh"
 echo "2. Deploy app: kubectl apply -f k8s-erechnung-local.yaml"
 echo "3. Apply Network Policies: kubectl apply -f network-policies.yaml"

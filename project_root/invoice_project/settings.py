@@ -330,6 +330,10 @@ XML_OUTPUT_DIR = os.path.join(MEDIA_ROOT, "xml")
 # generation to a background worker instead of blocking the request cycle.
 ENABLE_ASYNC_PDF = os.getenv("ENABLE_ASYNC_PDF", "False").lower() == "true"
 
+# Invoice Edit Lock — Pessimistic application-level locking for concurrent edits.
+# Locks expire automatically after this many minutes (protects against abandoned sessions).
+INVOICE_EDIT_LOCK_TIMEOUT_MINUTES = int(os.getenv("INVOICE_EDIT_LOCK_TIMEOUT_MINUTES", "30"))
+
 # Note: Directories are created by init script, not during settings import
 
 # XML Validation Settings

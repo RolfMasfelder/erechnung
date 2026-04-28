@@ -45,6 +45,25 @@ kubectl logs -n erechnung deployment/django-web -f
 
 ---
 
+## Docker Compose Files Reference
+
+| File | Purpose | Usage |
+|------|---------|-------|
+| `docker-compose.yml` | **Base configuration** — core services: Django backend, PostgreSQL, Redis | `docker compose up -d` |
+| `docker-compose.dev.yml` | **Development** — Django exposed directly (no API Gateway, faster iteration) | `docker compose -f docker-compose.dev.yml up -d` |
+| `docker-compose.dev-volumes.yml` | **Development overlay** — adds host volume mounts for live code reload | `docker compose -f docker-compose.yml -f docker-compose.dev-volumes.yml up -d` |
+| `docker-compose.frontend.yml` | **Frontend dev server** — Vite dev server + API Gateway with HTTPS | `docker compose -f docker-compose.frontend.yml up -d` |
+| `docker-compose.production.yml` | **Production** — API Gateway, Docker Secrets support, production hardening | `docker compose -f docker-compose.production.yml up -d` |
+| `docker-compose.secrets.yml` | **Production with GitHub Secrets** — reads credentials from `secrets/` directory | `docker compose -f docker-compose.secrets.yml up -d` |
+| `docker-compose.monitoring.yml` | **Monitoring overlay** — adds Prometheus, Grafana, Loki to any stack | `docker compose -f docker-compose.yml -f docker-compose.monitoring.yml up -d` |
+| `docker-compose.e2e.yml` | **E2E tests** — Playwright container, uses existing backend services | `cd scripts && ./run_e2e_container.sh` |
+| `docker-compose.backup-test.yml` | **Backup testing** — isolated PostgreSQL instance for restore verification | `cd scripts && ./backup_restore_test.sh` |
+| `docker-compose.update-test.yml` | **Update tests** — fully isolated environment (own ports/network/volumes) | `cd scripts && ./run-update-tests.sh` |
+
+> Overlay files (`dev-volumes`, `monitoring`) always require the base `docker-compose.yml` to be included first with `-f`.
+
+---
+
 ## Django Management Commands
 
 All commands must run inside the Docker container:

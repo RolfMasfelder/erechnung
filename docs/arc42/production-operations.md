@@ -167,7 +167,7 @@ docker compose exec web python project_root/manage.py backup_database
 **Cron einrichten:**
 ```bash
 # /etc/cron.d/erechnung-backup
-0 2 * * * root cd /path/to/eRechnung_Django_App && ./scripts/backup.sh >> /var/log/erechnung-backup.log 2>&1
+0 2 * * * root cd /path/to/erechnung && ./scripts/backup.sh >> /var/log/erechnung-backup.log 2>&1
 ```
 
 ### Backup-Verzeichnisstruktur

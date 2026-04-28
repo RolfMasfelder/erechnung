@@ -3,7 +3,7 @@ pgTAP Database Tests — direkt in der PostgreSQL-Datenbank ausgeführt.
 
 Zwei Testklassen:
   PgTAPSchemaTests        — Struktur-/Schema-Tests (keine Testdaten nötig)
-  PgTAPBusinessLogicTests — Daten-Integritäts-Tests (benötigen create_test_data)
+  PgTAPBusinessLogicTests — Daten-Integritäts-Tests (benötigen generate_test_data)
 
 Die SQL-Dateien liegen in postgres/tests/ und können auch direkt via psql
 ausgeführt werden:
@@ -163,7 +163,7 @@ class PgTAPBusinessLogicTests(TransactionTestCase):
     """
     Prüft Daten-Integrität und Business-Logik direkt in der Datenbank.
 
-    Verwendet TransactionTestCase weil create_test_data außerhalb einer
+    Verwendet TransactionTestCase weil generate_test_data außerhalb einer
     Django-Testanweisung Daten persistent schreiben muss, damit die
     pgTAP-Abfragen sie sehen können.
 
@@ -179,13 +179,13 @@ class PgTAPBusinessLogicTests(TransactionTestCase):
     def setUpClass(cls):
         super().setUpClass()
         _ensure_extensions()
-        # Testdaten anlegen (5 Einheiten für kurze Laufzeit)
-        call_command("create_test_data", "--count", "5", verbosity=0)
+        # Testdaten anlegen (minimal preset = 5 invoices, kurze Laufzeit)
+        call_command("generate_test_data", "--preset", "minimal", verbosity=0)
 
     @classmethod
     def tearDownClass(cls):
-        # Testdaten direkt via ORM löschen — create_test_data --clear würde
-        # anschließend auch neue Daten anlegen (count=25) und dabei nach
+        # Testdaten direkt via ORM löschen — generate_test_data --clear würde
+        # anschließend auch neue Daten anlegen und dabei nach
         # Country 'DE' suchen, die in der Test-DB nicht existiert.
         from invoice_app.models import BusinessPartner, Company, Invoice, InvoiceLine, Product
 

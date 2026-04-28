@@ -90,6 +90,9 @@ export const invoiceFields = createFieldMapper({
     cancelled_by_id:       'cancelled_by_id',
     cancels_invoice_number:'cancels_invoice_number',
     cancels_invoice_id:    'cancels_invoice_id',
+    // Concurrent Edit Lock (read-only, set by server)
+    editing_by_display:    'editing_by_display',
+    editing_since:         'editing_since',
   },
 })
 

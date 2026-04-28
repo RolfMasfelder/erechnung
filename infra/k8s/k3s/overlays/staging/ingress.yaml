@@ -1,0 +1,31 @@
+---
+# Ingress für Staging-Namespace (staging.erechnung.local)
+# TLS via selber CA wie Produktion (ClusterIssuer erechnung-ca-issuer)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: erechnung-ingress
+  namespace: erechnung-staging
+  annotations:
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$binary_remote_addr"
+    nginx.ingress.kubernetes.io/service-upstream: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "erechnung-ca-issuer"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - staging.erechnung.local
+    secretName: erechnung-staging-tls
+  rules:
+  - host: staging.erechnung.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: api-gateway-service
+            port:
+              number: 80

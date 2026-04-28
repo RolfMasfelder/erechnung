@@ -471,6 +471,9 @@ class InvoiceSerializer(serializers.ModelSerializer):
     cancels_invoice_number = serializers.SerializerMethodField()
     cancels_invoice_id = serializers.SerializerMethodField()
 
+    # Concurrent Edit Lock
+    editing_by_display = serializers.SerializerMethodField()
+
     @extend_schema_field(serializers.CharField(allow_null=True))
     def get_cancels_invoice_number(self, obj):
         try:
@@ -489,6 +492,14 @@ class InvoiceSerializer(serializers.ModelSerializer):
     def get_allowance_charges(self, obj):
         qs = obj.allowance_charges.filter(invoice_line__isnull=True)
         return InvoiceAllowanceChargeSerializer(qs, many=True).data
+
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_editing_by_display(self, obj):
+        """Return the display name of the user currently editing this invoice, or None."""
+        if obj.editing_by_id is None:
+            return None
+        user = obj.editing_by
+        return user.get_full_name() or user.username
 
     class Meta:
         model = Invoice
@@ -538,6 +549,9 @@ class InvoiceSerializer(serializers.ModelSerializer):
             "cancelled_by_id",
             "cancels_invoice_number",
             "cancels_invoice_id",
+            # Concurrent Edit Lock
+            "editing_by_display",
+            "editing_since",
         ]
         read_only_fields = [
             "pdf_file",
@@ -556,6 +570,8 @@ class InvoiceSerializer(serializers.ModelSerializer):
             "cancelled_by_id",
             "cancels_invoice_number",
             "cancels_invoice_id",
+            "editing_by_display",
+            "editing_since",
         ]
 
     def validate(self, attrs):

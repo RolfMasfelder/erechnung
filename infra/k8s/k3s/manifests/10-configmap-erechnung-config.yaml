@@ -35,4 +35,4 @@ data:
   BEHIND_GATEWAY: "true"
   # Init job bootstrap flags (disabled by default)
   INIT_CREATE_ADMIN: "false"
-  INIT_CREATE_TEST_DATA: "true"
+  INIT_CREATE_TEST_DATA: "false"

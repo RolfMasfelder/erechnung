@@ -5,7 +5,7 @@ Electronic invoice management system compliant with ZUGFeRD/Factur-X (EN 16931).
 ## Quick Start
 
 ```bash
-git clone <repository-url> && cd eRechnung_Django_App
+git clone <repository-url> && cd erechnung
 cd scripts && ./generate-secrets.sh && cd ..
 cd scripts && ./start_app.sh
 ```

@@ -40,7 +40,7 @@ jobs:
         python-version: '3.13'
 
     - name: Install ruff
-      run: pip install ruff
+      run: pip install ruff==0.15.12
 
     - name: Ruff lint check
       run: ruff check project_root/
@@ -137,8 +137,8 @@ jobs:
 
     - name: Create test data for E2E tests
       run: |
-        echo "📊 Creating test data (25 partners, 25 products, 50 invoices)..."
-        docker compose exec -T web bash -lc 'cd /app && set -a; [ -f ./.env ] && . ./.env; set +a; python project_root/manage.py create_test_data --count=25'
+        echo "📊 Creating test data (standard preset: 15 partners, 20 products, 30 invoices)..."
+        docker compose exec -T web bash -lc 'cd /app && set -a; [ -f ./.env ] && . ./.env; set +a; python project_root/manage.py generate_test_data --preset standard'
         echo "✅ Test data created successfully"
 
     - name: Run comprehensive test suite with coverage
