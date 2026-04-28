@@ -249,7 +249,9 @@ const loadInvoices = async () => {
     }
 
     // Debug: Query-Parameter ausgeben
-    console.log('API Query Parameters:', params)
+    if (import.meta.env.DEV) {
+      console.log('API Query Parameters:', params)
+    }
 
     const response = await invoiceService.getAll(params)
 

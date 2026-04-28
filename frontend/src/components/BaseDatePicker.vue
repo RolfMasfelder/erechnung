@@ -202,7 +202,9 @@ const handleUpdate = (value) => {
       emit('update:modelValue', [startDate, endDate])
     } else {
       // Unvollständige Range nicht emittieren
-      console.log('Unvollständige Range-Auswahl, warten auf zweites Datum')
+      if (import.meta.env.DEV) {
+        console.log('Unvollständige Range-Auswahl, warten auf zweites Datum')
+      }
     }
   }
   // Für Einzel-Datum: Als YYYY-MM-DD String emittieren (API-kompatibel)
