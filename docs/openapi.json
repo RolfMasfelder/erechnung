@@ -1435,6 +1435,57 @@
                 }
             }
         },
+        "/api/gdpdu/export/": {
+            "get": {
+                "operationId": "gdpdu_export_retrieve",
+                "description": "GDPdU/IDEA-Export der Rechnungen im angegebenen Zeitraum als ZIP (index.xml + CSV-Tabellen). Nur für Administratoren.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "end",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Enddatum (inklusive), Format YYYY-MM-DD",
+                        "required": true
+                    },
+                    {
+                        "in": "query",
+                        "name": "start",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Startdatum (inklusive), Format YYYY-MM-DD",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "gdpdu"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ZIP archive (application/zip)"
+                    },
+                    "400": {
+                        "description": "Invalid query parameters"
+                    }
+                }
+            }
+        },
         "/api/gdpr/consent-records/": {
             "get": {
                 "operationId": "gdpr_consent_records_list",
@@ -4483,6 +4534,74 @@
                 }
             }
         },
+        "/api/invoices/{id}/acquire_edit_lock/": {
+            "post": {
+                "operationId": "invoices_acquire_edit_lock_create",
+                "description": "Acquire the edit lock for this invoice. Returns 423 if already locked by another user.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this Invoice.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "invoices"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AcquireEditLockResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "423": {
+                        "description": "Invoice is currently being edited by another user"
+                    }
+                }
+            }
+        },
         "/api/invoices/{id}/cancel/": {
             "post": {
                 "operationId": "invoices_cancel_create",
@@ -4832,6 +4951,207 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/MarkAsPaidResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/invoices/{id}/mark_as_sent/": {
+            "post": {
+                "operationId": "invoices_mark_as_sent_create",
+                "description": "Mark the invoice as sent (DRAFT → SENT). GoBD: auto-locks the invoice.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this Invoice.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "invoices"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarkAsSentResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "description": "Invoice is not in DRAFT status"
+                    }
+                }
+            }
+        },
+        "/api/invoices/{id}/refresh_edit_lock/": {
+            "post": {
+                "operationId": "invoices_refresh_edit_lock_create",
+                "description": "Refresh (extend) the edit lock held by the current user. Call every ~60 s as a heartbeat.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this Invoice.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "invoices"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RefreshEditLockResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "423": {
+                        "description": "Lock is held by another user — cannot refresh"
+                    }
+                }
+            }
+        },
+        "/api/invoices/{id}/release_edit_lock/": {
+            "post": {
+                "operationId": "invoices_release_edit_lock_create",
+                "description": "Release the edit lock held by the current user.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this Invoice.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "invoices"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReleaseEditLockResponse"
                                 }
                             }
                         },
@@ -5559,6 +5879,22 @@
     },
     "components": {
         "schemas": {
+            "AcquireEditLockResponse": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "editing_since": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "editing_since",
+                    "message"
+                ]
+            },
             "ActionEnum": {
                 "enum": [
                     "CREATE",
@@ -7199,6 +7535,18 @@
                         "type": "integer",
                         "nullable": true,
                         "readOnly": true
+                    },
+                    "editing_by_display": {
+                        "type": "string",
+                        "nullable": true,
+                        "readOnly": true
+                    },
+                    "editing_since": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true,
+                        "title": "In Bearbeitung seit"
                     }
                 },
                 "required": [
@@ -7213,6 +7561,8 @@
                     "company_details",
                     "content_hash",
                     "created_at",
+                    "editing_by_display",
+                    "editing_since",
                     "id",
                     "invoice_number",
                     "invoice_type_display",
@@ -7737,6 +8087,17 @@
                 "description": "* `SENT` - Versendet\n* `PAID` - Bezahlt\n* `CANCELLED` - Storniert\n* `MANUAL` - Manuell gesperrt"
             },
             "MarkAsPaidResponse": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "message"
+                ]
+            },
+            "MarkAsSentResponse": {
                 "type": "object",
                 "properties": {
                     "message": {
@@ -9794,6 +10155,33 @@
                 ],
                 "type": "string",
                 "description": "* `analytics` - Nutzungsanalyse\n* `newsletter` - Newsletter\n* `profiling` - Profiling\n* `third_party` - Weitergabe an Dritte"
+            },
+            "RefreshEditLockResponse": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "editing_since": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "editing_since",
+                    "message"
+                ]
+            },
+            "ReleaseEditLockResponse": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "message"
+                ]
             },
             "RequestTypeEnum": {
                 "enum": [
