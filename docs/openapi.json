@@ -304,6 +304,57 @@
                 }
             }
         },
+        "/api/auth/change-password/": {
+            "post": {
+                "operationId": "auth_change_password_create",
+                "description": "Change the authenticated user's password.",
+                "tags": [
+                    "auth"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangePasswordRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangePasswordRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangePasswordRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Password changed"
+                    },
+                    "400": {
+                        "description": "Invalid current password or weak new password"
+                    }
+                }
+            }
+        },
         "/api/auth/token/": {
             "post": {
                 "operationId": "auth_token_create",
@@ -5789,6 +5840,176 @@
                 }
             }
         },
+        "/api/system/info/": {
+            "get": {
+                "operationId": "system_info_retrieve",
+                "description": "Return non-sensitive system info (version, runtime).",
+                "tags": [
+                    "system"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "System info object"
+                    }
+                }
+            }
+        },
+        "/api/user-settings/me/": {
+            "get": {
+                "operationId": "user_settings_me_retrieve",
+                "description": "Get the authenticated user's preferences.",
+                "tags": [
+                    "user-settings"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserSettings"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "description": "No profile assigned to this user"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "user_settings_me_update",
+                "description": "Replace all preference fields of the authenticated user.",
+                "tags": [
+                    "user-settings"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserSettingsRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserSettingsRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserSettingsRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserSettings"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "user_settings_me_partial_update",
+                "description": "Update individual preference fields of the authenticated user.",
+                "tags": [
+                    "user-settings"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedUserSettingsRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedUserSettingsRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedUserSettingsRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserSettings"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/health/detailed/": {
             "get": {
                 "operationId": "health_detailed_retrieve",
@@ -6540,6 +6761,25 @@
                     "message"
                 ]
             },
+            "ChangePasswordRequest": {
+                "type": "object",
+                "properties": {
+                    "current_password": {
+                        "type": "string",
+                        "writeOnly": true,
+                        "minLength": 1
+                    },
+                    "new_password": {
+                        "type": "string",
+                        "writeOnly": true,
+                        "minLength": 8
+                    }
+                },
+                "required": [
+                    "current_password",
+                    "new_password"
+                ]
+            },
             "CleanupExpiredResponse": {
                 "type": "object",
                 "properties": {
@@ -7245,6 +7485,16 @@
                     "subject_name",
                     "subject_type"
                 ]
+            },
+            "DateFormatEnum": {
+                "enum": [
+                    "%Y-%m-%d",
+                    "%d.%m.%Y",
+                    "%m/%d/%Y",
+                    "%d/%m/%Y"
+                ],
+                "type": "string",
+                "description": "* `%Y-%m-%d` - YYYY-MM-DD\n* `%d.%m.%Y` - DD.MM.YYYY\n* `%m/%d/%Y` - MM/DD/YYYY\n* `%d/%m/%Y` - DD/MM/YYYY"
             },
             "DpiaAssessmentStatusEnum": {
                 "enum": [
@@ -8064,6 +8314,16 @@
                 ],
                 "type": "string",
                 "description": "* `INVOICE` - Invoice\n* `CREDIT_NOTE` - Credit Note\n* `DEBIT_NOTE` - Debit Note\n* `CORRECTED` - Corrected Invoice\n* `PARTIAL` - Partial Invoice\n* `FINAL` - Final Invoice"
+            },
+            "LanguageEnum": {
+                "enum": [
+                    "en",
+                    "de",
+                    "fr",
+                    "es"
+                ],
+                "type": "string",
+                "description": "* `en` - English\n* `de` - German\n* `fr` - French\n* `es` - Spanish"
             },
             "LegalBasisEnum": {
                 "enum": [
@@ -9353,6 +9613,45 @@
                     }
                 }
             },
+            "PatchedUserSettingsRequest": {
+                "type": "object",
+                "description": "User-editable preferences. Excludes security fields (mfa, lock, etc.).",
+                "properties": {
+                    "language": {
+                        "$ref": "#/components/schemas/LanguageEnum"
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 50
+                    },
+                    "date_format": {
+                        "$ref": "#/components/schemas/DateFormatEnum"
+                    },
+                    "email_notifications": {
+                        "type": "boolean"
+                    },
+                    "notify_invoice_paid": {
+                        "type": "boolean",
+                        "title": "Notify on Invoice Paid"
+                    },
+                    "notify_invoice_overdue": {
+                        "type": "boolean",
+                        "title": "Notify on Invoice Overdue"
+                    },
+                    "default_currency": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 3
+                    },
+                    "default_payment_terms_days": {
+                        "type": "integer",
+                        "maximum": 2147483647,
+                        "minimum": 0,
+                        "title": "Default Payment Terms (days)"
+                    }
+                }
+            },
             "PrivacyImpactAssessment": {
                 "type": "object",
                 "description": "Serializer for Privacy Impact Assessments.",
@@ -10296,6 +10595,94 @@
                     "operation",
                     "quantity"
                 ]
+            },
+            "UserSettings": {
+                "type": "object",
+                "description": "User-editable preferences. Excludes security fields (mfa, lock, etc.).",
+                "properties": {
+                    "username": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "language": {
+                        "$ref": "#/components/schemas/LanguageEnum"
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "date_format": {
+                        "$ref": "#/components/schemas/DateFormatEnum"
+                    },
+                    "email_notifications": {
+                        "type": "boolean"
+                    },
+                    "notify_invoice_paid": {
+                        "type": "boolean",
+                        "title": "Notify on Invoice Paid"
+                    },
+                    "notify_invoice_overdue": {
+                        "type": "boolean",
+                        "title": "Notify on Invoice Overdue"
+                    },
+                    "default_currency": {
+                        "type": "string",
+                        "maxLength": 3
+                    },
+                    "default_payment_terms_days": {
+                        "type": "integer",
+                        "maximum": 2147483647,
+                        "minimum": 0,
+                        "title": "Default Payment Terms (days)"
+                    }
+                },
+                "required": [
+                    "email",
+                    "username"
+                ]
+            },
+            "UserSettingsRequest": {
+                "type": "object",
+                "description": "User-editable preferences. Excludes security fields (mfa, lock, etc.).",
+                "properties": {
+                    "language": {
+                        "$ref": "#/components/schemas/LanguageEnum"
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 50
+                    },
+                    "date_format": {
+                        "$ref": "#/components/schemas/DateFormatEnum"
+                    },
+                    "email_notifications": {
+                        "type": "boolean"
+                    },
+                    "notify_invoice_paid": {
+                        "type": "boolean",
+                        "title": "Notify on Invoice Paid"
+                    },
+                    "notify_invoice_overdue": {
+                        "type": "boolean",
+                        "title": "Notify on Invoice Overdue"
+                    },
+                    "default_currency": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 3
+                    },
+                    "default_payment_terms_days": {
+                        "type": "integer",
+                        "maximum": 2147483647,
+                        "minimum": 0,
+                        "title": "Default Payment Terms (days)"
+                    }
+                }
             }
         },
         "securitySchemes": {
