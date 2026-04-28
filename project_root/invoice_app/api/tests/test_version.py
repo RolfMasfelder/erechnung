@@ -1,8 +1,18 @@
 """Tests for the /api/version/ endpoint."""
 
+import tomllib
+from pathlib import Path
+
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
+
+
+def _pyproject_version() -> str:
+    """Load the project version from pyproject.toml at runtime."""
+    pyproject_path = Path(__file__).resolve().parents[4] / "pyproject.toml"
+    with pyproject_path.open("rb") as fh:
+        return tomllib.load(fh)["project"]["version"]
 
 
 class VersionEndpointTest(TestCase):
@@ -44,7 +54,7 @@ class VersionEndpointTest(TestCase):
         response = self.client.get(self.url)
         data = response.json()
 
-        self.assertEqual(data["version"], "1.0.0")
+        self.assertEqual(data["version"], _pyproject_version())
 
     def test_only_get_allowed(self):
         """POST/PUT/DELETE are not allowed."""
