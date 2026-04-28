@@ -5,6 +5,7 @@ import AppLayout from '@/components/AppLayout.vue'
 import ToastContainer from '@/components/ToastContainer.vue'
 import BaseConfirmDialog from '@/components/BaseConfirmDialog.vue'
 import ErrorBoundary from '@/components/ErrorBoundary.vue'
+import OfflineBanner from '@/components/OfflineBanner.vue'
 import { useConfirm } from '@/composables/useConfirm'
 import { useNetworkStatus } from '@/composables/useNetworkStatus'
 
@@ -21,6 +22,7 @@ const useLayout = computed(() => !publicRoutes.includes(route.name))
 
 <template>
   <div id="app">
+    <OfflineBanner />
     <ErrorBoundary>
       <AppLayout v-if="useLayout">
         <router-view />
