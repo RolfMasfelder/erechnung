@@ -237,3 +237,19 @@ export const attachmentFields = createFieldMapper({
     attachment_type: 'attachment_type',
   },
 })
+
+// -- User Settings ----------------------------------------------------------
+export const userSettingsFields = createFieldMapper({
+  UI_TO_API: {
+    username:                    'username',
+    email:                       'email',
+    language:                    'language',
+    timezone:                    'timezone',
+    date_format:                 'date_format',
+    email_notifications:         'email_notifications',
+    notify_invoice_paid:         'notify_invoice_paid',
+    notify_invoice_overdue:      'notify_invoice_overdue',
+    default_currency:            'default_currency',
+    default_payment_terms_days:  'default_payment_terms_days',
+  },
+})
