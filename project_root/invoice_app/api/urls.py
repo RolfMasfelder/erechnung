@@ -25,6 +25,7 @@ from .rest_views import (
     ProductViewSet,
     RetentionSummaryView,
 )
+from .views.gdpdu_export_view import GDPdUExportView
 from .views.version_view import VersionView
 
 router = DefaultRouter()
@@ -62,6 +63,8 @@ urlpatterns = [
         RetentionSummaryView.as_view(),
         name="api-compliance-retention-summary",
     ),
+    # GDPdU / IDEA export (§147 AO)
+    path("gdpdu/export/", GDPdUExportView.as_view(), name="api-gdpdu-export"),
     # Router endpoints last
     path("", include(router.urls)),
 ]
