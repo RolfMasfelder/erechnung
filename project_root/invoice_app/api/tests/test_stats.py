@@ -9,7 +9,6 @@ from invoice_app.models import BusinessPartner, Company, Country, Invoice, Produ
 from rest_framework import status
 from rest_framework.test import APIClient
 
-
 User = get_user_model()
 
 
