@@ -696,11 +696,13 @@ async function loadData() {
       ? companiesResponse
       : (companiesResponse.results || [])
 
-    console.log('Geladene Daten (Edit):', {
-      customers: customers.value.length,
-      products: products.value.length,
-      companies: companies.value.length
-    })
+    if (import.meta.env.DEV) {
+      console.log('Geladene Daten (Edit):', {
+        customers: customers.value.length,
+        products: products.value.length,
+        companies: companies.value.length
+      })
+    }
 
     // Warnung bei leeren Daten
     if (customers.value.length === 0) {

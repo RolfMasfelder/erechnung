@@ -541,11 +541,13 @@ async function loadData() {
       ? companiesResponse
       : (companiesResponse.results || [])
 
-    console.log('Geladene Daten:', {
-      customers: customers.value.length,
-      products: products.value.length,
-      companies: companies.value.length
-    })
+    if (import.meta.env.DEV) {
+      console.log('Geladene Daten:', {
+        customers: customers.value.length,
+        products: products.value.length,
+        companies: companies.value.length
+      })
+    }
 
     // Wenn nur eine Firma vorhanden ist, automatisch auswählen
     if (companies.value.length === 1) {

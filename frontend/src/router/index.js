@@ -101,10 +101,14 @@ router.beforeEach((to, from, next) => {
   }
 
   if (to.meta.requiresAuth && !isAuthenticated) {
-    console.log('🚫 Access denied - redirecting to login')
+    if (import.meta.env.DEV) {
+      console.log('🚫 Access denied - redirecting to login')
+    }
     next({ name: 'Login', query: { redirect: to.fullPath } })
   } else if (to.name === 'Login' && isAuthenticated) {
-    console.log('✅ Already authenticated - redirecting to dashboard')
+    if (import.meta.env.DEV) {
+      console.log('✅ Already authenticated - redirecting to dashboard')
+    }
     next({ name: 'Dashboard' })
   } else {
     next()
