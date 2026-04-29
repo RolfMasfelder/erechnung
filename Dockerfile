@@ -1,4 +1,4 @@
-FROM python:3.13-slim-bookworm AS base
+FROM python:3.13.13-slim-bookworm AS base
 
 # Build arguments for versioning
 ARG APP_VERSION=1.0.0
