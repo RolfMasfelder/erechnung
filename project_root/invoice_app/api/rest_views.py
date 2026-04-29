@@ -816,18 +816,23 @@ class InvoiceViewSet(viewsets.ModelViewSet):
                 user=request.user,
             )
         except EmailDisabledError as exc:
+            logger.warning("Email sending disabled for invoice %s: %s", invoice.id, exc)
             return Response(
-                {"detail": str(exc)},
+                {"detail": "E-Mail-Versand ist derzeit nicht verfügbar."},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         except EmailDeliveryError as exc:
             logger.error("SMTP delivery failed for invoice %s: %s", invoice.id, exc)
             return Response(
-                {"detail": f"E-Mail-Versand fehlgeschlagen: {exc}"},
+                {"detail": "E-Mail-Versand fehlgeschlagen. Bitte später erneut versuchen."},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         except ValueError as exc:
-            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+            logger.warning("Invalid email send request for invoice %s: %s", invoice.id, exc)
+            return Response(
+                {"detail": "Ungültige Anfrageparameter für den E-Mail-Versand."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         return Response(
             {
