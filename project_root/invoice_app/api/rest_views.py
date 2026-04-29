@@ -822,7 +822,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         except EmailDeliveryError as exc:
             logger.error("SMTP delivery failed for invoice %s: %s", invoice.id, exc)
             return Response(
-                {"detail": f"E-Mail-Versand fehlgeschlagen: {exc}"},
+                {"detail": "E-Mail-Versand fehlgeschlagen. Bitte später erneut versuchen."},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         except ValueError as exc:
