@@ -5211,6 +5211,78 @@
                 }
             }
         },
+        "/api/invoices/{id}/send_email/": {
+            "post": {
+                "operationId": "invoices_send_email_create",
+                "description": "Rechnung per E-Mail versenden. PDF/A-3 wird immer angehängt und enthält die ZUGFeRD/Factur-X XML bereits eingebettet (EN16931-konform). Über attach_xml=true kann die XML zusätzlich als separates Attachment verschickt werden (nur für reine XRechnung-Workflows empfohlen). Erfordert eine konfigurierte SMTP-Verbindung; schlägt fehl, wenn INVOICE_EMAIL_ENABLED=False.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this Invoice.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "invoices"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendInvoiceEmailRequestRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendInvoiceEmailRequestRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendInvoiceEmailRequestRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SendInvoiceEmailResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Ungültige Eingabe (z. B. fehlender Empfänger)"
+                    },
+                    "503": {
+                        "description": "E-Mail-Versand deaktiviert oder SMTP-Fehler"
+                    }
+                }
+            }
+        },
         "/api/products/": {
             "get": {
                 "operationId": "products_list",
@@ -10503,6 +10575,59 @@
                 ],
                 "type": "string",
                 "description": "* `low` - Niedrig\n* `medium` - Mittel\n* `high` - Hoch\n* `critical` - Kritisch"
+            },
+            "SendInvoiceEmailRequestRequest": {
+                "type": "object",
+                "properties": {
+                    "recipient": {
+                        "type": "string",
+                        "format": "email",
+                        "minLength": 1
+                    },
+                    "message": {
+                        "type": "string",
+                        "default": ""
+                    },
+                    "attach_xml": {
+                        "type": "boolean",
+                        "default": false
+                    }
+                },
+                "required": [
+                    "recipient"
+                ]
+            },
+            "SendInvoiceEmailResponse": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "recipient": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "subject": {
+                        "type": "string"
+                    },
+                    "attached_files": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "sent_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "attached_files",
+                    "message",
+                    "recipient",
+                    "sent_at",
+                    "subject"
+                ]
             },
             "SeverityEnum": {
                 "enum": [

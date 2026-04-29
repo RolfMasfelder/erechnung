@@ -246,6 +246,19 @@ class Invoice(models.Model):
         verbose_name=_("Storniert durch"),
     )
 
+    # ── E-Mail-Versand ───────────────────────────────────────────────────────
+    last_emailed_at = models.DateTimeField(
+        _("Zuletzt per E-Mail versendet am"),
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+    last_email_recipient = models.EmailField(
+        _("Letzter E-Mail-Empfänger"),
+        max_length=254,
+        blank=True,
+    )
+
     # Default managers: exclude archived by default
     objects = models.Manager()  # includes archived
 
@@ -294,6 +307,12 @@ class Invoice(models.Model):
                     "cancelled_by_id",
                     "is_archived",
                     "archived_at",
+                    "last_emailed_at",
+                    "last_email_recipient",
+                    # PDF/XML are derived artifacts (re)generated on demand,
+                    # not legally relevant content per GoBD §7.1.
+                    "pdf_file",
+                    "xml_file",
                 }
                 changed_fields = set()
                 for field in self._meta.fields:

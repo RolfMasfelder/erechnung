@@ -742,6 +742,102 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        description=(
+            "Rechnung per E-Mail versenden. PDF/A-3 wird immer angehängt und "
+            "enthält die ZUGFeRD/Factur-X XML bereits eingebettet (EN16931-konform). "
+            "Über attach_xml=true kann die XML zusätzlich als separates Attachment "
+            "verschickt werden (nur für reine XRechnung-Workflows empfohlen). "
+            "Erfordert eine konfigurierte SMTP-Verbindung; "
+            "schlägt fehl, wenn INVOICE_EMAIL_ENABLED=False."
+        ),
+        request=inline_serializer(
+            name="SendInvoiceEmailRequest",
+            fields={
+                "recipient": serializers.EmailField(required=True),
+                "message": serializers.CharField(required=False, allow_blank=True, default=""),
+                # Default False: PDF/A-3 already embeds the ZUGFeRD/Factur-X XML.
+                # Setting to True ships the XML as a separate attachment too
+                # (use only for pure XRechnung workflows).
+                "attach_xml": serializers.BooleanField(required=False, default=False),
+            },
+        ),
+        responses={
+            200: inline_serializer(
+                name="SendInvoiceEmailResponse",
+                fields={
+                    "message": serializers.CharField(),
+                    "recipient": serializers.EmailField(),
+                    "subject": serializers.CharField(),
+                    "attached_files": serializers.ListField(child=serializers.CharField()),
+                    "sent_at": serializers.DateTimeField(),
+                },
+            ),
+            400: OpenApiResponse(description="Ungültige Eingabe (z. B. fehlender Empfänger)"),
+            503: OpenApiResponse(description="E-Mail-Versand deaktiviert oder SMTP-Fehler"),
+        },
+    )
+    @action(detail=True, methods=["post"], url_path="send_email")
+    def send_email(self, request, pk=None):
+        """Send the invoice (PDF + optional XML) to a recipient via SMTP."""
+        from invoice_app.services.email_service import (
+            EmailDeliveryError,
+            EmailDisabledError,
+            InvoiceEmailService,
+        )
+
+        invoice = self.get_object()
+        recipient = (request.data.get("recipient") or "").strip()
+        message = request.data.get("message") or ""
+        # PDF/A-3 already embeds the structured XML — separate attachment is opt-in.
+        attach_xml = bool(request.data.get("attach_xml", False))
+
+        if not recipient:
+            return Response(
+                {"detail": "Empfänger-E-Mail-Adresse ist erforderlich."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # DRAFT auto-transition: sending an invoice marks it as SENT (GoBD-locks it).
+        if invoice.status == Invoice.InvoiceStatus.DRAFT:
+            invoice.status = Invoice.InvoiceStatus.SENT
+            invoice.save()
+            invoice.refresh_from_db()
+
+        try:
+            result = InvoiceEmailService().send_invoice(
+                invoice,
+                recipient,
+                message=message,
+                attach_xml=attach_xml,
+                request=request,
+                user=request.user,
+            )
+        except EmailDisabledError as exc:
+            return Response(
+                {"detail": str(exc)},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except EmailDeliveryError as exc:
+            logger.error("SMTP delivery failed for invoice %s: %s", invoice.id, exc)
+            return Response(
+                {"detail": f"E-Mail-Versand fehlgeschlagen: {exc}"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {
+                "message": f"Rechnung {invoice.invoice_number} per E-Mail versendet.",
+                "recipient": result.recipient,
+                "subject": result.subject,
+                "attached_files": result.attached_filenames,
+                "sent_at": result.sent_at,
+            },
+            status=status.HTTP_200_OK,
+        )
+
 
 class InvoiceLineViewSet(viewsets.ModelViewSet):
     """
