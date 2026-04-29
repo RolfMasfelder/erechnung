@@ -826,7 +826,11 @@ class InvoiceViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         except ValueError as exc:
-            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+            logger.warning("Invalid email send request for invoice %s: %s", invoice.id, exc)
+            return Response(
+                {"detail": "Ungültige Anfrageparameter für den E-Mail-Versand."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         return Response(
             {
