@@ -814,8 +814,9 @@ class InvoiceViewSet(viewsets.ModelViewSet):
                 user=request.user,
             )
         except EmailDisabledError as exc:
+            logger.warning("Email sending disabled for invoice %s: %s", invoice.id, exc)
             return Response(
-                {"detail": str(exc)},
+                {"detail": "E-Mail-Versand ist derzeit nicht verfügbar."},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         except EmailDeliveryError as exc:
