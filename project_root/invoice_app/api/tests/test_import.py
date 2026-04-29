@@ -401,3 +401,120 @@ class TestProductImport:
         assert float(product.stock_quantity) == 100.0
         assert float(product.minimum_stock) == 10.0
         assert float(product.default_tax_rate) == 19.00
+
+
+@pytest.mark.django_db
+class TestImportAuditLogging:
+    """Tests for the hybrid audit log entry written by import endpoints (ADR-025)."""
+
+    def test_business_partner_import_creates_audit_entry(self, api_client, germany):
+        from invoice_app.models import AuditLog
+
+        url = reverse("api-business-partner-import")
+        data = {
+            "rows": [
+                {
+                    "company_name": "Audit GmbH",
+                    "address_line1": "Auditstr. 1",
+                    "postal_code": "10115",
+                    "city": "Berlin",
+                    "country_code": "DE",
+                },
+                {
+                    "company_name": "Audit AG",
+                    "address_line1": "Auditstr. 2",
+                    "postal_code": "10117",
+                    "city": "Berlin",
+                    "country_code": "DE",
+                },
+            ]
+        }
+        response = api_client.post(url, data, format="json")
+        assert response.status_code == status.HTTP_201_CREATED
+
+        entries = AuditLog.objects.filter(action=AuditLog.ActionType.IMPORT).order_by("-timestamp")
+        assert entries.count() == 1
+        entry = entries.first()
+        assert entry.details["object_type"] == "BusinessPartner"
+        assert entry.details["row_count"] == 2
+        assert entry.details["imported_count"] == 2
+        assert entry.details["error_count"] == 0
+        assert entry.details["dry_run"] is False
+        assert entry.details["format"] == "json"
+        assert len(entry.details["source_hash"]) == 64
+        assert len(entry.details["imported_ids"]) == 2
+        assert entry.severity == AuditLog.Severity.LOW
+
+    def test_product_import_creates_audit_entry(self, api_client):
+        from invoice_app.models import AuditLog
+
+        url = reverse("api-product-import")
+        data = {"rows": [{"name": "Audit Product", "base_price": "12.34"}]}
+        response = api_client.post(url, data, format="json")
+        assert response.status_code == status.HTTP_201_CREATED
+
+        entry = AuditLog.objects.filter(action=AuditLog.ActionType.IMPORT).get()
+        assert entry.details["object_type"] == "Product"
+        assert entry.details["imported_count"] == 1
+        assert len(entry.details["imported_ids"]) == 1
+
+    def test_audit_entry_records_errors_with_medium_severity(self, api_client, germany):
+        """A row that triggers an error must be recorded compactly with raised severity."""
+        from invoice_app.models import AuditLog, BusinessPartner
+
+        BusinessPartner.objects.create(
+            company_name="Dup GmbH",
+            address_line1="Dup 1",
+            postal_code="20095",
+            city="Hamburg",
+            country=germany,
+        )
+
+        url = reverse("api-business-partner-import")
+        data = {
+            "rows": [
+                {
+                    "company_name": "Dup GmbH",
+                    "address_line1": "Dup 1",
+                    "postal_code": "20095",
+                    "city": "Hamburg",
+                    "country_code": "DE",
+                }
+            ],
+            "skip_duplicates": False,
+            "update_existing": False,
+        }
+        response = api_client.post(url, data, format="json")
+        assert response.status_code == status.HTTP_207_MULTI_STATUS
+
+        entry = AuditLog.objects.filter(action=AuditLog.ActionType.IMPORT).get()
+        assert entry.details["error_count"] == 1
+        assert entry.details["imported_count"] == 0
+        assert len(entry.details["errors"]) == 1
+        assert entry.severity == AuditLog.Severity.MEDIUM
+
+    def test_audit_source_hash_is_deterministic(self, api_client, germany):
+        """Identical payloads must produce identical source_hash values."""
+        from invoice_app.models import AuditLog
+
+        rows = [
+            {
+                "company_name": "Hash GmbH",
+                "address_line1": "Hashstr. 1",
+                "postal_code": "30159",
+                "city": "Hannover",
+                "country_code": "DE",
+            }
+        ]
+        url = reverse("api-business-partner-import")
+        api_client.post(url, {"rows": rows}, format="json")
+        api_client.post(url, {"rows": rows, "skip_duplicates": True}, format="json")
+
+        hashes = list(
+            AuditLog.objects.filter(action=AuditLog.ActionType.IMPORT)
+            .order_by("timestamp")
+            .values_list("details__source_hash", flat=True)
+        )
+        assert len(hashes) == 2
+        assert hashes[0] == hashes[1]
+

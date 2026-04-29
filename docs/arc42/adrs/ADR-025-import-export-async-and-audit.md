@@ -26,6 +26,7 @@ Der Import/Export-Workflow für Rechnungen, Geschäftspartner und Produkte ist i
 **Begründung:**
 
 Die zwei diskutierten Optionen waren:
+
 - A) **Pro Datensatz** ein Audit-Eintrag — vollständig nachvollziehbar, aber für Imports mit >1000 Records erzeugt das ein Vielfaches an Log-Volumen.
 - B) **Nur eine Zusammenfassung** pro Job — kompakt, aber GoBD-grenzwertig (welche genauen Datensätze wurden importiert?).
 
@@ -39,6 +40,7 @@ Die zwei diskutierten Optionen waren:
 - **Keine** zusätzlichen pro-Record Audit-Einträge im Import-Service. Pro-Record-Änderungen werden weiterhin durch das bestehende generelle Modell-Audit-Log (Save-Hook) erfasst, das jedem `INSERT/UPDATE` automatisch folgt.
 
 Damit gilt:
+
 - GoBD-Nachvollziehbarkeit: Welche Records wurden in welchem Job angefasst? → Job-Eintrag mit ID-Liste.
 - Welche genauen Feldwerte wurden geschrieben? → reguläres Modell-Audit-Log.
 - Log-Volumen: 1 Eintrag pro Import-Job statt N Einträge.
@@ -47,11 +49,12 @@ Damit gilt:
 
 - Phase 4 wird nicht implementiert wie ursprünglich geplant. Stattdessen: Audit-Hybrid jetzt umsetzen, Async-Exports erst nach realem Lastnachweis.
 - `TODO_2026.md` §3.14 wird geschlossen.
-- Folge-Iteration für den Audit-Hybrid (eigene Aufgabe, nicht Teil dieses ADR): Erweiterung von `ImportService.import_records()` um einen aggregierten Audit-Eintrag mit ID-Liste.
+- Folge-Iteration für den Audit-Hybrid (eigene Aufgabe, nicht Teil dieses ADR): Erweiterung von `ImportService.import_records()` um einen aggregierten Audit-Eintrag mit ID-Liste. **Umgesetzt am 29.04.2026** in `BusinessPartnerImportView` und `ProductImportView` (`_log_import_audit()` Helper in `rest_views.py`); 4 neue Tests in `test_import.py::TestImportAuditLogging`.
 
 ## Re-Evaluation
 
 Bei eines der folgenden Trigger neue Iteration / ADR:
+
 - Synchrone Exports überschreiten regelmäßig 30 s.
 - Audit-Log-Volumen wird zum Performance-Problem (unwahrscheinlich beim Hybrid).
 - Compliance-Audit fordert pro-Record-Granularität explizit.

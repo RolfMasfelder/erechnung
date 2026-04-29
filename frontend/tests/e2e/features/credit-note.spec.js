@@ -14,26 +14,46 @@ import { login } from '../fixtures/auth.js'
 const INVOICE_DETAIL_URL_PATTERN = /\/api\/invoices\/\d+\/?$/
 
 /**
+ * Open the invoice list and apply the status filter so that only invoices
+ * with the given status are visible. Required because the list is paginated
+ * and SENT invoices may otherwise be off the first page once tests have
+ * created credit notes / cancellations during the run.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {string} label - localized status option ("Versendet", "Bezahlt", ...)
+ */
+async function filterByStatus(page, label) {
+  await page.goto('/invoices')
+  await page.waitForLoadState('networkidle')
+  await page.locator('select').first().selectOption({ label })
+  await page.waitForLoadState('networkidle')
+}
+
+/**
+ * Locate the first SENT invoice row that is not a credit note.
+ * Uses the status filter for stable visibility across paginated results.
+ * @param {import('@playwright/test').Page} page
+ */
+async function firstSentInvoiceRow(page) {
+  await filterByStatus(page, 'Versendet')
+  const row = page.locator('table tbody tr', {
+    has: page.locator('.status-sent'),
+    hasNot: page.locator('.type-credit-note'),
+  }).first()
+  await expect(row).toBeVisible({ timeout: 10000 })
+  return row
+}
+
+/**
  * Navigate to a SENT invoice detail page.
  * @param {import('@playwright/test').Page} page
  * @returns {Promise<string>} The invoice number
  */
 async function goToSentInvoice(page) {
-  await page.goto('/invoices')
-  await page.waitForLoadState('networkidle')
-
-  // Exclude credit note rows (.type-credit-note) — they have status SENT but can't be cancelled
-  const sentRow = page.locator('table tbody tr', {
-    has: page.locator('.status-sent'),
-    hasNot: page.locator('.type-credit-note'),
-  }).first()
-  await expect(sentRow).toBeVisible({ timeout: 10000 })
-
+  const sentRow = await firstSentInvoiceRow(page)
   const invoiceNumber = await sentRow.locator('a.invoice-link').textContent() ?? ''
-
   await sentRow.locator('a.invoice-link').click()
   await page.waitForLoadState('networkidle')
-
   return invoiceNumber.trim()
 }
 
@@ -47,15 +67,7 @@ test.describe('Gutschrift / Stornierung', () => {
 
   test.describe('Storno-Button Sichtbarkeit', () => {
     test('Stornieren-Button ist bei SENT-Rechnung sichtbar', async ({ page }) => {
-      // Navigate to invoice list, find a SENT invoice
-      await page.goto('/invoices')
-      await page.waitForLoadState('networkidle')
-
-      // Find a row with status "Versendet"
-      const sentRow = page.locator('table tbody tr', { has: page.locator('.status-sent') }).first()
-      await expect(sentRow).toBeVisible({ timeout: 10000 })
-
-      // Click invoice link to navigate to detail
+      const sentRow = await firstSentInvoiceRow(page)
       await sentRow.locator('a.invoice-link').click()
       await page.waitForLoadState('networkidle')
 
@@ -65,10 +77,11 @@ test.describe('Gutschrift / Stornierung', () => {
     })
 
     test('Stornieren-Button ist bei PAID-Rechnung sichtbar', async ({ page }) => {
-      await page.goto('/invoices')
-      await page.waitForLoadState('networkidle')
-
-      const paidRow = page.locator('table tbody tr', { has: page.locator('.status-paid') }).first()
+      await filterByStatus(page, 'Bezahlt')
+      const paidRow = page.locator('table tbody tr', {
+        has: page.locator('.status-paid'),
+        hasNot: page.locator('.type-credit-note'),
+      }).first()
       await expect(paidRow).toBeVisible({ timeout: 10000 })
 
       await paidRow.locator('a.invoice-link').click()
@@ -79,10 +92,10 @@ test.describe('Gutschrift / Stornierung', () => {
     })
 
     test('Stornieren-Button ist bei DRAFT-Rechnung NICHT sichtbar', async ({ page }) => {
-      await page.goto('/invoices')
-      await page.waitForLoadState('networkidle')
-
-      const draftRow = page.locator('table tbody tr', { has: page.locator('.status-draft') }).first()
+      await filterByStatus(page, 'Entwurf')
+      const draftRow = page.locator('table tbody tr', {
+        has: page.locator('.status-draft'),
+      }).first()
       await expect(draftRow).toBeVisible({ timeout: 10000 })
 
       await draftRow.locator('a.invoice-link').click()
@@ -178,17 +191,8 @@ test.describe('Gutschrift / Stornierung', () => {
 
   test.describe.serial('Storno-Workflow (End-to-End)', () => {
     test('Rechnung stornieren erzeugt Gutschrift und navigiert dorthin', async ({ page }) => {
-      // Navigate to a SENT invoice
-      await page.goto('/invoices')
-      await page.waitForLoadState('networkidle')
-
-      // Exclude credit note rows — they have status SENT but can't be cancelled
-      const sentRow = page.locator('table tbody tr', {
-        has: page.locator('.status-sent'),
-        hasNot: page.locator('.type-credit-note'),
-      }).first()
-      await expect(sentRow).toBeVisible({ timeout: 10000 })
-
+      // Navigate to a SENT invoice (filter list to keep them on page 1)
+      const sentRow = await firstSentInvoiceRow(page)
       const originalNumber = (await sentRow.locator('a.invoice-link').textContent() ?? '').trim()
       console.log(`Storniere Rechnung: ${originalNumber}`)
 
@@ -243,10 +247,7 @@ test.describe('Gutschrift / Stornierung', () => {
 
     test('Gutschrift zeigt Querverweis zur Originalrechnung', async ({ page }) => {
       // First, find a SENT invoice and cancel it (if not already done)
-      await page.goto('/invoices')
-      await page.waitForLoadState('networkidle')
-
-      // Exclude credit note rows — they have status SENT but can't be cancelled
+      await filterByStatus(page, 'Versendet')
       const sentRow = page.locator('table tbody tr', {
         has: page.locator('.status-sent'),
         hasNot: page.locator('.type-credit-note'),
@@ -302,10 +303,7 @@ test.describe('Gutschrift / Stornierung', () => {
     })
 
     test('Stornieren-Button verschwindet nach Stornierung', async ({ page }) => {
-      await page.goto('/invoices')
-      await page.waitForLoadState('networkidle')
-
-      // Exclude credit note rows — they have status SENT but can't be cancelled
+      await filterByStatus(page, 'Versendet')
       const sentRow = page.locator('table tbody tr', {
         has: page.locator('.status-sent'),
         hasNot: page.locator('.type-credit-note'),

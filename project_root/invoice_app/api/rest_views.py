@@ -2,6 +2,8 @@
 REST API views for the invoice_app.
 """
 
+import hashlib
+import json
 import logging  # noqa: I001
 from decimal import Decimal, InvalidOperation
 
@@ -895,6 +897,56 @@ class DashboardStatsView(APIView):
             raise ServiceUnavailableError("Dashboard-Statistiken konnten nicht abgerufen werden.") from None
 
 
+def _hash_import_payload(rows):
+    """
+    Compute a deterministic SHA-256 hash of the imported rows.
+
+    Used as a stable identifier of the source data for audit logging
+    (ADR-025 — Hybrid audit). Keys are sorted so re-ordering does not
+    change the hash; values are coerced via ``default=str`` to handle
+    Decimals/dates emitted by DRF.
+    """
+    canonical = json.dumps(rows, sort_keys=True, default=str, ensure_ascii=False)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _log_import_audit(*, request, object_type, rows, result):
+    """
+    Write a single aggregated audit entry for a bulk import job (ADR-025).
+
+    One ``AuditLog`` entry per import job containing:
+
+    - User, timestamp, source-data hash, format, dry-run flag
+    - Aggregated counts (created/updated/skipped/failed)
+    - List of IDs of imported records (no full payloads — those are
+      captured by the regular per-model audit hooks)
+    - Compact list of row-level errors (row index + message)
+    """
+    payload_hash = _hash_import_payload(rows)
+    error_count = result.get("error_count", 0)
+    severity = AuditLog.Severity.MEDIUM if error_count else AuditLog.Severity.LOW
+
+    AuditLog.log_action(
+        action=AuditLog.ActionType.IMPORT,
+        user=request.user,
+        request=request,
+        description=f"Bulk-Import: {object_type} ({len(rows)} Zeilen)",
+        details={
+            "object_type": object_type,
+            "format": "json",
+            "dry_run": False,
+            "source_hash": payload_hash,
+            "row_count": len(rows),
+            "imported_count": result.get("imported_count", 0),
+            "skipped_count": result.get("skipped_count", 0),
+            "error_count": error_count,
+            "imported_ids": result.get("imported_ids", []),
+            "errors": result.get("errors", []),
+        },
+        severity=severity,
+    )
+
+
 class BusinessPartnerImportView(APIView):
     """
     API endpoint for bulk importing business partners (customers/suppliers).
@@ -991,6 +1043,13 @@ class BusinessPartnerImportView(APIView):
             "errors": errors,
             "imported_ids": imported_ids,
         }
+
+        _log_import_audit(
+            request=request,
+            object_type="BusinessPartner",
+            rows=rows,
+            result=result,
+        )
 
         result_status = status.HTTP_201_CREATED if error_count == 0 else status.HTTP_207_MULTI_STATUS
         return Response(result, status=result_status)
@@ -1090,6 +1149,13 @@ class ProductImportView(APIView):
             "errors": errors,
             "imported_ids": imported_ids,
         }
+
+        _log_import_audit(
+            request=request,
+            object_type="Product",
+            rows=rows,
+            result=result,
+        )
 
         result_status = status.HTTP_201_CREATED if error_count == 0 else status.HTTP_207_MULTI_STATUS
         return Response(result, status=result_status)
