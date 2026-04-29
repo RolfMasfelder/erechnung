@@ -1,0 +1,17 @@
+Sehr geehrte Damen und Herren{% if partner_name %} bei {{ partner_name }}{% endif %},
+
+anbei erhalten Sie die Rechnung {{ invoice.invoice_number }} vom {{ invoice.issue_date|date:"d.m.Y" }}.
+
+Rechnungsnummer: {{ invoice.invoice_number }}
+Rechnungsdatum:  {{ invoice.issue_date|date:"d.m.Y" }}
+Fälligkeit:      {{ invoice.due_date|date:"d.m.Y" }}
+Betrag:          {{ invoice.total_amount }} {{ invoice.currency }}
+{% if custom_message %}
+{{ custom_message }}
+{% endif %}
+Die Rechnung liegt diesem Schreiben als PDF/A-3 bei. Bei elektronischer
+Verarbeitung können Sie zusätzlich die strukturierte XML-Datei (ZUGFeRD /
+XRechnung) verwenden, sofern beigefügt.
+
+Mit freundlichen Grüßen
+{{ company_name }}

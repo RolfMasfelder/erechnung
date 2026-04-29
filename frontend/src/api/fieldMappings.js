@@ -93,6 +93,9 @@ export const invoiceFields = createFieldMapper({
     // Concurrent Edit Lock (read-only, set by server)
     editing_by_display:    'editing_by_display',
     editing_since:         'editing_since',
+    // E-Mail-Versand-Tracking (read-only, set by server on send_email)
+    last_emailed_at:       'last_emailed_at',
+    last_email_recipient:  'last_email_recipient',
   },
 })
 

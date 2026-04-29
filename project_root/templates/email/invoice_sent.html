@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Rechnung {{ invoice.invoice_number }}</title>
+</head>
+<body style="font-family: Arial, sans-serif; color: #222; line-height: 1.5;">
+  <p>Sehr geehrte Damen und Herren{% if partner_name %} bei <strong>{{ partner_name }}</strong>{% endif %},</p>
+
+  <p>anbei erhalten Sie die Rechnung
+    <strong>{{ invoice.invoice_number }}</strong>
+    vom {{ invoice.issue_date|date:"d.m.Y" }}.</p>
+
+  <table cellpadding="6" style="border-collapse: collapse; margin: 16px 0;">
+    <tr><td><strong>Rechnungsnummer</strong></td><td>{{ invoice.invoice_number }}</td></tr>
+    <tr><td><strong>Rechnungsdatum</strong></td><td>{{ invoice.issue_date|date:"d.m.Y" }}</td></tr>
+    <tr><td><strong>Fälligkeit</strong></td><td>{{ invoice.due_date|date:"d.m.Y" }}</td></tr>
+    <tr><td><strong>Betrag</strong></td><td>{{ invoice.total_amount }} {{ invoice.currency }}</td></tr>
+  </table>
+
+  {% if custom_message %}
+    <p style="white-space: pre-wrap; padding: 12px; background: #f4f4f4; border-left: 3px solid #4a90e2;">{{ custom_message }}</p>
+  {% endif %}
+
+  <p>Die Rechnung liegt diesem Schreiben als <strong>PDF/A-3</strong> bei.
+     Bei elektronischer Verarbeitung können Sie zusätzlich die strukturierte
+     XML-Datei (ZUGFeRD / XRechnung) verwenden, sofern beigefügt.</p>
+
+  <p>Mit freundlichen Grüßen<br>
+     <strong>{{ company_name }}</strong></p>
+</body>
+</html>

@@ -93,10 +93,39 @@ services:
       timeout: 3s
       retries: 5
 
+  # Mailpit - SMTP catcher for development (no real delivery)
+  # Web UI: http://localhost:8025  •  SMTP: mailpit:1025
+  mailpit:
+    image: axllent/mailpit:v1.28
+    container_name: erechnung_dev_mailpit
+    ports:
+      - "8025:8025"  # Web UI
+      - "1025:1025"  # SMTP
+    networks:
+      - erechnung-dev-network
+    environment:
+      MP_MAX_MESSAGES: "5000"
+      MP_DATABASE: "/data/mailpit.db"
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    volumes:
+      - mailpit_dev_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8025/readyz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "com.erechnung.service=mailpit"
+      - "com.erechnung.environment=development"
+
 volumes:
   postgres_dev_data:
     driver: local
   redis_dev_data:
+    driver: local
+  mailpit_dev_data:
     driver: local
 
 networks:

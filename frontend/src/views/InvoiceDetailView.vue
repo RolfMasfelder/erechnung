@@ -47,6 +47,13 @@
           ✉️ Als versendet markieren
         </BaseButton>
         <BaseButton
+          v-if="canSendEmail"
+          variant="primary"
+          @click="showSendModal = true"
+        >
+          📤 Per E-Mail versenden
+        </BaseButton>
+        <BaseButton
           v-if="invoice?.status?.toUpperCase() === 'DRAFT'"
           variant="danger"
           @click="handleDelete"
@@ -254,6 +261,14 @@
       @updated="handleInvoiceUpdated"
     />
 
+    <!-- Send-Email Modal -->
+    <SendInvoiceModal
+      v-if="showSendModal && invoice"
+      :invoice="invoice"
+      @close="showSendModal = false"
+      @sent="handleEmailSent"
+    />
+
     <!-- Cancel Confirmation Dialog -->
     <div v-if="showCancelDialog" class="modal-overlay" @click.self="showCancelDialog = false">
       <div class="modal-content cancel-dialog">
@@ -299,6 +314,7 @@ import BaseAlert from '@/components/BaseAlert.vue'
 import BaseTable from '@/components/BaseTable.vue'
 import InvoiceEditModal from '@/components/InvoiceEditModal.vue'
 import InvoiceAttachments from '@/components/InvoiceAttachments.vue'
+import SendInvoiceModal from '@/components/SendInvoiceModal.vue'
 import { invoiceService } from '@/api/services/invoiceService'
 import { useToast } from '@/composables/useToast'
 
@@ -311,6 +327,7 @@ const generatingXml = ref(false)
 const markingAsSent = ref(false)
 const invoice = ref(null)
 const showEditModal = ref(false)
+const showSendModal = ref(false)
 const showCancelDialog = ref(false)
 const cancelReason = ref('')
 const cancelling = ref(false)
@@ -320,6 +337,13 @@ const canCancel = computed(() => {
   if (!invoice.value) return false
   const s = invoice.value.status?.toUpperCase()
   return (s === 'SENT' || s === 'PAID') && invoice.value.invoice_type !== 'CREDIT_NOTE'
+})
+
+// Send-Email is allowed in any non-cancelled state (DRAFT auto-transitions to SENT).
+const canSendEmail = computed(() => {
+  if (!invoice.value) return false
+  const s = invoice.value.status?.toUpperCase()
+  return s !== 'CANCELLED' && invoice.value.invoice_type !== 'CREDIT_NOTE'
 })
 
 // Prüfen ob mindestens eine Position einen Rabatt hat
@@ -528,6 +552,12 @@ const handleInvoiceUpdated = (updated) => {
   // Rechnung neu laden
   loadInvoice()
   // console.log('Rechnung aktualisiert:', updated)
+}
+
+const handleEmailSent = () => {
+  showSendModal.value = false
+  // Rechnung neu laden, damit last_emailed_at und ggf. neuer Status (DRAFT→SENT) angezeigt werden.
+  loadInvoice()
 }
 
 const handleDelete = async () => {
