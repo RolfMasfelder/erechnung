@@ -9,6 +9,7 @@ from invoice_app.models import BusinessPartner, Company, Country, Invoice, Produ
 from rest_framework import status
 from rest_framework.test import APIClient
 
+
 User = get_user_model()
 
 
@@ -59,9 +60,7 @@ class DashboardStatsViewTest(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpass123"
-        )
+        self.user = User.objects.create_user(username="testuser", email="test@example.com", password="testpass123")
         self.country = _germany()
         self.company = Company.objects.create(
             name="Test Company",

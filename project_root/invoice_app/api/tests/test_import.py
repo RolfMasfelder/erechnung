@@ -517,4 +517,3 @@ class TestImportAuditLogging:
         )
         assert len(hashes) == 2
         assert hashes[0] == hashes[1]
-

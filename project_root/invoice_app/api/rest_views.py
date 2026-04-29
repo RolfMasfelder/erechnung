@@ -15,6 +15,12 @@ from django.http import FileResponse
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiExample, OpenApiParameter, OpenApiResponse, extend_schema, inline_serializer
+from rest_framework import filters, serializers, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from invoice_app.models import (
     AuditLog,
     BusinessPartner,
@@ -31,11 +37,6 @@ from invoice_app.models import (
     ProcessingActivity,
     Product,
 )
-from rest_framework import filters, serializers, status, viewsets
-from rest_framework.decorators import action
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from .exceptions import (
     EditLockError,
@@ -68,6 +69,7 @@ from .serializers import (
     ProductImportSerializer,
     ProductSerializer,
 )
+
 
 logger = logging.getLogger(__name__)
 

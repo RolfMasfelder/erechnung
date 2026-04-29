@@ -343,9 +343,7 @@ class UserProfile(models.Model):
 
     # Default values for new invoices
     default_currency = models.CharField(_("Default Currency"), max_length=3, default="EUR")
-    default_payment_terms_days = models.PositiveIntegerField(
-        _("Default Payment Terms (days)"), default=30
-    )
+    default_payment_terms_days = models.PositiveIntegerField(_("Default Payment Terms (days)"), default=30)
 
     # Security settings
     last_login_ip = models.GenericIPAddressField(_("Last Login IP"), null=True, blank=True)

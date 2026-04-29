@@ -24,6 +24,7 @@ from invoice_app.services.gdpdu_export_service import export_period
 from rest_framework import status
 from rest_framework.test import APIClient
 
+
 User = get_user_model()
 
 
@@ -221,9 +222,7 @@ class TestGDPdUExportEndpoint:
     """API-level tests for ``GET /api/gdpdu/export/``."""
 
     def _admin_client(self):
-        admin = User.objects.create_user(
-            username="gdpdu-admin", password="x", is_staff=True, is_superuser=True
-        )
+        admin = User.objects.create_user(username="gdpdu-admin", password="x", is_staff=True, is_superuser=True)
         client = APIClient()
         client.force_authenticate(user=admin)
         return client, admin
@@ -286,11 +285,7 @@ class TestGDPdUExportEndpoint:
         assert response.status_code == status.HTTP_200_OK
         after = AuditLog.objects.filter(action=AuditLog.ActionType.EXPORT).count()
         assert after == before + 1
-        entry = (
-            AuditLog.objects.filter(action=AuditLog.ActionType.EXPORT)
-            .order_by("-id")
-            .first()
-        )
+        entry = AuditLog.objects.filter(action=AuditLog.ActionType.EXPORT).order_by("-id").first()
         assert entry is not None
         assert entry.user_id == admin.id
         assert entry.details.get("start") == "2026-03-01"

@@ -22,11 +22,11 @@ from invoice_app.services.email_service import (
 pytestmark = pytest.mark.django_db
 
 
-EMAIL_TEST_SETTINGS = dict(
-    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
-    INVOICE_EMAIL_ENABLED=True,
-    DEFAULT_FROM_EMAIL="rechnung@example.com",
-)
+EMAIL_TEST_SETTINGS = {
+    "EMAIL_BACKEND": "django.core.mail.backends.locmem.EmailBackend",
+    "INVOICE_EMAIL_ENABLED": True,
+    "DEFAULT_FROM_EMAIL": "rechnung@example.com",
+}
 
 
 @pytest.fixture(autouse=True)
@@ -146,9 +146,7 @@ class TestSendEmailEndpoint:
         assert data["sent_at"] is not None
         assert len(mail.outbox) == 1
 
-    def test_send_email_endpoint_missing_recipient(
-        self, authenticated_admin_client, sent_invoice
-    ):
+    def test_send_email_endpoint_missing_recipient(self, authenticated_admin_client, sent_invoice):
         """Missing recipient yields 400 without sending."""
         url = reverse("api-invoice-send-email", kwargs={"pk": sent_invoice.pk})
         response = authenticated_admin_client.post(url, {}, format="json")
@@ -156,9 +154,7 @@ class TestSendEmailEndpoint:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert mail.outbox == []
 
-    def test_send_email_endpoint_drafts_auto_transition(
-        self, authenticated_admin_client, draft_invoice
-    ):
+    def test_send_email_endpoint_drafts_auto_transition(self, authenticated_admin_client, draft_invoice):
         """A DRAFT invoice is auto-marked SENT (and locked) when emailed."""
         url = reverse("api-invoice-send-email", kwargs={"pk": draft_invoice.pk})
         response = authenticated_admin_client.post(
@@ -173,9 +169,7 @@ class TestSendEmailEndpoint:
         assert draft_invoice.is_locked is True
 
     @override_settings(INVOICE_EMAIL_ENABLED=False)
-    def test_send_email_endpoint_kill_switch_returns_503(
-        self, authenticated_admin_client, sent_invoice
-    ):
+    def test_send_email_endpoint_kill_switch_returns_503(self, authenticated_admin_client, sent_invoice):
         """Disabled kill switch surfaces as 503 to the client."""
         url = reverse("api-invoice-send-email", kwargs={"pk": sent_invoice.pk})
         response = authenticated_admin_client.post(

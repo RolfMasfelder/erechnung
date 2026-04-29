@@ -14,7 +14,6 @@ from __future__ import annotations
 import logging
 import mimetypes
 from dataclasses import dataclass
-from typing import Optional
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
@@ -66,9 +65,7 @@ class InvoiceEmailService:
         AuditLog entry (action=SEND_EMAIL) and updates ``last_emailed_at``.
         """
         if not getattr(settings, "INVOICE_EMAIL_ENABLED", True):
-            raise EmailDisabledError(
-                "E-Mail-Versand ist deaktiviert (INVOICE_EMAIL_ENABLED=False)."
-            )
+            raise EmailDisabledError("E-Mail-Versand ist deaktiviert (INVOICE_EMAIL_ENABLED=False).")
 
         if not recipient:
             raise ValueError("recipient must not be empty")
@@ -78,9 +75,7 @@ class InvoiceEmailService:
         if not invoice.pdf_file or not invoice.pdf_file.storage.exists(invoice.pdf_file.name):
             invoice_service.generate_invoice_files(invoice, zugferd_profile="COMFORT")
             invoice.refresh_from_db()
-        if attach_xml and (
-            not invoice.xml_file or not invoice.xml_file.storage.exists(invoice.xml_file.name)
-        ):
+        if attach_xml and (not invoice.xml_file or not invoice.xml_file.storage.exists(invoice.xml_file.name)):
             invoice_service.generate_invoice_files(invoice, zugferd_profile="COMFORT")
             invoice.refresh_from_db()
 
@@ -124,18 +119,14 @@ class InvoiceEmailService:
             raise EmailDeliveryError(str(exc)) from exc
 
         if sent != 1:
-            raise EmailDeliveryError(
-                f"SMTP backend reported {sent} delivered messages (expected 1)."
-            )
+            raise EmailDeliveryError(f"SMTP backend reported {sent} delivered messages (expected 1).")
 
         sent_at = timezone.now()
 
         # Update invoice tracking fields (allowed even when GoBD-locked).
         invoice.last_emailed_at = sent_at
         invoice.last_email_recipient = recipient
-        invoice.save(
-            update_fields=["last_emailed_at", "last_email_recipient", "updated_at"]
-        )
+        invoice.save(update_fields=["last_emailed_at", "last_email_recipient", "updated_at"])
 
         AuditLog.log_action(
             action=AuditLog.ActionType.SEND_EMAIL,

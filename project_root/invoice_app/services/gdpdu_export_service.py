@@ -25,15 +25,16 @@ from __future__ import annotations
 import csv
 import io
 import zipfile
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Iterable
 from xml.sax.saxutils import escape as _xml_escape
 
 from django.utils import timezone
 
 from invoice_app.models import BusinessPartner, Invoice, InvoiceLine
+
 
 # CSV dialect — must match what is declared in index.xml.
 _CSV_DELIMITER = ";"
@@ -139,17 +140,11 @@ def export_period(start_date: date, end_date: date) -> bytes:
 
     invoice_ids = [inv.pk for inv in invoices]
     lines = list(
-        InvoiceLine.objects.filter(invoice_id__in=invoice_ids)
-        .select_related("invoice")
-        .order_by("invoice_id", "pk")
+        InvoiceLine.objects.filter(invoice_id__in=invoice_ids).select_related("invoice").order_by("invoice_id", "pk")
     )
 
     partner_ids = {inv.business_partner_id for inv in invoices if inv.business_partner_id}
-    partners = list(
-        BusinessPartner.objects.filter(pk__in=partner_ids)
-        .select_related("country")
-        .order_by("pk")
-    )
+    partners = list(BusinessPartner.objects.filter(pk__in=partner_ids).select_related("country").order_by("pk"))
 
     invoice_csv = _render_invoice_csv(invoices)
     lines_csv = _render_invoice_line_csv(lines)
