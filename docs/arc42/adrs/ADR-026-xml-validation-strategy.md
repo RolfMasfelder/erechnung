@@ -2,7 +2,7 @@
 
 ## Status
 
-**Proposed** — retrospective documentation of an existing implementation; to be reviewed and accepted.
+**Accepted** — 2026-04-30 (retrospective documentation of the implementation merged 2026-03-05, see TODO §2.5).
 
 ## Date
 
