@@ -336,6 +336,15 @@ class UserProfile(models.Model):
         ],
     )
 
+    # Notification preferences
+    email_notifications = models.BooleanField(_("Email Notifications"), default=True)
+    notify_invoice_paid = models.BooleanField(_("Notify on Invoice Paid"), default=True)
+    notify_invoice_overdue = models.BooleanField(_("Notify on Invoice Overdue"), default=True)
+
+    # Default values for new invoices
+    default_currency = models.CharField(_("Default Currency"), max_length=3, default="EUR")
+    default_payment_terms_days = models.PositiveIntegerField(_("Default Payment Terms (days)"), default=30)
+
     # Security settings
     last_login_ip = models.GenericIPAddressField(_("Last Login IP"), null=True, blank=True)
     failed_login_attempts = models.PositiveIntegerField(_("Failed Login Attempts"), default=0)

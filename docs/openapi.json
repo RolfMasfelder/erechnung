@@ -304,6 +304,57 @@
                 }
             }
         },
+        "/api/auth/change-password/": {
+            "post": {
+                "operationId": "auth_change_password_create",
+                "description": "Change the authenticated user's password.",
+                "tags": [
+                    "auth"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangePasswordRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangePasswordRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangePasswordRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Password changed"
+                    },
+                    "400": {
+                        "description": "Invalid current password or weak new password"
+                    }
+                }
+            }
+        },
         "/api/auth/token/": {
             "post": {
                 "operationId": "auth_token_create",
@@ -1431,6 +1482,57 @@
                             }
                         },
                         "description": ""
+                    }
+                }
+            }
+        },
+        "/api/gdpdu/export/": {
+            "get": {
+                "operationId": "gdpdu_export_retrieve",
+                "description": "GDPdU/IDEA-Export der Rechnungen im angegebenen Zeitraum als ZIP (index.xml + CSV-Tabellen). Nur für Administratoren.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "end",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Enddatum (inklusive), Format YYYY-MM-DD",
+                        "required": true
+                    },
+                    {
+                        "in": "query",
+                        "name": "start",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Startdatum (inklusive), Format YYYY-MM-DD",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "gdpdu"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ZIP archive (application/zip)"
+                    },
+                    "400": {
+                        "description": "Invalid query parameters"
                     }
                 }
             }
@@ -4483,6 +4585,74 @@
                 }
             }
         },
+        "/api/invoices/{id}/acquire_edit_lock/": {
+            "post": {
+                "operationId": "invoices_acquire_edit_lock_create",
+                "description": "Acquire the edit lock for this invoice. Returns 423 if already locked by another user.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this Invoice.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "invoices"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AcquireEditLockResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "423": {
+                        "description": "Invoice is currently being edited by another user"
+                    }
+                }
+            }
+        },
         "/api/invoices/{id}/cancel/": {
             "post": {
                 "operationId": "invoices_cancel_create",
@@ -4836,6 +5006,279 @@
                             }
                         },
                         "description": ""
+                    }
+                }
+            }
+        },
+        "/api/invoices/{id}/mark_as_sent/": {
+            "post": {
+                "operationId": "invoices_mark_as_sent_create",
+                "description": "Mark the invoice as sent (DRAFT → SENT). GoBD: auto-locks the invoice.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this Invoice.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "invoices"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarkAsSentResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "description": "Invoice is not in DRAFT status"
+                    }
+                }
+            }
+        },
+        "/api/invoices/{id}/refresh_edit_lock/": {
+            "post": {
+                "operationId": "invoices_refresh_edit_lock_create",
+                "description": "Refresh (extend) the edit lock held by the current user. Call every ~60 s as a heartbeat.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this Invoice.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "invoices"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RefreshEditLockResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "423": {
+                        "description": "Lock is held by another user — cannot refresh"
+                    }
+                }
+            }
+        },
+        "/api/invoices/{id}/release_edit_lock/": {
+            "post": {
+                "operationId": "invoices_release_edit_lock_create",
+                "description": "Release the edit lock held by the current user.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this Invoice.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "invoices"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReleaseEditLockResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/invoices/{id}/send_email/": {
+            "post": {
+                "operationId": "invoices_send_email_create",
+                "description": "Rechnung per E-Mail versenden. PDF/A-3 wird immer angehängt und enthält die ZUGFeRD/Factur-X XML bereits eingebettet (EN16931-konform). Über attach_xml=true kann die XML zusätzlich als separates Attachment verschickt werden (nur für reine XRechnung-Workflows empfohlen). Erfordert eine konfigurierte SMTP-Verbindung; schlägt fehl, wenn INVOICE_EMAIL_ENABLED=False.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this Invoice.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "invoices"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendInvoiceEmailRequestRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendInvoiceEmailRequestRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendInvoiceEmailRequestRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SendInvoiceEmailResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Ungültige Eingabe (z. B. fehlender Empfänger)"
+                    },
+                    "503": {
+                        "description": "E-Mail-Versand deaktiviert oder SMTP-Fehler"
                     }
                 }
             }
@@ -5469,6 +5912,176 @@
                 }
             }
         },
+        "/api/system/info/": {
+            "get": {
+                "operationId": "system_info_retrieve",
+                "description": "Return non-sensitive system info (version, runtime).",
+                "tags": [
+                    "system"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "System info object"
+                    }
+                }
+            }
+        },
+        "/api/user-settings/me/": {
+            "get": {
+                "operationId": "user_settings_me_retrieve",
+                "description": "Get the authenticated user's preferences.",
+                "tags": [
+                    "user-settings"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserSettings"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "description": "No profile assigned to this user"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "user_settings_me_update",
+                "description": "Replace all preference fields of the authenticated user.",
+                "tags": [
+                    "user-settings"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserSettingsRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserSettingsRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserSettingsRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserSettings"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "user_settings_me_partial_update",
+                "description": "Update individual preference fields of the authenticated user.",
+                "tags": [
+                    "user-settings"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedUserSettingsRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedUserSettingsRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedUserSettingsRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserSettings"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/health/detailed/": {
             "get": {
                 "operationId": "health_detailed_retrieve",
@@ -5559,6 +6172,22 @@
     },
     "components": {
         "schemas": {
+            "AcquireEditLockResponse": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "editing_since": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "editing_since",
+                    "message"
+                ]
+            },
             "ActionEnum": {
                 "enum": [
                     "CREATE",
@@ -6202,6 +6831,25 @@
                     "credit_note_id",
                     "credit_note_number",
                     "message"
+                ]
+            },
+            "ChangePasswordRequest": {
+                "type": "object",
+                "properties": {
+                    "current_password": {
+                        "type": "string",
+                        "writeOnly": true,
+                        "minLength": 1
+                    },
+                    "new_password": {
+                        "type": "string",
+                        "writeOnly": true,
+                        "minLength": 8
+                    }
+                },
+                "required": [
+                    "current_password",
+                    "new_password"
                 ]
             },
             "CleanupExpiredResponse": {
@@ -6910,6 +7558,16 @@
                     "subject_type"
                 ]
             },
+            "DateFormatEnum": {
+                "enum": [
+                    "%Y-%m-%d",
+                    "%d.%m.%Y",
+                    "%m/%d/%Y",
+                    "%d/%m/%Y"
+                ],
+                "type": "string",
+                "description": "* `%Y-%m-%d` - YYYY-MM-DD\n* `%d.%m.%Y` - DD.MM.YYYY\n* `%m/%d/%Y` - MM/DD/YYYY\n* `%d/%m/%Y` - DD/MM/YYYY"
+            },
             "DpiaAssessmentStatusEnum": {
                 "enum": [
                     "draft",
@@ -7199,6 +7857,18 @@
                         "type": "integer",
                         "nullable": true,
                         "readOnly": true
+                    },
+                    "editing_by_display": {
+                        "type": "string",
+                        "nullable": true,
+                        "readOnly": true
+                    },
+                    "editing_since": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true,
+                        "title": "In Bearbeitung seit"
                     }
                 },
                 "required": [
@@ -7213,6 +7883,8 @@
                     "company_details",
                     "content_hash",
                     "created_at",
+                    "editing_by_display",
+                    "editing_since",
                     "id",
                     "invoice_number",
                     "invoice_type_display",
@@ -7715,6 +8387,16 @@
                 "type": "string",
                 "description": "* `INVOICE` - Invoice\n* `CREDIT_NOTE` - Credit Note\n* `DEBIT_NOTE` - Debit Note\n* `CORRECTED` - Corrected Invoice\n* `PARTIAL` - Partial Invoice\n* `FINAL` - Final Invoice"
             },
+            "LanguageEnum": {
+                "enum": [
+                    "en",
+                    "de",
+                    "fr",
+                    "es"
+                ],
+                "type": "string",
+                "description": "* `en` - English\n* `de` - German\n* `fr` - French\n* `es` - Spanish"
+            },
             "LegalBasisEnum": {
                 "enum": [
                     "contract",
@@ -7737,6 +8419,17 @@
                 "description": "* `SENT` - Versendet\n* `PAID` - Bezahlt\n* `CANCELLED` - Storniert\n* `MANUAL` - Manuell gesperrt"
             },
             "MarkAsPaidResponse": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "message"
+                ]
+            },
+            "MarkAsSentResponse": {
                 "type": "object",
                 "properties": {
                     "message": {
@@ -8992,6 +9685,45 @@
                     }
                 }
             },
+            "PatchedUserSettingsRequest": {
+                "type": "object",
+                "description": "User-editable preferences. Excludes security fields (mfa, lock, etc.).",
+                "properties": {
+                    "language": {
+                        "$ref": "#/components/schemas/LanguageEnum"
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 50
+                    },
+                    "date_format": {
+                        "$ref": "#/components/schemas/DateFormatEnum"
+                    },
+                    "email_notifications": {
+                        "type": "boolean"
+                    },
+                    "notify_invoice_paid": {
+                        "type": "boolean",
+                        "title": "Notify on Invoice Paid"
+                    },
+                    "notify_invoice_overdue": {
+                        "type": "boolean",
+                        "title": "Notify on Invoice Overdue"
+                    },
+                    "default_currency": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 3
+                    },
+                    "default_payment_terms_days": {
+                        "type": "integer",
+                        "maximum": 2147483647,
+                        "minimum": 0,
+                        "title": "Default Payment Terms (days)"
+                    }
+                }
+            },
             "PrivacyImpactAssessment": {
                 "type": "object",
                 "description": "Serializer for Privacy Impact Assessments.",
@@ -9795,6 +10527,33 @@
                 "type": "string",
                 "description": "* `analytics` - Nutzungsanalyse\n* `newsletter` - Newsletter\n* `profiling` - Profiling\n* `third_party` - Weitergabe an Dritte"
             },
+            "RefreshEditLockResponse": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "editing_since": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "editing_since",
+                    "message"
+                ]
+            },
+            "ReleaseEditLockResponse": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "message"
+                ]
+            },
             "RequestTypeEnum": {
                 "enum": [
                     "access",
@@ -9816,6 +10575,59 @@
                 ],
                 "type": "string",
                 "description": "* `low` - Niedrig\n* `medium` - Mittel\n* `high` - Hoch\n* `critical` - Kritisch"
+            },
+            "SendInvoiceEmailRequestRequest": {
+                "type": "object",
+                "properties": {
+                    "recipient": {
+                        "type": "string",
+                        "format": "email",
+                        "minLength": 1
+                    },
+                    "message": {
+                        "type": "string",
+                        "default": ""
+                    },
+                    "attach_xml": {
+                        "type": "boolean",
+                        "default": false
+                    }
+                },
+                "required": [
+                    "recipient"
+                ]
+            },
+            "SendInvoiceEmailResponse": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "recipient": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "subject": {
+                        "type": "string"
+                    },
+                    "attached_files": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "sent_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "attached_files",
+                    "message",
+                    "recipient",
+                    "sent_at",
+                    "subject"
+                ]
             },
             "SeverityEnum": {
                 "enum": [
@@ -9908,6 +10720,94 @@
                     "operation",
                     "quantity"
                 ]
+            },
+            "UserSettings": {
+                "type": "object",
+                "description": "User-editable preferences. Excludes security fields (mfa, lock, etc.).",
+                "properties": {
+                    "username": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "language": {
+                        "$ref": "#/components/schemas/LanguageEnum"
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "date_format": {
+                        "$ref": "#/components/schemas/DateFormatEnum"
+                    },
+                    "email_notifications": {
+                        "type": "boolean"
+                    },
+                    "notify_invoice_paid": {
+                        "type": "boolean",
+                        "title": "Notify on Invoice Paid"
+                    },
+                    "notify_invoice_overdue": {
+                        "type": "boolean",
+                        "title": "Notify on Invoice Overdue"
+                    },
+                    "default_currency": {
+                        "type": "string",
+                        "maxLength": 3
+                    },
+                    "default_payment_terms_days": {
+                        "type": "integer",
+                        "maximum": 2147483647,
+                        "minimum": 0,
+                        "title": "Default Payment Terms (days)"
+                    }
+                },
+                "required": [
+                    "email",
+                    "username"
+                ]
+            },
+            "UserSettingsRequest": {
+                "type": "object",
+                "description": "User-editable preferences. Excludes security fields (mfa, lock, etc.).",
+                "properties": {
+                    "language": {
+                        "$ref": "#/components/schemas/LanguageEnum"
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 50
+                    },
+                    "date_format": {
+                        "$ref": "#/components/schemas/DateFormatEnum"
+                    },
+                    "email_notifications": {
+                        "type": "boolean"
+                    },
+                    "notify_invoice_paid": {
+                        "type": "boolean",
+                        "title": "Notify on Invoice Paid"
+                    },
+                    "notify_invoice_overdue": {
+                        "type": "boolean",
+                        "title": "Notify on Invoice Overdue"
+                    },
+                    "default_currency": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 3
+                    },
+                    "default_payment_terms_days": {
+                        "type": "integer",
+                        "maximum": 2147483647,
+                        "minimum": 0,
+                        "title": "Default Payment Terms (days)"
+                    }
+                }
             }
         },
         "securitySchemes": {

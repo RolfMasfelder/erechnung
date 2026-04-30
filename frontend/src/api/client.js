@@ -32,13 +32,15 @@ apiClient.interceptors.request.use(
       delete config.headers['Content-Type']
     }
 
-    // Debug-Log
-    console.log('📡 API Request:', {
-      method: config.method?.toUpperCase(),
-      url: config.url,
-      baseURL: config.baseURL,
-      fullURL: `${config.baseURL}${config.url}`
-    })
+    // Debug-Log (DEV only)
+    if (import.meta.env.DEV) {
+      console.log('📡 API Request:', {
+        method: config.method?.toUpperCase(),
+        url: config.url,
+        baseURL: config.baseURL,
+        fullURL: `${config.baseURL}${config.url}`
+      })
+    }
 
     return config
   },
@@ -53,11 +55,15 @@ apiClient.interceptors.request.use(
  */
 apiClient.interceptors.response.use(
   response => {
-    console.log('✅ API Response:', response.status, response.config.url)
+    if (import.meta.env.DEV) {
+      console.log('✅ API Response:', response.status, response.config.url)
+    }
     return response
   },
   async error => {
-    console.log('❌ API Error:', error.response?.status, error.config?.url, error.message)
+    if (import.meta.env.DEV) {
+      console.log('❌ API Error:', error.response?.status, error.config?.url, error.message)
+    }
     const originalRequest = error.config
 
     // Netzwerkfehler (kein Response vom Server - Offline, Timeout, DNS, etc.)

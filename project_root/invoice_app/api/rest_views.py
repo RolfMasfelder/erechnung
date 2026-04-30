@@ -2,6 +2,8 @@
 REST API views for the invoice_app.
 """
 
+import hashlib
+import json
 import logging  # noqa: I001
 from decimal import Decimal, InvalidOperation
 
@@ -13,6 +15,12 @@ from django.http import FileResponse
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiExample, OpenApiParameter, OpenApiResponse, extend_schema, inline_serializer
+from rest_framework import filters, serializers, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from invoice_app.models import (
     AuditLog,
     BusinessPartner,
@@ -29,11 +37,6 @@ from invoice_app.models import (
     ProcessingActivity,
     Product,
 )
-from rest_framework import filters, serializers, status, viewsets
-from rest_framework.decorators import action
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from .exceptions import (
     EditLockError,
@@ -66,6 +69,7 @@ from .serializers import (
     ProductImportSerializer,
     ProductSerializer,
 )
+
 
 logger = logging.getLogger(__name__)
 
@@ -740,6 +744,107 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        description=(
+            "Rechnung per E-Mail versenden. PDF/A-3 wird immer angehängt und "
+            "enthält die ZUGFeRD/Factur-X XML bereits eingebettet (EN16931-konform). "
+            "Über attach_xml=true kann die XML zusätzlich als separates Attachment "
+            "verschickt werden (nur für reine XRechnung-Workflows empfohlen). "
+            "Erfordert eine konfigurierte SMTP-Verbindung; "
+            "schlägt fehl, wenn INVOICE_EMAIL_ENABLED=False."
+        ),
+        request=inline_serializer(
+            name="SendInvoiceEmailRequest",
+            fields={
+                "recipient": serializers.EmailField(required=True),
+                "message": serializers.CharField(required=False, allow_blank=True, default=""),
+                # Default False: PDF/A-3 already embeds the ZUGFeRD/Factur-X XML.
+                # Setting to True ships the XML as a separate attachment too
+                # (use only for pure XRechnung workflows).
+                "attach_xml": serializers.BooleanField(required=False, default=False),
+            },
+        ),
+        responses={
+            200: inline_serializer(
+                name="SendInvoiceEmailResponse",
+                fields={
+                    "message": serializers.CharField(),
+                    "recipient": serializers.EmailField(),
+                    "subject": serializers.CharField(),
+                    "attached_files": serializers.ListField(child=serializers.CharField()),
+                    "sent_at": serializers.DateTimeField(),
+                },
+            ),
+            400: OpenApiResponse(description="Ungültige Eingabe (z. B. fehlender Empfänger)"),
+            503: OpenApiResponse(description="E-Mail-Versand deaktiviert oder SMTP-Fehler"),
+        },
+    )
+    @action(detail=True, methods=["post"], url_path="send_email")
+    def send_email(self, request, pk=None):
+        """Send the invoice (PDF + optional XML) to a recipient via SMTP."""
+        from invoice_app.services.email_service import (
+            EmailDeliveryError,
+            EmailDisabledError,
+            InvoiceEmailService,
+        )
+
+        invoice = self.get_object()
+        recipient = (request.data.get("recipient") or "").strip()
+        message = request.data.get("message") or ""
+        # PDF/A-3 already embeds the structured XML — separate attachment is opt-in.
+        attach_xml = bool(request.data.get("attach_xml", False))
+
+        if not recipient:
+            return Response(
+                {"detail": "Empfänger-E-Mail-Adresse ist erforderlich."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # DRAFT auto-transition: sending an invoice marks it as SENT (GoBD-locks it).
+        if invoice.status == Invoice.InvoiceStatus.DRAFT:
+            invoice.status = Invoice.InvoiceStatus.SENT
+            invoice.save()
+            invoice.refresh_from_db()
+
+        try:
+            result = InvoiceEmailService().send_invoice(
+                invoice,
+                recipient,
+                message=message,
+                attach_xml=attach_xml,
+                request=request,
+                user=request.user,
+            )
+        except EmailDisabledError as exc:
+            logger.warning("Email sending disabled for invoice %s: %s", invoice.id, exc)
+            return Response(
+                {"detail": "E-Mail-Versand ist derzeit nicht verfügbar."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except EmailDeliveryError as exc:
+            logger.error("SMTP delivery failed for invoice %s: %s", invoice.id, exc)
+            return Response(
+                {"detail": "E-Mail-Versand fehlgeschlagen. Bitte später erneut versuchen."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except ValueError as exc:
+            logger.warning("Invalid email send request for invoice %s: %s", invoice.id, exc)
+            return Response(
+                {"detail": "Ungültige Anfrageparameter für den E-Mail-Versand."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {
+                "message": f"Rechnung {invoice.invoice_number} per E-Mail versendet.",
+                "recipient": result.recipient,
+                "subject": result.subject,
+                "attached_files": result.attached_filenames,
+                "sent_at": result.sent_at,
+            },
+            status=status.HTTP_200_OK,
+        )
+
 
 class InvoiceLineViewSet(viewsets.ModelViewSet):
     """
@@ -895,6 +1000,56 @@ class DashboardStatsView(APIView):
             raise ServiceUnavailableError("Dashboard-Statistiken konnten nicht abgerufen werden.") from None
 
 
+def _hash_import_payload(rows):
+    """
+    Compute a deterministic SHA-256 hash of the imported rows.
+
+    Used as a stable identifier of the source data for audit logging
+    (ADR-025 — Hybrid audit). Keys are sorted so re-ordering does not
+    change the hash; values are coerced via ``default=str`` to handle
+    Decimals/dates emitted by DRF.
+    """
+    canonical = json.dumps(rows, sort_keys=True, default=str, ensure_ascii=False)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _log_import_audit(*, request, object_type, rows, result):
+    """
+    Write a single aggregated audit entry for a bulk import job (ADR-025).
+
+    One ``AuditLog`` entry per import job containing:
+
+    - User, timestamp, source-data hash, format, dry-run flag
+    - Aggregated counts (created/updated/skipped/failed)
+    - List of IDs of imported records (no full payloads — those are
+      captured by the regular per-model audit hooks)
+    - Compact list of row-level errors (row index + message)
+    """
+    payload_hash = _hash_import_payload(rows)
+    error_count = result.get("error_count", 0)
+    severity = AuditLog.Severity.MEDIUM if error_count else AuditLog.Severity.LOW
+
+    AuditLog.log_action(
+        action=AuditLog.ActionType.IMPORT,
+        user=request.user,
+        request=request,
+        description=f"Bulk-Import: {object_type} ({len(rows)} Zeilen)",
+        details={
+            "object_type": object_type,
+            "format": "json",
+            "dry_run": False,
+            "source_hash": payload_hash,
+            "row_count": len(rows),
+            "imported_count": result.get("imported_count", 0),
+            "skipped_count": result.get("skipped_count", 0),
+            "error_count": error_count,
+            "imported_ids": result.get("imported_ids", []),
+            "errors": result.get("errors", []),
+        },
+        severity=severity,
+    )
+
+
 class BusinessPartnerImportView(APIView):
     """
     API endpoint for bulk importing business partners (customers/suppliers).
@@ -991,6 +1146,13 @@ class BusinessPartnerImportView(APIView):
             "errors": errors,
             "imported_ids": imported_ids,
         }
+
+        _log_import_audit(
+            request=request,
+            object_type="BusinessPartner",
+            rows=rows,
+            result=result,
+        )
 
         result_status = status.HTTP_201_CREATED if error_count == 0 else status.HTTP_207_MULTI_STATUS
         return Response(result, status=result_status)
@@ -1090,6 +1252,13 @@ class ProductImportView(APIView):
             "errors": errors,
             "imported_ids": imported_ids,
         }
+
+        _log_import_audit(
+            request=request,
+            object_type="Product",
+            rows=rows,
+            result=result,
+        )
 
         result_status = status.HTTP_201_CREATED if error_count == 0 else status.HTTP_207_MULTI_STATUS
         return Response(result, status=result_status)

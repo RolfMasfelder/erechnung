@@ -25,6 +25,8 @@ from .rest_views import (
     ProductViewSet,
     RetentionSummaryView,
 )
+from .views.gdpdu_export_view import GDPdUExportView
+from .views.user_settings_view import ChangePasswordView, SystemInfoView, UserSettingsMeView
 from .views.version_view import VersionView
 
 router = DefaultRouter()
@@ -62,6 +64,12 @@ urlpatterns = [
         RetentionSummaryView.as_view(),
         name="api-compliance-retention-summary",
     ),
+    # GDPdU / IDEA export (§147 AO)
+    path("gdpdu/export/", GDPdUExportView.as_view(), name="api-gdpdu-export"),
+    # User settings, password change, system info
+    path("user-settings/me/", UserSettingsMeView.as_view(), name="api-user-settings-me"),
+    path("auth/change-password/", ChangePasswordView.as_view(), name="api-auth-change-password"),
+    path("system/info/", SystemInfoView.as_view(), name="api-system-info"),
     # Router endpoints last
     path("", include(router.urls)),
 ]

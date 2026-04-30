@@ -35,14 +35,18 @@ export const authService = {
    * @returns {Promise<{access: string, refresh: string}>}
    */
   async login(username, password) {
-    console.log('🔐 Login attempt:', { username, endpoint: '/auth/token/' })
+    if (import.meta.env.DEV) {
+      console.log('🔐 Login attempt:', { username, endpoint: '/auth/token/' })
+    }
 
     const response = await apiClient.post('/auth/token/', {
       username,
       password
     })
 
-    console.log('✅ Login successful:', response.data)
+    if (import.meta.env.DEV) {
+      console.log('✅ Login successful:', response.data)
+    }
 
     const { access, refresh } = response.data
 
@@ -53,7 +57,9 @@ export const authService = {
     // User-Daten aus JWT Token extrahieren
     const userData = decodeJWT(access)
     if (userData) {
-      console.log('👤 Decoded user data:', userData)
+      if (import.meta.env.DEV) {
+        console.log('👤 Decoded user data:', userData)
+      }
       localStorage.setItem('current_user', JSON.stringify(userData))
     }
 

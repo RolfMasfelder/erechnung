@@ -230,6 +230,33 @@ export const invoiceService = {
     return mapInvoiceFromApi(response.data)
   },
 
+  /**
+   * Rechnung per E-Mail versenden.
+   *
+   * Anhänge: PDF/A-3 (mit eingebetteter ZUGFeRD/Factur-X-XML, EN16931).
+   * Optional kann die XML zusätzlich als separates Attachment angehängt werden
+   * (`attachXml=true`) — nur für reine XRechnung-Workflows nötig.
+   *
+   * Der Backend-Endpoint transitioniert DRAFT-Rechnungen automatisch nach SENT.
+   *
+   * @param {number} id - Invoice-ID
+   * @param {object} payload
+   * @param {string} payload.recipient - E-Mail-Adresse des Empfängers
+   * @param {string} [payload.message]  - Optionale persönliche Nachricht
+   * @param {boolean} [payload.attachXml=false] - XML zusätzlich separat anhängen
+   * @returns {Promise<{message: string, recipient: string, subject: string,
+   *   attached_files: string[], sent_at: string}>}
+   * @throws {AxiosError} 400 bei ungültiger Eingabe, 503 wenn deaktiviert/SMTP-Fehler
+   */
+  async sendEmail(id, { recipient, message = '', attachXml = false }) {
+    const response = await apiClient.post(`/invoices/${id}/send_email/`, {
+      recipient,
+      message,
+      attach_xml: attachXml,
+    })
+    return response.data
+  },
+
   // ── Concurrent Edit Lock ────────────────────────────────────────────────
 
   /**

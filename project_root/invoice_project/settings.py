@@ -346,6 +346,22 @@ XML_VALIDATION_TIMING_THRESHOLD_MS = int(os.getenv("XML_VALIDATION_TIMING_THRESH
 # Test runner — cleans up leftover XML artifacts before each test run
 TEST_RUNNER = "invoice_project.test_runner.ERehnungTestRunner"
 
+# ── E-Mail-Versand ───────────────────────────────────────────────────────
+# Default backend = SMTP. Dev points to Mailpit (no real delivery), Production
+# points to IONOS (smtp.ionos.de). Tests override with locmem in pytest fixtures.
+# Hard kill-switch: INVOICE_EMAIL_ENABLED=false makes send_invoice_email() raise.
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "mailpit")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "1025"))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "False").lower() == "true"
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() == "true"
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = get_secret("EMAIL_HOST_PASSWORD", os.getenv("EMAIL_HOST_PASSWORD", ""))
+EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "10"))
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "no-reply@erechnung.local")
+SERVER_EMAIL = os.getenv("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
+INVOICE_EMAIL_ENABLED = os.getenv("INVOICE_EMAIL_ENABLED", "True").lower() == "true"
+
 # Celery settings
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
