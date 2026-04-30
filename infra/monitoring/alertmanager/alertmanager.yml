@@ -1,0 +1,41 @@
+# Alertmanager configuration for Docker Compose development stack
+# Decision: ADR-016 (Monitoring Stack Selection)
+#
+# For production (k3s), see infra/k8s/k3s/manifests/98-alertmanager.yaml
+# SMTP password is read from a file — set ALERTMANAGER_SMTP_PASSWORD_FILE env var
+# or place the password in secrets/alertmanager_smtp_password (gitignored).
+global:
+  smtp_smarthost: smtp.ionos.de:587
+  smtp_from: github@nector-it-gmbh.de
+  smtp_auth_username: github@nector-it-gmbh.de
+  smtp_auth_password_file: /etc/alertmanager/secrets/smtp_password
+  smtp_require_tls: true
+  resolve_timeout: 5m
+
+route:
+  receiver: ops-mail
+  group_by: ['alertname', 'severity']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers:
+        - severity="critical"
+      receiver: ops-mail
+      group_wait: 10s
+      repeat_interval: 1h
+
+receivers:
+  - name: ops-mail
+    email_configs:
+      - to: ops@nector-it-gmbh.de
+        send_resolved: true
+        headers:
+          Subject: '[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .GroupLabels.alertname }}'
+
+inhibit_rules:
+  - source_matchers:
+      - severity="critical"
+    target_matchers:
+      - severity="warning"
+    equal: ['alertname']

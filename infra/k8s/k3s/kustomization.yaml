@@ -38,6 +38,9 @@ resources:
   # Log aggregation (Loki + Promtail)
   - manifests/96-deploy-loki.yaml
   - manifests/97-deploy-promtail.yaml
+  # Alert routing (Alertmanager + SMTP via Sealed Secret)
+  - manifests/98-alertmanager.yaml
+  - secrets/alertmanager-smtp.sealed.yaml
   - policies/ingress-nginx-network-policies.yaml
   - policies/erechnung-network-policies.yaml
   - policies/monitoring-network-policies.yaml
