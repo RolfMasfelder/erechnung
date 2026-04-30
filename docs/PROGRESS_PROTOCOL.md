@@ -5261,3 +5261,56 @@ During TODO.md review, discovered that legacy Organization templates and referen
 - URL patterns already updated to support company/customer separation
 
 ---
+
+## 2026-04-30 — Arbeitsauftrag P1 + P2 (Locale, Alertmanager, SLO, Runbooks)
+
+### Ziel
+
+Umsetzung aus `docs/work-assignments/2026-04-30.md`:
+- P1: PDF-Zahlen auf de_DE-Lokalisation umstellen
+- P2: Alertmanager + SMTP-Routing, SLO-Dashboard, Runbooks
+
+### P1: PDF de_DE Lokalisierung
+
+- `settings.py`: `LANGUAGE_CODE="de-de"`, `USE_L10N=True`, `USE_THOUSAND_SEPARATOR=False`, `LocaleMiddleware` hinzugefügt
+- `invoice_pdf.html`: `{% load l10n %}` + `|localize`-Filter für alle `floatformat`-Aufrufe (XML-Ausgabe bleibt EN 16931-konform mit Dezimalpunkten)
+- `test_crud_views.py`: 3 Assertions auf de_DE angepasst (erwartete Folge der Locale-Änderung)
+- 730 Tests: alle grün, exit code 0
+- Commit: `fix(pdf): localize numbers to de_DE in invoice PDF template` (a36b720)
+
+### P2: Alertmanager + Monitoring-Infrastruktur
+
+**Alertmanager:**
+- `infra/monitoring/alertmanager/alertmanager.yml`: Neue Config mit SMTP via smtp.ionos.de:587, Route (critical: 1h, default: 4h), Inhibit-Regeln
+- `docker-compose.monitoring.yml`: `alertmanager`-Service (prom/alertmanager:v0.32.1), Passwort-Mount via `./secrets/alertmanager_smtp_password`
+- `infra/monitoring/prometheus/prometheus.yml`: `alerting:`-Block auf docker-compose `alertmanager:9093`
+- `infra/k8s/k3s/manifests/98-alertmanager.yaml`: Vollständiges k3s-Manifest (ConfigMap, PVC, Deployment, Service)
+- `infra/k8s/k3s/kustomization.yaml`: `98-alertmanager.yaml` + `secrets/alertmanager-smtp.sealed.yaml` eingetragen
+- `infra/k8s/k3s/secrets/alertmanager-smtp.sealed.yaml`: Placeholder mit kubeseal-Anleitung
+- `scripts/seal-secret.sh`: Wrapper-Skript für kubeseal-Sealed-Secret-Erstellung
+- Commit: `feat(monitoring): add Alertmanager with SMTP routing (docker-compose + k3s)` (0875ff8)
+
+**Alert Rules (Recording Rules + Runbook-URLs):**
+- `infra/monitoring/prometheus/alert_rules.yml`: 5 Recording Rules (p50/p95/p99 Latenz, Error Rate, Invoice Rate) + `runbook_url` für alle 12 Alerts
+- `infra/k8s/k3s/manifests/92-configmap-prometheus.yaml`: Inline-Copy der alert_rules vollständig synchronisiert (recording rules + alle Alerts + runbook_url-Annotationen)
+
+**SLO-Dashboard:**
+- `infra/monitoring/grafana/dashboards/erechnung-slo.json`: Neues Dashboard (4 Sections: Latenz p50/p95/p99, Error Rate, Availability Stat, Invoice Throughput, PDF Failure Rate)
+- `infra/k8s/k3s/manifests/94-configmap-grafana-dashboards.yaml`: SLO-Dashboard als zweites ConfigMap-Data-Entry eingebettet
+- Commit: `feat(monitoring): add SLO Grafana dashboard (latency/error-rate/throughput)` (a797690)
+
+**Runbooks:**
+- `docs/runbooks/`: 12 Markdown-Runbooks erstellt (DjangoDown, HighErrorRate, HighRequestLatency, OverdueInvoicesHigh, PDFGenerationFailureRate, PDFGenerationSlow, XMLValidationErrors, PostgresDown, RedisDown, HighDatabaseConnections, RedisMemoryHigh, HighCeleryTaskFailureRate)
+- Commit: `docs: add runbooks for all 12 Prometheus alerts` (b97fe3a)
+
+### Push
+
+- `origin` (local mirror): ✅ bce6300..b97fe3a dev
+- `github` (GitHub): ✅ bce6300..b97fe3a dev
+
+### Offene Punkte P2
+
+- `infra/k8s/k3s/secrets/alertmanager-smtp.sealed.yaml` ist noch ein Placeholder — muss im Cluster mit `scripts/seal-secret.sh` durch echtes SealedSecret ersetzt werden (kubeseal muss im Cluster installiert sein)
+- P3 (InvoiceDetailView UX-Refactoring) noch nicht begonnen
+
+---
