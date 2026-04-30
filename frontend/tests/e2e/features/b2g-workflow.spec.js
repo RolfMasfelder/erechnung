@@ -155,8 +155,8 @@ test.describe('B2G-Workflow (XRechnung)', () => {
       await xrRow.locator('a.invoice-link').click()
       await page.waitForLoadState('networkidle')
 
-      // Step 3: XRechnung XML button should be visible
-      await expect(page.getByRole('button', { name: /XRechnung XML/i })).toBeVisible()
+      // Step 3: Smart-Download button should show 'XML herunterladen' for B2G invoices
+      await expect(page.getByRole('button', { name: /XML herunterladen/i })).toBeVisible()
     })
 
     test('XRechnung XML Button ist bei normaler Rechnung NICHT sichtbar', async ({ page }) => {
