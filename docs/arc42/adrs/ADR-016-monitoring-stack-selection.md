@@ -2,7 +2,7 @@
 
 ## Status
 
-**TODO** - Decision Pending
+**Accepted** — 2026-04-30
 
 ## Context
 
@@ -23,9 +23,15 @@ The monitoring solution must:
 
 ## Decision
 
-**TO BE DETERMINED**
+**Plain Prometheus + Grafana + Loki + Promtail + Alertmanager + kube-state-metrics**, self-hosted in beiden Deployments (Docker Compose `docker-compose.monitoring.yml` und k3s `infra/k8s/k3s/manifests/9*`). Alle Images mit explizit gepinnten Versionen (z. B. `prom/prometheus:v3.11.1`, `grafana/grafana:12.4.2`).
 
-Need to evaluate monitoring solutions based on deployment environment and operational capacity.
+Kein Prometheus Operator: Für eine Single-Cluster-/Single-Namespace-Topologie überwiegt die zusätzliche CRD- und Operator-Komplexität den Nutzen. Service-Discovery erfolgt über statische Targets bzw. Kubernetes-SD ohne `ServiceMonitor`-CRDs.
+
+Kein Thanos / VictoriaMetrics: Vorerst genügen kurze Retention-Zeiten (Prometheus 15 Tage, Loki 30 Tage). Re-Evaluation, sobald entweder >30 Tage Metric-Retention oder Multi-Cluster-Föderation gefordert sind.
+
+Alerting via Alertmanager → SMTP über die bereits konfigurierte IONOS-Mailbox (`EMAIL_HOST=smtp.ionos.de`, `EMAIL_HOST_USER=github@nector-it-gmbh.de`, vgl. ADR-012 / `secrets/`-Strategie). Damit ist die im April 2026 fertiggestellte E-Mail-Infrastruktur (§3.5) auch der Notification-Kanal für operative Alerts — kein zusätzlicher Slack/PagerDuty-Account nötig. Routing/Severity über Alertmanager-Routes; Empfänger für initial: Operator-Mailbox.
+
+Distributed Tracing (OpenTelemetry/Jaeger) ist explizit **nicht** Teil dieses ADR und wird unter §3.1 (Security Phase 3+4) separat verfolgt.
 
 ## Options to Evaluate
 
@@ -236,58 +242,72 @@ Monitoring stack should be combined with log aggregation. Options:
    - Can metrics be sent to third-party SaaS?
    - Or must be self-hosted?
 
-## Recommendation (Preliminary)
+## Selected Stack
 
-### For Initial Deployment:
-**Prometheus Operator + Grafana + Loki**
+| Component | Image / Version | Rolle |
+|---|---|---|
+| Prometheus | `prom/prometheus:v3.11.1` | Metrik-Scraping, TSDB, Recording/Alert-Rules |
+| Grafana | `grafana/grafana:12.4.2` | Dashboards (eRechnung-Overview als Default-Home) |
+| Loki | `grafana/loki` (gepinnte Version) | Log-Aggregation |
+| Promtail | `grafana/promtail` (gepinnte Version) | Log-Shipping zu Loki |
+| Alertmanager | `prom/alertmanager` (gepinnte Version) | Alert-Routing → SMTP/IONOS |
+| kube-state-metrics | gepinnte Version | k8s-Cluster-Metriken |
+| redis-exporter | gepinnte Version | Redis-Metriken (Docker-Compose) |
 
-**Rationale:**
-- **Vendor neutral** - can run anywhere
-- **Cost effective** - $0 licensing
-- **Industry standard** - well-supported
-- **Kubernetes-native** - excellent integration
-- **Complete solution** - metrics + logs + dashboards
-- **Operational** - manageable complexity with Operator
+## Implementation Notes
 
-### Monitoring Stack Components:
-- **Prometheus Operator**: Metrics collection
-- **Grafana**: Visualization and dashboards
-- **Alertmanager**: Alert routing and notification
-- **Loki**: Log aggregation
-- **Promtail**: Log shipping to Loki
+- **Konfiguration**: `infra/monitoring/prometheus/prometheus.yml`, `alert_rules.yml`, `infra/monitoring/grafana/{provisioning,dashboards}/`.
+- **k3s-Manifeste**: `infra/k8s/k3s/manifests/9*-*.yaml` (Namespace `monitoring`, PodSecurity `privileged` wegen Promtail-Hostmount).
+- **Network Policies**: `infra/k8s/k3s/policies/monitoring-network-policies.yaml` regeln Ingress/Egress zwischen Prometheus, Grafana, Loki, Promtail und der Anwendungs-Namespace.
+- **Retention**: Prometheus `--storage.tsdb.retention.time=15d`, Loki retention 30d (jeweils im Konfig-File überprüfen/anpassen).
+- **Alerting via SMTP**: Alertmanager nutzt dieselben SMTP-Credentials wie der Rechnungs-E-Mail-Versand (IONOS, ADR-012-konform aus Sealed Secrets bzw. `.env`).
+  ```yaml
+  # alertmanager.yml (Auszug)
+  global:
+    smtp_smarthost: smtp.ionos.de:587
+    smtp_from: github@nector-it-gmbh.de
+    smtp_auth_username: github@nector-it-gmbh.de
+    smtp_auth_password_file: /etc/alertmanager/secrets/smtp_password
+    smtp_require_tls: true
+  route:
+    receiver: ops-mail
+    group_by: ['alertname', 'severity']
+    repeat_interval: 4h
+  receivers:
+    - name: ops-mail
+      email_configs:
+        - to: ops@nector-it-gmbh.de
+  ```
+- **Custom Business-Metriken**: via `django-prometheus` und eigener Counter/Histograms im Backend (siehe §2.1 / `PROGRESS_PROTOCOL.md` 04.03.2026).
+- **GitOps**: Deployment via `kubectl apply -k infra/k8s/k3s/`; mittelfristig durch ArgoCD übernommen (ADR-014).
 
-### Long-Term Enhancement (Optional):
-- Add **Thanos** if long-term retention (>30 days) needed
-- Or **VictoriaMetrics** if cost optimization critical
+## Verworfene Alternativen
 
-## Implementation Notes (Placeholder)
-
-**TO BE COMPLETED AFTER DECISION**
-
-### ServiceMonitor Example:
-```yaml
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: django-app
-  namespace: erechnung
-spec:
-  selector:
-    matchLabels:
-      app: django-app
-  endpoints:
-  - port: metrics
-    interval: 30s
-```
-
-### Grafana Dashboard:
-- Import community dashboards for Kubernetes
-- Create custom dashboard for eRechnung business metrics
-- Configure alerts for critical conditions
+- **Prometheus Operator** — zu viel Operator-/CRD-Overhead für Single-Cluster.
+- **Cloud-Native Monitoring** (CloudWatch/Azure Monitor/GCP) — Vendor-Lock-in, kein Cloud-Provider im Einsatz.
+- **Datadog / New Relic** — Kosten und Datenabfluss zu Drittanbieter (DSGVO/GoBD-relevant).
+- **VictoriaMetrics** — kein hinreichender Vorteil bei aktueller Datenmenge; Re-Eval bei Skalierung.
+- **Thanos** — keine Multi-Cluster- oder Long-Term-Retention-Anforderung; Re-Eval >30 Tage Retention.
+- **ELK** — zu ressourcenintensiv für Single-Node-k3s; Loki deckt Use Cases ab.
 
 ## Consequences
 
-**TO BE DOCUMENTED AFTER DECISION**
+**Positive:**
+- Vollständig vendor-neutral, lizenzkostenfrei.
+- Ein einheitlicher Stack in beiden Deployments (Docker Compose Dev + k3s Prod-like) — kein doppeltes Mental Model.
+- Notification-Pfad nutzt bereits getestete SMTP-Strecke (E-Mail-Versand seit 2026-04-29 live, IONOS-bestätigt) — keine Zusatzabhängigkeit.
+- Custom Business-Metriken integriert, kube-state-metrics liefert Cluster-Sicht.
+
+**Negative / Trade-offs:**
+- Manuelle Maintenance (Image-Updates, Dashboard-Pflege, Alert-Rule-Tuning) — keine Operator-Automation.
+- Begrenzte Retention (15 d Metrics, 30 d Logs); historische Auswertungen >30 Tage erfordern Re-Eval (Thanos/VictoriaMetrics).
+- Single-Instance-Deployment ohne HA — bei Cluster-Ausfall sind Monitoring-Daten kurzzeitig unverfügbar (für aktuellen Single-Node-Betrieb akzeptabel).
+- SMTP-Alerting hängt an einer einzigen Mailbox; bei IONOS-Ausfall keine Notification — Mitigation: zusätzlich Heartbeat-Alert über externen Watchdog (Backlog).
+
+**Re-Evaluation-Trigger:**
+- Retention-Anforderung >30 Tage → Thanos oder VictoriaMetrics evaluieren.
+- Multi-Cluster oder >5 Services mit Custom Metrics → Prometheus Operator evaluieren.
+- Zweiter Notification-Kanal nötig (SMS/Webhook) → Alertmanager-Receiver erweitern.
 
 ## Related Decisions
 
@@ -308,9 +328,8 @@ spec:
 ---
 
 **Next Steps:**
-1. Determine operational capacity for self-hosted solution
-2. Assess budget constraints
-3. Define retention requirements
-4. Evaluate Prometheus Operator vs. managed monitoring
-5. Document implementation plan
-6. Set up dashboards and alerts
+1. Alertmanager-Deployment im k3s ergänzen (`infra/k8s/k3s/manifests/9X-alertmanager.yaml`) mit SMTP-Config aus Sealed Secret.
+2. Alertmanager-`smtp_password`-Sealed-Secret erzeugen und in Kustomize einhängen (ADR-012-Pattern).
+3. Recording Rules + SLO-Dashboards (Request-Latency, Error-Rate, Invoice-Throughput) ergänzen.
+4. Runbook-Links als `annotations.runbook_url` in `alert_rules.yml` einpflegen.
+5. End-to-End-Test der Alertkette: künstlicher Alert → Alertmanager → IONOS SMTP → Inbox.
