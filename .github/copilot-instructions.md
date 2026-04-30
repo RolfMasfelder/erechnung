@@ -46,7 +46,7 @@ Two separate installations that must look and function identically.
   - E2E tests run ONLY in containers. Do NOT install anything on host.
 
 ## Project Type
-- Django 5.1 + DRF (ZUGFeRD/Factur-X invoice system)
+- Django 5.2 + DRF (ZUGFeRD/Factur-X invoice system)
 - Vue.js 3 frontend (Vite + Pinia + Tailwind)
 - PostgreSQL 17 + Redis 7
 - nginx API Gateway with RBAC
