@@ -8,7 +8,7 @@ data:
   INIT_CREATE_ADMIN: "true"
   DJANGO_DEBUG: "False"
   # Staging-Hostname + erechnung.local (k8s health probes senden Host: erechnung.local)
-  DJANGO_ALLOWED_HOSTS: "staging.erechnung.local,erechnung.local,192.168.178.200,192.168.178.80,localhost,127.0.0.1,django-web-service"
+  DJANGO_ALLOWED_HOSTS: "staging.erechnung.local,erechnung.local,192.168.178.200,192.168.178.80,localhost,127.0.0.1,django-web-service,django-web-service.erechnung-staging.svc,django-web-service.erechnung-staging.svc.cluster.local"
   # Kein TLS zwischen Django und PostgreSQL innerhalb desselben Namespace (vereinfachtes Staging)
   DATABASE_SSL_MODE: "disable"
   DATABASE_SSL_CA: ""

@@ -34,6 +34,15 @@ data:
               environment: "kubernetes"
         metrics_path: /metrics
 
+      # Django staging metrics
+      - job_name: "django-staging"
+        static_configs:
+          - targets: ["django-web-service.erechnung-staging.svc:8000"]
+            labels:
+              service: "django-backend"
+              environment: "staging"
+        metrics_path: /metrics
+
       # kube-state-metrics (cluster-level metrics)
       - job_name: "kube-state-metrics"
         static_configs:
