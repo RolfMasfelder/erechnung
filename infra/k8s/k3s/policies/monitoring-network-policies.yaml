@@ -24,6 +24,71 @@ spec:
       port: 3000
 
 ---
+# Allow ingress-nginx to reach Alertmanager
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-alertmanager
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app: alertmanager
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 9093
+  # Allow Prometheus to send alerts to Alertmanager
+  - from:
+    - podSelector:
+        matchLabels:
+          app: prometheus
+    ports:
+    - protocol: TCP
+      port: 9093
+
+---
+# Allow Alertmanager egress: SMTP + DNS
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-alertmanager-egress
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app: alertmanager
+  policyTypes:
+  - Egress
+  egress:
+  # SMTP (IONOS smtp.ionos.de:587)
+  - ports:
+    - protocol: TCP
+      port: 587
+  # DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+
+---
 # Allow ingress-nginx and Grafana to reach Prometheus
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

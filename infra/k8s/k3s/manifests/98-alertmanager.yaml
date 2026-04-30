@@ -105,7 +105,7 @@ spec:
             - "--config.file=/etc/alertmanager/alertmanager.yml"
             - "--storage.path=/alertmanager"
             - "--web.listen-address=:9093"
-            - "--web.external-url=http://192.168.178.200/alertmanager/"
+            - "--web.external-url=https://monitoring.erechnung.local/alertmanager/"
             - "--web.route-prefix=/alertmanager/"
           ports:
             - containerPort: 9093
