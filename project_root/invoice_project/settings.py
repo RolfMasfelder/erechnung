@@ -190,6 +190,7 @@ MIDDLEWARE = [
     *(["corsheaders.middleware.CorsMiddleware"] if not BEHIND_GATEWAY else []),
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -290,15 +291,22 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # Internationalization
-# https://docs.djangoproject.com/en/5.1/topics/i18n/
+# https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "de-de"
 
 TIME_ZONE = "UTC"
 
 USE_I18N = True
 
+USE_L10N = True
+
 USE_TZ = True
+
+# Use German decimal/thousands format (comma as decimal separator) in templates.
+# Note: EN 16931 XML output must always use dots — localize() is only applied
+# in the visible PDF layer, never in generated XML.
+USE_THOUSAND_SEPARATOR = False  # avoid 1.000 ambiguity in monetary amounts
 
 
 # Static files (CSS, JavaScript, Images)

@@ -172,7 +172,8 @@ class CompanyCRUDTests(CRUDTestCase):
 
         # Should not redirect, should show form with errors
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "This field is required")
+        # Validation message is localized (de-DE)
+        self.assertContains(response, "Dieses Feld ist zwingend erforderlich")
 
         # Should not create a new company
         self.assertEqual(Company.objects.count(), initial_count)
@@ -367,7 +368,8 @@ class InvoiceCRUDTests(CRUDTestCase):
         self.assertContains(response, self.invoice.invoice_number)
         self.assertContains(response, self.company.name)
         self.assertContains(response, self.business_partner.display_name)
-        self.assertContains(response, str(self.invoice.total_amount))
+        # total_amount is rendered localized (de-DE: comma as decimal separator)
+        self.assertContains(response, "119,00")
         self.assertEqual(response.context["invoice"], self.invoice)
 
     def test_invoice_create_view(self):
@@ -472,8 +474,8 @@ class NavigationAndUITests(CRUDTestCase):
         response = self.client.post(url, data)
 
         self.assertEqual(response.status_code, 200)
-        # Should show validation errors
-        self.assertContains(response, "This field is required")
+        # Should show validation errors (localized to de-DE)
+        self.assertContains(response, "Dieses Feld ist zwingend erforderlich")
 
     def test_success_messages(self):
         """Test that success messages are displayed after operations."""

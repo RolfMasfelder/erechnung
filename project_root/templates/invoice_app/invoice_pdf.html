@@ -13,7 +13,7 @@
      e) WeasyPrint nutzt dasselbe Template ohne weitere Änderungen
 
    KEIN extends 'base.html' – standalone für WeasyPrint!
-{% endcomment %}<!DOCTYPE html>
+{% endcomment %}{% load l10n %}<!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8">
@@ -194,12 +194,12 @@
         </td>
         <td class="num">{{ line.quantity }}</td>
         <td>{{ line.get_unit_of_measure_display }}</td>
-        <td class="num">{{ line.unit_price|floatformat:2 }} {{ invoice.currency }}</td>
+        <td class="num">{{ line.unit_price|floatformat:2|localize }} {{ invoice.currency }}</td>
         <td class="num">
-          {% if line.discount_percentage %}{{ line.discount_percentage|floatformat:1 }} %{% else %}–{% endif %}
+          {% if line.discount_percentage %}{{ line.discount_percentage|floatformat:1|localize }} %{% else %}–{% endif %}
         </td>
-        <td class="num">{{ line.tax_rate|floatformat:1 }} %</td>
-        <td class="num">{{ line.line_total|floatformat:2 }} {{ invoice.currency }}</td>
+        <td class="num">{{ line.tax_rate|floatformat:1|localize }} %</td>
+        <td class="num">{{ line.line_total|floatformat:2|localize }} {{ invoice.currency }}</td>
       </tr>
       {% empty %}
       <tr><td colspan="9" style="text-align:center; color:#888;">Keine Positionen</td></tr>
@@ -220,28 +220,28 @@
               {% if ac.reason %}&nbsp;({{ ac.reason }}){% endif %}:
             </td>
             <td>
-              {% if ac.is_charge %}+{% else %}&minus;{% endif %}{{ ac.actual_amount|floatformat:2 }} {{ invoice.currency }}
+              {% if ac.is_charge %}+{% else %}&minus;{% endif %}{{ ac.actual_amount|floatformat:2|localize }} {{ invoice.currency }}
             </td>
           </tr>
         {% endfor %}
         <tr style="border-top: 1px dashed #ccc; font-weight: 600;">
           <td>Nettobetrag (nach Abzügen):</td>
-          <td>{{ invoice.subtotal|floatformat:2 }} {{ invoice.currency }}</td>
+          <td>{{ invoice.subtotal|floatformat:2|localize }} {{ invoice.currency }}</td>
         </tr>
       {% else %}
         <tr>
           <td>Nettobetrag:</td>
-          <td>{{ invoice.subtotal|floatformat:2 }} {{ invoice.currency }}</td>
+          <td>{{ invoice.subtotal|floatformat:2|localize }} {{ invoice.currency }}</td>
         </tr>
       {% endif %}
       {% endwith %}
       <tr>
         <td>MwSt.:</td>
-        <td>{{ invoice.tax_amount|floatformat:2 }} {{ invoice.currency }}</td>
+        <td>{{ invoice.tax_amount|floatformat:2|localize }} {{ invoice.currency }}</td>
       </tr>
       <tr class="grand-total">
         <td><strong>Gesamtbetrag:</strong></td>
-        <td><strong>{{ invoice.total_amount|floatformat:2 }} {{ invoice.currency }}</strong></td>
+        <td><strong>{{ invoice.total_amount|floatformat:2|localize }} {{ invoice.currency }}</strong></td>
       </tr>
     </table>
   </div>
