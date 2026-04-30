@@ -5310,7 +5310,7 @@ Umsetzung aus `docs/work-assignments/2026-04-30.md`:
 
 ### Offene Punkte P2
 
-- `infra/k8s/k3s/secrets/alertmanager-smtp.sealed.yaml` ist noch ein Placeholder — muss im Cluster mit `scripts/seal-secret.sh` durch echtes SealedSecret ersetzt werden (kubeseal muss im Cluster installiert sein)
+- `infra/k8s/k3s/secrets/alertmanager-smtp.sealed.yaml`: Echtes SealedSecret per `scripts/seal-secret.sh` erstellt (Commit `f0154c0`). Im Cluster deployed — `kubectl get secret alertmanager-smtp -n monitoring` liefert Opaque/1 Key, SealedSecret-AGE 7h38m. ✅
 - P3 (InvoiceDetailView UX-Refactoring) noch nicht begonnen
 
 ---
