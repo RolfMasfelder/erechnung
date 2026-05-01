@@ -142,7 +142,9 @@ test.describe('InvoiceDetailView: konsolidierte Action-Buttons', () => {
         context.waitForEvent('page', { timeout: 90_000 }),
         page.getByRole('button', { name: /Vorschau/i }).click(),
       ])
-      // blob: URLs are immediately loaded when the tab opens — no waitForLoadState needed
+      // window.open() creates a blank tab first, then navigates to the blob URL —
+      // wait for the navigation to complete before asserting the URL
+      await newPage.waitForURL(/blob:|application\/pdf/, { timeout: 90_000 })
       expect(newPage.url()).toMatch(/^(?:blob:|.*application\/pdf)/)
       await newPage.close()
     })
@@ -239,7 +241,8 @@ test.describe('SendInvoiceModal: Delivery-Mode-Selector', () => {
     await page.getByRole('button', { name: /Datei herunterladen/i }).click()
 
     await expect(page.getByText(/XRechnung/i).first()).toBeVisible()
-    await expect(page.getByRole('button', { name: /XML herunterladen/i })).toBeVisible()
+    // Scope to dialog to avoid strict mode conflict with smartDownload button on detail page
+    await expect(page.getByRole('dialog').getByRole('button', { name: /XML herunterladen/i })).toBeVisible()
   })
 
   test('Peppol-Tab: Button ist disabled', async ({ page }) => {
@@ -272,8 +275,8 @@ test.describe('SendInvoiceModal: Delivery-Mode-Selector', () => {
     // Use .first() to avoid strict-mode violation: the modal renders the text in two elements
     await expect(page.getByText(/PDF\/A-3|ZUGFeRD/i).first()).toBeVisible()
 
-    // Switch back to E-Mail
-    await page.getByRole('button', { name: /E-Mail/i }).first().click()
+    // Switch back to E-Mail — scope to dialog to avoid matching 'Per E-Mail versenden' behind overlay
+    await page.getByRole('dialog').getByRole('button', { name: /E-Mail/i }).click()
     await expect(page.getByLabel('Empfänger-E-Mail-Adresse')).toBeVisible()
   })
 
