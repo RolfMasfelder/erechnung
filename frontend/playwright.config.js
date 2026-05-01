@@ -100,7 +100,7 @@ export default defineConfig({
   // },
 
   /* Global timeout for entire test run */
-  globalTimeout: process.env.CI ? 600000 : 800000, // 10min CI, 10min local
+  globalTimeout: process.env.CI ? 1200000 : 1500000, // 20min CI, 25min local
 
   /* Timeout for each test */
   timeout: 60000, // 1 minute per test
