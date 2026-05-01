@@ -90,19 +90,30 @@ DRAFT → SENT → PAID
 
 > Die **Rechnungsnummer** wird automatisch vom System generiert und kann nicht manuell gesetzt werden.
 
-### 3.3 PDF / ZUGFeRD generieren
+### 3.3 Vorschau und Download
 
-1. Öffnen Sie die Rechnung (Status DRAFT)
-2. Klicken Sie auf **PDF generieren**
-3. Das System erstellt eine **ZUGFeRD/Factur-X EN 16931 (Comfort)**-konforme PDF/A-3-Datei mit eingebettetem XML
-4. Nach der Generierung stehen **PDF herunterladen** und **XML herunterladen** zur Verfügung
+<!-- TODO: Screenshot 30.04.2026 — neue Action-Bar mit Vorschau-Button und Smart-Download-Button (B2B: "PDF herunterladen", B2G: "XML herunterladen") -->
+
+**Vorschau:**
+1. Öffnen Sie die Rechnung
+2. Klicken Sie auf **Vorschau** — das PDF öffnet sich in einem neuen Browser-Tab
+
+**Herunterladen:**
+1. Klicken Sie auf **PDF herunterladen** (B2B) bzw. **XML herunterladen** (B2G/XRechnung)
+2. Die Datei wird direkt heruntergeladen
 
 > Das generierte PDF enthält das maschinenlesbare ZUGFeRD-XML eingebettet. Es kann direkt an Kunden versendet und von deren ERP-System automatisch verarbeitet werden.
 
 ### 3.4 Rechnung versenden (Status → SENT)
 
-Ändern Sie den Status auf **SENT**. Damit wird die Rechnung GoBD-gesperrt.
-Der tatsächliche Versand (E-Mail etc.) erfolgt außerhalb des Systems.
+<!-- TODO: Screenshot 30.04.2026 — SendInvoiceModal mit drei Tabs: E-Mail, Datei herunterladen, Peppol (disabled) -->
+
+1. Klicken Sie auf **Versenden** in der Rechnungsdetailansicht
+2. Wählen Sie den Versandweg:
+   - **E-Mail**: Empfänger-Adresse eingeben und Formular absenden — Status wechselt automatisch auf SENT
+   - **Datei herunterladen**: Datei lokal speichern und manuell versenden (B2B → PDF/A-3, B2G → XRechnung XML)
+   - **Peppol/Portal**: geplant für eine spätere Version
+3. Mit E-Mail-Versand wird die Rechnung GoBD-gesperrt (Status SENT)
 
 ### 3.5 Rechnung als bezahlt markieren
 

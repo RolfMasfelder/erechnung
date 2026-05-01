@@ -5345,4 +5345,43 @@ Umsetzung aus `docs/work-assignments/2026-04-30.md`:
 - `7cfb6e1` — feat(ui): simplify InvoiceDetailView action bar — SmartDownload, Vorschau, Versand-Status, delivery modes in SendInvoiceModal
 - `98cd223` — test(e2e): add 18 E2E tests for P3 invoice-actions UX refactoring
 
+## 2026-05-01 — E2E-Tests stabilisieren + Branch mergen
+
+### Kontext
+
+E2E-Workflow auf GitHub CI (Run #46, 47, 48, 49) schlug fehl. Ursachen wurden iterativ analysiert und behoben.
+
+### Fixes (Branch feature/invoice-actions-ux)
+
+**Root Causes und Lösungen:**
+
+| Test | Problem | Fix |
+|---|---|---|
+| Vorschau-Button öffnet neuen Tab | `waitForLoadState`-Timeout 60 s auf CI | `waitForRequest(/download_pdf/)` + `context.waitForEvent('page')` statt URL-Tracking (Blob-URLs sind in Playwright nicht trackbar) |
+| Download-Tab B2B | Strict-mode: 2 Elemente für `/PDF herunterladen/i` | `page.getByRole('dialog').getByRole('button', ...)` |
+| Download-Tab B2G | Strict-mode: 2 Elemente für `/XML herunterladen/i` | `page.getByRole('dialog').getByRole('button', ...)` |
+| Tab-Wechsel E-Mail→Download→E-Mail | `/E-Mail/i` traf auch „Per E-Mail versenden" hinter Modal | `page.getByRole('dialog').getByRole('button', { name: /E-Mail/i })` |
+| `goToB2GInvoice()` | Landete auf Gutschrift (credit-note.spec.js #84 storniert die einzige B2G-Rechnung) | Schleife überspringt `.type-credit-note` UND `.status-cancelled` |
+
+**`playwright.config.js`:** `globalTimeout` erhöht auf 20 min (CI) / 25 min (lokal), da Suite mit PDF-Generierung ~12 min dauert.
+
+### Commits
+
+- `b5522f7` — test: expand frontend test coverage across services, components, views and composables
+- `6b87b8e` — fix: fix 4 flaky E2E tests in invoice-actions.spec.js
+- `cc1c499` — fix: fix 3 remaining flaky E2E tests in invoice-actions.spec.js
+- `ed97d04` — fix: correct 3 remaining E2E flaws (blob URL timing, strict-mode XML btn, E-Mail tab scope)
+- `65c8a1c` — fix: use waitForRequest+newTab to verify PDF preview instead of unreliable blob URL check
+
+### Merge + Abschluss
+
+- `d392f4a` — feat(invoice-ui): merge feature/invoice-actions-ux → dev
+- `docs/USER_MANUAL.md`: Abschnitte 3.3 + 3.4 auf neue Action-Bar aktualisiert, Screenshot-TODOs markiert
+- `TODO_2026.md`: §2.7, §2.9, §2.10 abgehakt (1 offener Punkt bleibt: §2.10 Alertkette E2E-Test)
+- Push: `origin` ✅ `github` ✅
+
+### Lokaler E2E-Lauf (Verifikation)
+
+149 Tests, **145 passed**, 4 skipped, 0 failed — exit code 0 (12.3 min)
+
 ---
