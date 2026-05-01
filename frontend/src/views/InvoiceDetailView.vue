@@ -1,13 +1,14 @@
 <template>
   <div class="invoice-detail">
     <div class="page-header">
-      <div>
-        <router-link to="/invoices" class="back-link">← Zurück</router-link>
-        <h1 class="page-title">
-          <span v-if="invoice?.invoice_type === 'CREDIT_NOTE'" class="type-badge type-credit-note">Gutschrift</span>
-          {{ invoice?.invoice_number }}
-        </h1>
-      </div>
+      <div class="page-header-top">
+        <div>
+          <router-link to="/invoices" class="back-link">← Zurück</router-link>
+          <h1 class="page-title">
+            <span v-if="invoice?.invoice_type === 'CREDIT_NOTE'" class="type-badge type-credit-note">Gutschrift</span>
+            {{ invoice?.invoice_number }}
+          </h1>
+        </div>
 
       <div class="actions">
         <BaseButton
@@ -18,33 +19,19 @@
           ✏️ Bearbeiten
         </BaseButton>
         <BaseButton
-          variant="primary"
-          :loading="generatingPdf"
-          @click="generatePDF"
-        >
-          ⚡ PDF generieren
-        </BaseButton>
-        <BaseButton variant="secondary" :disabled="generatingPdf" @click="downloadPDF">
-          📥 PDF herunterladen
-        </BaseButton>
-        <BaseButton variant="secondary" @click="downloadXML">
-          📥 XML herunterladen
-        </BaseButton>
-        <BaseButton
-          v-if="invoice?.business_partner_details?.partner_type === 'GOVERNMENT'"
           variant="secondary"
-          :loading="generatingXml"
-          @click="generateXRechnung"
+          :loading="downloading"
+          :title="smartDownloadTooltip"
+          @click="smartDownload"
         >
-          🏛️ XRechnung XML erzeugen
+          📥 {{ smartDownloadLabel }}
         </BaseButton>
         <BaseButton
-          v-if="invoice?.status?.toUpperCase() === 'DRAFT'"
-          variant="success"
-          :loading="markingAsSent"
-          @click="handleMarkAsSent"
+          variant="secondary"
+          title="PDF im Browser öffnen (Vorschau)"
+          @click="previewPDF"
         >
-          ✉️ Als versendet markieren
+          👁 Vorschau
         </BaseButton>
         <BaseButton
           v-if="canSendEmail"
@@ -68,7 +55,12 @@
           ❌ Stornieren
         </BaseButton>
       </div>
-    </div>
+      </div><!-- end page-header-top -->
+      <div v-if="invoice?.last_emailed_at" class="versand-status">
+        📧 Zuletzt versendet: {{ formatDateTime(invoice.last_emailed_at) }}
+        <span v-if="invoice.last_email_recipient"> an <strong>{{ invoice.last_email_recipient }}</strong></span>
+      </div>
+    </div><!-- end page-header -->
 
     <div v-if="loading" class="loading">
       Lädt Rechnung...
@@ -322,15 +314,28 @@ const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const loading = ref(false)
-const generatingPdf = ref(false)
-const generatingXml = ref(false)
-const markingAsSent = ref(false)
+const downloading = ref(false)
 const invoice = ref(null)
 const showEditModal = ref(false)
 const showSendModal = ref(false)
 const showCancelDialog = ref(false)
 const cancelReason = ref('')
 const cancelling = ref(false)
+
+// Smart-Download: B2G → XRechnung XML, sonst → PDF
+const isGovernment = computed(
+  () => invoice.value?.business_partner_details?.partner_type === 'GOVERNMENT'
+)
+
+const smartDownloadLabel = computed(() =>
+  isGovernment.value ? 'XML herunterladen' : 'PDF herunterladen'
+)
+
+const smartDownloadTooltip = computed(() =>
+  isGovernment.value
+    ? 'XRechnung (XML) generieren und herunterladen (B2G)'
+    : 'PDF/A-3 mit eingebetteter ZUGFeRD-XML herunterladen'
+)
 
 // Cancel button visible only for SENT or PAID invoices (not credit notes)
 const canCancel = computed(() => {
@@ -421,87 +426,58 @@ const loadInvoice = async () => {
   }
 }
 
-const handleMarkAsSent = async () => {
-  if (!confirm('Rechnung als versendet markieren? Danach kann sie nicht mehr bearbeitet werden (GoBD).')) return
-  markingAsSent.value = true
+const smartDownload = async () => {
+  downloading.value = true
   try {
-    await invoiceService.markAsSent(route.params.id)
-    toast.success('Rechnung als versendet markiert und gesperrt.')
-    await loadInvoice()
-  } catch (error) {
-    const detail = error.response?.data?.detail ?? 'Fehler beim Statuswechsel'
+    let blob, filename
+    if (isGovernment.value) {
+      await invoiceService.generateXml(route.params.id)
+      blob = await invoiceService.downloadXML(route.params.id)
+      filename = `invoice-${invoice.value.invoice_number}.xml`
+      toast.success('XRechnung XML erfolgreich heruntergeladen')
+    } else {
+      blob = await invoiceService.downloadPDF(route.params.id)
+      filename = `invoice-${invoice.value.invoice_number}.pdf`
+      toast.success('PDF erfolgreich heruntergeladen')
+    }
+    const url = globalThis.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    globalThis.URL.revokeObjectURL(url)
+    a.remove()
+  } catch (err) {
+    const detail = err?.response?.data?.detail ?? 'Fehler beim Herunterladen'
     toast.error(detail)
   } finally {
-    markingAsSent.value = false
+    downloading.value = false
   }
 }
 
-const generatePDF = async () => {
-  generatingPdf.value = true
-  try {
-    const result = await invoiceService.generatePDF(route.params.id)
-    if (result.xml_valid) {
-      toast.success('PDF/A-3 erfolgreich generiert')
-    } else {
-      toast.warning('PDF generiert, aber XML-Validierung mit Warnungen')
-    }
-    await loadInvoice()
-  } catch (error) {
-    console.error('Failed to generate PDF:', error)
-    toast.error('Fehler bei der PDF-Generierung')
-  } finally {
-    generatingPdf.value = false
-  }
-}
-
-const downloadPDF = async () => {
+const previewPDF = async () => {
   try {
     const blob = await invoiceService.downloadPDF(route.params.id)
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `invoice-${invoice.value.invoice_number}.pdf`
-    document.body.appendChild(a)
-    a.click()
-    window.URL.revokeObjectURL(url)
-    document.body.removeChild(a)
-    toast.success('PDF erfolgreich heruntergeladen')
-  } catch (error) {
-    console.error('Failed to download PDF:', error)
-    toast.error('Fehler beim Herunterladen des PDFs')
-  }
-}
-
-const downloadXML = async () => {
-  try {
-    const blob = await invoiceService.downloadXML(route.params.id)
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `invoice-${invoice.value.invoice_number}.xml`
-    document.body.appendChild(a)
-    a.click()
-    window.URL.revokeObjectURL(url)
-    document.body.removeChild(a)
-  } catch (error) {
-    console.error('Failed to download XML:', error)
-  }
-}
-
-const generateXRechnung = async () => {
-  generatingXml.value = true
-  try {
-    await invoiceService.generateXml(route.params.id)
-    toast.success('XRechnung XML erfolgreich erzeugt')
-    // Auto-download the generated XML
-    await downloadXML()
-  } catch (error) {
-    console.error('Failed to generate XRechnung XML:', error)
-    const detail = error.response?.data?.detail ?? 'Fehler beim Erzeugen der XRechnung'
+    const url = globalThis.URL.createObjectURL(blob)
+    globalThis.open(url, '_blank')
+    // Revoke after browser has loaded the PDF
+    setTimeout(() => globalThis.URL.revokeObjectURL(url), 60000)
+  } catch (err) {
+    const detail = err?.response?.data?.detail ?? 'Fehler beim Laden der PDF-Vorschau'
     toast.error(detail)
-  } finally {
-    generatingXml.value = false
   }
+}
+
+function formatDateTime(iso) {
+  if (!iso) return ''
+  return new Date(iso).toLocaleString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 const getStatusLabel = (status) => {
@@ -623,9 +599,20 @@ function formatTime(iso) {
 
 .page-header {
   display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: white;
+  padding: 0.75rem 0 0.75rem;
+}
+
+.page-header-top {
+  display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 2rem;
 }
 
 .back-link {
@@ -650,6 +637,14 @@ function formatTime(iso) {
 .actions {
   display: flex;
   gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.versand-status {
+  font-size: 0.8rem;
+  color: #6b7280;
+  text-align: right;
+  padding-right: 0.25rem;
 }
 
 .loading {

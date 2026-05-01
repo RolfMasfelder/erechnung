@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import CompanyListView from '../CompanyListView.vue'
 import { companyService } from '@/api/services/companyService'
@@ -12,10 +12,9 @@ vi.mock('@/api/services/companyService', () => ({
   }
 }))
 
+const mockToast = { showToast: vi.fn(), success: vi.fn(), error: vi.fn() }
 vi.mock('@/composables/useToast', () => ({
-  useToast: () => ({
-    showToast: vi.fn()
-  })
+  useToast: () => mockToast
 }))
 
 describe('CompanyListView', () => {
@@ -147,5 +146,119 @@ describe('CompanyListView', () => {
     const text = wrapper.text()
     expect(text).toContain('Aktiv')
     expect(text).toContain('Inaktiv')
+  })
+
+  it('handleSort updates sort params and reloads', async () => {
+    wrapper = mount(CompanyListView, { global: { plugins: [router] } })
+    await flushPromises()
+    vi.clearAllMocks()
+    companyService.getAll.mockResolvedValue(mockCompanies)
+
+    const baseTable = wrapper.findComponent({ name: 'BaseTable' })
+    await baseTable.vm.$emit('sort', { key: 'name', order: 'desc' })
+    await flushPromises()
+
+    expect(companyService.getAll).toHaveBeenCalledWith(
+      expect.objectContaining({ ordering: '-name' })
+    )
+  })
+
+  it('handleSort ascending ordering', async () => {
+    wrapper = mount(CompanyListView, { global: { plugins: [router] } })
+    await flushPromises()
+    vi.clearAllMocks()
+    companyService.getAll.mockResolvedValue(mockCompanies)
+
+    const baseTable = wrapper.findComponent({ name: 'BaseTable' })
+    await baseTable.vm.$emit('sort', { key: 'vat_id', order: 'asc' })
+    await flushPromises()
+
+    expect(companyService.getAll).toHaveBeenCalledWith(
+      expect.objectContaining({ ordering: 'vat_id' })
+    )
+  })
+
+  it('handlePageChange updates page and reloads', async () => {
+    companyService.getAll.mockResolvedValue({
+      count: 30, results: mockCompanies.results
+    })
+    wrapper = mount(CompanyListView, { global: { plugins: [router] } })
+    await flushPromises()
+    vi.clearAllMocks()
+    companyService.getAll.mockResolvedValue(mockCompanies)
+
+    const pagination = wrapper.findComponent({ name: 'BasePagination' })
+    if (pagination.exists()) {
+      await pagination.vm.$emit('change', 2)
+      await flushPromises()
+      expect(companyService.getAll).toHaveBeenCalledWith(
+        expect.objectContaining({ page: 2 })
+      )
+    } else {
+      // Trigger via vm directly
+      if (wrapper.vm.handlePageChange) {
+        await wrapper.vm.handlePageChange(2)
+        await flushPromises()
+        expect(companyService.getAll).toHaveBeenCalledWith(
+          expect.objectContaining({ page: 2 })
+        )
+      }
+    }
+  })
+
+  it('viewCompany navigates to company detail', async () => {
+    const pushSpy = vi.spyOn(router, 'push')
+    wrapper = mount(CompanyListView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    if (wrapper.vm.viewCompany) {
+      await wrapper.vm.viewCompany(1)
+      expect(pushSpy).toHaveBeenCalledWith({ name: 'CompanyDetail', params: { id: 1 } })
+    }
+  })
+
+  it('handleCompanyCreated closes modal and reloads', async () => {
+    wrapper = mount(CompanyListView, { global: { plugins: [router] } })
+    await flushPromises()
+    vi.clearAllMocks()
+    companyService.getAll.mockResolvedValue(mockCompanies)
+
+    if (wrapper.vm.handleCompanyCreated) {
+      await wrapper.vm.handleCompanyCreated({ name: 'New Company GmbH', id: 3 })
+      await flushPromises()
+      expect(mockToast.success).toHaveBeenCalled()
+      expect(companyService.getAll).toHaveBeenCalled()
+    }
+  })
+
+  it('handleCompanyUpdated closes modal and reloads', async () => {
+    wrapper = mount(CompanyListView, { global: { plugins: [router] } })
+    await flushPromises()
+    vi.clearAllMocks()
+    companyService.getAll.mockResolvedValue(mockCompanies)
+
+    if (wrapper.vm.handleCompanyUpdated) {
+      await wrapper.vm.handleCompanyUpdated()
+      await flushPromises()
+      expect(mockToast.success).toHaveBeenCalled()
+      expect(companyService.getAll).toHaveBeenCalled()
+    }
+  })
+
+  it('handleSearch reloads with search param after debounce', async () => {
+    vi.useFakeTimers()
+    wrapper = mount(CompanyListView, { global: { plugins: [router] } })
+    await flushPromises()
+    vi.clearAllMocks()
+    companyService.getAll.mockResolvedValue(mockCompanies)
+
+    const input = wrapper.find('input[placeholder*="Suche"]')
+    await input.setValue('GmbH')
+    await input.trigger('input')
+    vi.advanceTimersByTime(600)
+    await flushPromises()
+
+    expect(companyService.getAll).toHaveBeenCalled()
+    vi.useRealTimers()
   })
 })

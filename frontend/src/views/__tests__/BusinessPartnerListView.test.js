@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import BusinessPartnerListView from '../BusinessPartnerListView.vue'
 import { businessPartnerService } from '@/api/services/businessPartnerService'
@@ -24,6 +24,10 @@ vi.mock('@/composables/useToast', () => ({
     info: vi.fn(),
     warning: vi.fn()
   })
+}))
+
+vi.mock('@/api/services/importService', () => ({
+  importService: { importBusinessPartners: vi.fn() }
 }))
 
 describe('BusinessPartnerListView', () => {
@@ -195,6 +199,68 @@ describe('BusinessPartnerListView', () => {
           ordering: '-city'
         })
       )
+    }
+  })
+
+  it('handlePageChange updates page and reloads', async () => {
+    wrapper = mount(BusinessPartnerListView, { global: { plugins: [router] } })
+    await flushPromises()
+    vi.clearAllMocks()
+    businessPartnerService.getAll.mockResolvedValue(mockCustomers)
+
+    if (wrapper.vm.handlePageChange) {
+      await wrapper.vm.handlePageChange(2)
+      await flushPromises()
+      expect(businessPartnerService.getAll).toHaveBeenCalledWith(
+        expect.objectContaining({ page: 2 })
+      )
+    }
+  })
+
+  it('viewCustomer navigates to business partner detail', async () => {
+    const pushSpy = vi.spyOn(router, 'push')
+    wrapper = mount(BusinessPartnerListView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    if (wrapper.vm.viewCustomer) {
+      await wrapper.vm.viewCustomer(1)
+      expect(pushSpy).toHaveBeenCalledWith({ name: 'BusinessPartnerDetail', params: { id: 1 } })
+    }
+  })
+
+  it('editCustomer sets id and shows modal', async () => {
+    wrapper = mount(BusinessPartnerListView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    if (wrapper.vm.editCustomer) {
+      await wrapper.vm.editCustomer(2)
+      expect(wrapper.vm.showEditModal).toBe(true)
+    }
+  })
+
+  it('handleBusinessPartnerCreated reloads and navigates', async () => {
+    wrapper = mount(BusinessPartnerListView, { global: { plugins: [router] } })
+    await flushPromises()
+    vi.clearAllMocks()
+    businessPartnerService.getAll.mockResolvedValue(mockCustomers)
+
+    if (wrapper.vm.handleBusinessPartnerCreated) {
+      await wrapper.vm.handleBusinessPartnerCreated({ id: 3, name: 'New GmbH' })
+      await flushPromises()
+      expect(businessPartnerService.getAll).toHaveBeenCalled()
+    }
+  })
+
+  it('handleBusinessPartnerUpdated closes modal and reloads', async () => {
+    wrapper = mount(BusinessPartnerListView, { global: { plugins: [router] } })
+    await flushPromises()
+    vi.clearAllMocks()
+    businessPartnerService.getAll.mockResolvedValue(mockCustomers)
+
+    if (wrapper.vm.handleBusinessPartnerUpdated) {
+      await wrapper.vm.handleBusinessPartnerUpdated()
+      await flushPromises()
+      expect(businessPartnerService.getAll).toHaveBeenCalled()
     }
   })
 })

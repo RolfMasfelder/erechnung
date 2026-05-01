@@ -5311,6 +5311,38 @@ Umsetzung aus `docs/work-assignments/2026-04-30.md`:
 ### Offene Punkte P2
 
 - `infra/k8s/k3s/secrets/alertmanager-smtp.sealed.yaml`: Echtes SealedSecret per `scripts/seal-secret.sh` erstellt (Commit `f0154c0`). Im Cluster deployed — `kubectl get secret alertmanager-smtp -n monitoring` liefert Opaque/1 Key, SealedSecret-AGE 7h38m. ✅
-- P3 (InvoiceDetailView UX-Refactoring) noch nicht begonnen
+
+### P3: InvoiceDetailView UX-Refactoring (Branch: feature/invoice-actions-ux)
+
+**Ziel**: Aktionsleiste in der Rechnungsdetailansicht vereinfachen — weniger Buttons, kontextabhängiges Verhalten (B2B vs. B2G), Versand-Status-Anzeige, Delivery-Mode-Auswahl im SendInvoiceModal.
+
+**InvoiceDetailView.vue**:
+- 5 Buttons entfernt: `generatePDF`, `downloadPDF`, `downloadXML`, `generateXRechnung`, `handleMarkAsSent`
+- Neuer `smartDownload()`-Button: B2B → PDF-Blob download, B2G → XML generieren + download
+- Neuer `previewPDF()`-Button: PDF-Blob in neuem Tab öffnen (via `globalThis.open()`)
+- Computed: `isGovernment`, `smartDownloadLabel`, `smartDownloadTooltip`
+- Versand-Status-Sektion: zeigt `last_emailed_at` + `last_email_recipient` formatiert
+- Sticky Page-Header (position: sticky; top: 0)
+- `formatDateTime()` Hilfsfunktion hinzugefügt
+
+**SendInvoiceModal.vue**:
+- 3 Delivery-Mode-Tabs: `📧 E-Mail` (default), `📥 Datei herunterladen`, `🔗 Peppol/Portal` (disabled)
+- Download-Mode: B2B → PDF/A-3 ZUGFeRD, B2G → XRechnung XML; `handleDownload()` via `globalThis.URL.createObjectURL`
+- Peppol-Mode: "nicht verfügbar"-Warnung
+- Footer-Buttons kontextabhängig (Versenden / Herunterladen / nur Abbrechen)
+
+**E2E-Tests (frontend/tests/e2e/features/invoice-actions.spec.js)**:
+- 18 neue Tests in 5 Gruppen: SmartDownload-Button (4), Vorschau-Button (3), Entfernte-Buttons-Check (3), Versand-Status-Anzeige (1), SendInvoiceModal Delivery-Modes (7)
+- `b2g-workflow.spec.js`: 2 Assertions auf neue Button-Labels angepasst
+
+**Unit-Tests (Vitest)**:
+- 52 Dateien, 747 Tests — alle grün (exit code 0)
+- Coverage gesamt: 70.82% Stmts, 66.23% Branch, 59.23% Funcs, 71.49% Lines
+- `SendInvoiceModal.vue` wird durch E2E-Tests abgedeckt (kein separater Unit-Test)
+
+### Commits (Branch feature/invoice-actions-ux)
+
+- `7cfb6e1` — feat(ui): simplify InvoiceDetailView action bar — SmartDownload, Vorschau, Versand-Status, delivery modes in SendInvoiceModal
+- `98cd223` — test(e2e): add 18 E2E tests for P3 invoice-actions UX refactoring
 
 ---

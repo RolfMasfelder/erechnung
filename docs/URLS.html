@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eRechnung — URL-Übersicht</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f172a; color: #e2e8f0; padding: 2rem; }
+    h1 { font-size: 1.6rem; font-weight: 700; color: #f8fafc; margin-bottom: 0.25rem; }
+    .subtitle { color: #64748b; font-size: 0.85rem; margin-bottom: 2rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 1.5rem; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 0.75rem; overflow: hidden; }
+    .card-header { padding: 0.9rem 1.2rem; background: #0f172a; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 0.6rem; }
+    .card-header h2 { font-size: 0.95rem; font-weight: 600; color: #f1f5f9; }
+    .card-header .icon { font-size: 1.1rem; }
+    .card-body { padding: 0.8rem 1.2rem; }
+    .url-row { display: flex; align-items: baseline; gap: 0.6rem; padding: 0.45rem 0; border-bottom: 1px solid #1e293b; }
+    .url-row:last-child { border-bottom: none; }
+    .url-label { font-size: 0.78rem; color: #94a3b8; min-width: 130px; flex-shrink: 0; }
+    .url-link { font-size: 0.85rem; color: #38bdf8; text-decoration: none; word-break: break-all; }
+    .url-link:hover { color: #7dd3fc; text-decoration: underline; }
+    .note { font-size: 0.75rem; color: #64748b; font-style: italic; }
+
+    /* API table */
+    .api-section { margin-top: 0.6rem; }
+    .api-section h3 { font-size: 0.78rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin: 0.8rem 0 0.3rem; }
+    .api-row { display: flex; align-items: baseline; gap: 0.5rem; padding: 0.3rem 0; border-bottom: 1px solid #1e2d40; font-size: 0.82rem; }
+    .api-row:last-child { border-bottom: none; }
+    .methods { display: flex; gap: 0.25rem; flex-shrink: 0; min-width: 140px; flex-wrap: wrap; }
+    .badge { font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.35rem; border-radius: 0.25rem; letter-spacing: 0.03em; }
+    .GET    { background: #065f46; color: #6ee7b7; }
+    .POST   { background: #1e3a5f; color: #93c5fd; }
+    .PUT    { background: #4a1d96; color: #c4b5fd; }
+    .PATCH  { background: #78350f; color: #fcd34d; }
+    .DELETE { background: #7f1d1d; color: #fca5a5; }
+    .api-path { color: #e2e8f0; font-family: "SF Mono", "Fira Code", monospace; }
+    .base-url-note { font-size: 0.75rem; color: #475569; margin-top: 0.4rem; }
+    .separator { border: none; border-top: 1px solid #334155; margin: 0.6rem 0; }
+  </style>
+</head>
+<body>
+
+<h1>eRechnung — URL-Übersicht</h1>
+<p class="subtitle">Kubernetes (k3s) · ingress-nginx EXTERNAL-IP: 192.168.178.200 · /etc/hosts: 192.168.178.200  erechnung.local  monitoring.erechnung.local</p>
+
+<div class="grid">
+
+  <!-- Anwendung -->
+  <div class="card">
+    <div class="card-header"><span class="icon">🧾</span><h2>Anwendung</h2></div>
+    <div class="card-body">
+      <div class="url-row">
+        <span class="url-label">Frontend</span>
+        <a class="url-link" href="https://erechnung.local/" target="_blank">https://erechnung.local/</a>
+      </div>
+      <div class="url-row">
+        <span class="url-label">API (Basis)</span>
+        <a class="url-link" href="https://erechnung.local/api/" target="_blank">https://erechnung.local/api/</a>
+      </div>
+      <div class="url-row">
+        <span class="url-label">API Schema (OpenAPI)</span>
+        <a class="url-link" href="https://erechnung.local/api/schema/" target="_blank">https://erechnung.local/api/schema/</a>
+      </div>
+      <div class="url-row">
+        <span class="url-label">Health (einfach)</span>
+        <a class="url-link" href="https://erechnung.local/health/" target="_blank">https://erechnung.local/health/</a>
+      </div>
+      <div class="url-row">
+        <span class="url-label">Health (detailed)</span>
+        <a class="url-link" href="https://erechnung.local/health/detailed/" target="_blank">https://erechnung.local/health/detailed/</a>
+      </div>
+      <div class="url-row">
+        <span class="url-label">Health (readiness)</span>
+        <a class="url-link" href="https://erechnung.local/health/readiness/" target="_blank">https://erechnung.local/health/readiness/</a>
+      </div>
+      <div class="url-row">
+        <span class="url-label">System Info</span>
+        <a class="url-link" href="https://erechnung.local/api/system/info/" target="_blank">https://erechnung.local/api/system/info/</a>
+      </div>
+      <div class="url-row">
+        <span class="url-label">Django Admin</span>
+        <a class="url-link" href="https://erechnung.local/admin/" target="_blank">https://erechnung.local/admin/</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monitoring -->
+  <div class="card">
+    <div class="card-header"><span class="icon">📊</span><h2>Monitoring</h2></div>
+    <div class="card-body">
+      <div class="url-row">
+        <span class="url-label">Grafana</span>
+        <a class="url-link" href="https://monitoring.erechnung.local/grafana/" target="_blank">https://monitoring.erechnung.local/grafana/</a>
+      </div>
+      <div class="url-row">
+        <span class="url-label">Grafana SLO-Dashboard</span>
+        <a class="url-link" href="https://monitoring.erechnung.local/grafana/d/erechnung-slo" target="_blank">https://monitoring.erechnung.local/grafana/d/erechnung-slo</a>
+      </div>
+      <div class="url-row">
+        <span class="url-label">Prometheus</span>
+        <a class="url-link" href="https://monitoring.erechnung.local/prometheus/" target="_blank">https://monitoring.erechnung.local/prometheus/</a>
+      </div>
+      <div class="url-row">
+        <span class="url-label">Prometheus Alerts</span>
+        <a class="url-link" href="https://monitoring.erechnung.local/prometheus/alerts" target="_blank">https://monitoring.erechnung.local/prometheus/alerts</a>
+      </div>
+      <div class="url-row">
+        <span class="url-label">Prometheus Targets</span>
+        <a class="url-link" href="https://monitoring.erechnung.local/prometheus/targets" target="_blank">https://monitoring.erechnung.local/prometheus/targets</a>
+      </div>
+      <div class="url-row">
+        <span class="url-label">Alertmanager</span>
+        <a class="url-link" href="https://monitoring.erechnung.local/alertmanager/" target="_blank">https://monitoring.erechnung.local/alertmanager/</a>
+      </div>
+      <div class="url-row">
+        <span class="url-label">Prometheus Metriken (intern)</span>
+        <span class="note">kubectl exec -n erechnung deployment/django-web -- curl localhost:8000/metrics</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Entwicklung lokal -->
+  <div class="card">
+    <div class="card-header"><span class="icon">🛠️</span><h2>Lokale Entwicklung (docker compose)</h2></div>
+    <div class="card-body">
+      <div class="url-row">
+        <span class="url-label">Frontend (Vite Dev)</span>
+        <a class="url-link" href="http://localhost:5173" target="_blank">http://localhost:5173</a>
+      </div>
+      <div class="url-row">
+        <span class="url-label">Backend (Django)</span>
+        <a class="url-link" href="http://localhost:8000" target="_blank">http://localhost:8000</a>
+      </div>
+      <div class="url-row">
+        <span class="url-label">Backend API</span>
+        <a class="url-link" href="http://localhost:8000/api/" target="_blank">http://localhost:8000/api/</a>
+      </div>
+      <div class="url-row">
+        <span class="url-label">Django Admin</span>
+        <a class="url-link" href="http://localhost:8000/admin/" target="_blank">http://localhost:8000/admin/</a>
+      </div>
+      <div class="url-row">
+        <span class="url-label">Alertmanager (lokal)</span>
+        <a class="url-link" href="http://localhost:9093" target="_blank">http://localhost:9093</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- API Endpoints -->
+  <div class="card" style="grid-column: 1 / -1;">
+    <div class="card-header"><span class="icon">🔌</span><h2>API Endpoints</h2></div>
+    <div class="card-body">
+      <p class="base-url-note">Basis-URL: <code>https://erechnung.local</code> &nbsp;·&nbsp; Authentifizierung: Bearer Token (POST <code>/api/auth/token/</code>)</p>
+      <hr class="separator">
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 0 2rem;">
+
+        <div class="api-section">
+          <h3>Auth</h3>
+          <div class="api-row"><div class="methods"><span class="badge POST">POST</span></div><span class="api-path">/api/auth/token/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge POST">POST</span></div><span class="api-path">/api/auth/token/refresh/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge POST">POST</span></div><span class="api-path">/api/auth/change-password/</span></div>
+
+          <h3>Rechnungen</h3>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span><span class="badge POST">POST</span></div><span class="api-path">/api/invoices/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span><span class="badge PUT">PUT</span><span class="badge PATCH">PATCH</span><span class="badge DELETE">DEL</span></div><span class="api-path">/api/invoices/{id}/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span></div><span class="api-path">/api/invoices/{id}/download_pdf/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span></div><span class="api-path">/api/invoices/{id}/download_xml/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge POST">POST</span></div><span class="api-path">/api/invoices/{id}/generate_pdf/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge POST">POST</span></div><span class="api-path">/api/invoices/{id}/generate_xml/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge POST">POST</span></div><span class="api-path">/api/invoices/{id}/mark_as_paid/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge POST">POST</span></div><span class="api-path">/api/invoices/{id}/mark_as_sent/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge POST">POST</span></div><span class="api-path">/api/invoices/{id}/send_email/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge POST">POST</span></div><span class="api-path">/api/invoices/{id}/cancel/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge POST">POST</span></div><span class="api-path">/api/invoices/{id}/acquire_edit_lock/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge POST">POST</span></div><span class="api-path">/api/invoices/{id}/refresh_edit_lock/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge POST">POST</span></div><span class="api-path">/api/invoices/{id}/release_edit_lock/</span></div>
+
+          <h3>Rechnungspositionen &amp; Anlagen</h3>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span><span class="badge POST">POST</span></div><span class="api-path">/api/invoice-lines/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span><span class="badge PUT">PUT</span><span class="badge PATCH">PATCH</span><span class="badge DELETE">DEL</span></div><span class="api-path">/api/invoice-lines/{id}/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span><span class="badge POST">POST</span></div><span class="api-path">/api/invoice-attachments/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span><span class="badge PUT">PUT</span><span class="badge PATCH">PATCH</span><span class="badge DELETE">DEL</span></div><span class="api-path">/api/invoice-attachments/{id}/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span><span class="badge POST">POST</span></div><span class="api-path">/api/invoice-allowance-charges/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span><span class="badge PUT">PUT</span><span class="badge PATCH">PATCH</span><span class="badge DELETE">DEL</span></div><span class="api-path">/api/invoice-allowance-charges/{id}/</span></div>
+        </div>
+
+        <div class="api-section">
+          <h3>Geschäftspartner</h3>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span><span class="badge POST">POST</span></div><span class="api-path">/api/business-partners/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span><span class="badge PUT">PUT</span><span class="badge PATCH">PATCH</span><span class="badge DELETE">DEL</span></div><span class="api-path">/api/business-partners/{id}/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge POST">POST</span></div><span class="api-path">/api/business-partners/import/</span></div>
+
+          <h3>Produkte</h3>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span><span class="badge POST">POST</span></div><span class="api-path">/api/products/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span><span class="badge PUT">PUT</span><span class="badge PATCH">PATCH</span><span class="badge DELETE">DEL</span></div><span class="api-path">/api/products/{id}/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge POST">POST</span></div><span class="api-path">/api/products/import/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span></div><span class="api-path">/api/products/low_stock/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span></div><span class="api-path">/api/products/tax-options/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge POST">POST</span></div><span class="api-path">/api/products/{id}/update_stock/</span></div>
+
+          <h3>Stammdaten</h3>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span><span class="badge POST">POST</span></div><span class="api-path">/api/companies/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span><span class="badge PUT">PUT</span><span class="badge PATCH">PATCH</span><span class="badge DELETE">DEL</span></div><span class="api-path">/api/companies/{id}/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span></div><span class="api-path">/api/countries/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span></div><span class="api-path">/api/countries/{code}/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span></div><span class="api-path">/api/countries/{code}/tax-rates/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span><span class="badge PUT">PUT</span><span class="badge PATCH">PATCH</span></div><span class="api-path">/api/user-settings/me/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span></div><span class="api-path">/api/stats/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span></div><span class="api-path">/api/system/info/</span></div>
+
+          <h3>Compliance &amp; Audit</h3>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span></div><span class="api-path">/api/audit-logs/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span></div><span class="api-path">/api/audit-logs/{id}/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge POST">POST</span></div><span class="api-path">/api/audit-logs/cleanup_expired/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span></div><span class="api-path">/api/audit-logs/compliance_events/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span></div><span class="api-path">/api/audit-logs/security_events/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span></div><span class="api-path">/api/compliance/integrity-report/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span></div><span class="api-path">/api/compliance/retention-summary/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span></div><span class="api-path">/api/gdpdu/export/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span><span class="badge POST">POST</span></div><span class="api-path">/api/gdpr/requests/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge GET">GET</span><span class="badge PUT">PUT</span><span class="badge PATCH">PATCH</span><span class="badge DELETE">DEL</span></div><span class="api-path">/api/gdpr/requests/{id}/</span></div>
+          <div class="api-row"><div class="methods"><span class="badge POST">POST</span></div><span class="api-path">/api/gdpr/requests/{id}/process/</span></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Nützliche Kubectl-Befehle -->
+  <div class="card" style="grid-column: 1 / -1;">
+    <div class="card-header"><span class="icon">⚙️</span><h2>Nützliche Befehle</h2></div>
+    <div class="card-body" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 0 2rem;">
+      <div class="api-section">
+        <h3>Status</h3>
+        <div class="url-row"><span class="url-label" style="min-width:200px">Alle Pods (erechnung)</span><code style="font-size:0.75rem;color:#94a3b8">kubectl get pods -n erechnung</code></div>
+        <div class="url-row"><span class="url-label" style="min-width:200px">Alle Pods (monitoring)</span><code style="font-size:0.75rem;color:#94a3b8">kubectl get pods -n monitoring</code></div>
+        <div class="url-row"><span class="url-label" style="min-width:200px">Ingress-Status</span><code style="font-size:0.75rem;color:#94a3b8">kubectl get ingress -A</code></div>
+        <div class="url-row"><span class="url-label" style="min-width:200px">Apply all manifests</span><code style="font-size:0.75rem;color:#94a3b8">kubectl apply -k infra/k8s/k3s/</code></div>
+      </div>
+      <div class="api-section">
+        <h3>Logs &amp; Debug</h3>
+        <div class="url-row"><span class="url-label" style="min-width:200px">Django Logs</span><code style="font-size:0.75rem;color:#94a3b8">kubectl logs -n erechnung -l app=django-web --tail=50</code></div>
+        <div class="url-row"><span class="url-label" style="min-width:200px">Alertmanager Logs</span><code style="font-size:0.75rem;color:#94a3b8">kubectl logs -n monitoring -l app=alertmanager --tail=50</code></div>
+        <div class="url-row"><span class="url-label" style="min-width:200px">Django Shell</span><code style="font-size:0.75rem;color:#94a3b8">docker compose exec web python project_root/manage.py shell</code></div>
+        <div class="url-row"><span class="url-label" style="min-width:200px">Backend Tests</span><code style="font-size:0.75rem;color:#94a3b8">cd scripts && ./run_tests_docker.sh</code></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p style="margin-top:2rem;font-size:0.72rem;color:#475569">Generiert am 30. April 2026 · docs/URLS.html</p>
+
+</body>
+</html>

@@ -7,6 +7,7 @@ vi.mock('@/api/client', () => ({
     get: vi.fn(),
     post: vi.fn(),
     put: vi.fn(),
+    patch: vi.fn(),
     delete: vi.fn()
   }
 }))
@@ -104,6 +105,15 @@ describe('businessPartnerService', () => {
         params: { search: 'test', page: 2 }
       })
     })
+
+    it('handles non-paginated array response', async () => {
+      const mockResponse = { data: [{ id: 1, company_name: 'Customer A' }] }
+      apiClient.get.mockResolvedValue(mockResponse)
+
+      const result = await businessPartnerService.getAll()
+
+      expect(Array.isArray(result)).toBe(true)
+    })
   })
 
   describe('getById', () => {
@@ -165,6 +175,19 @@ describe('businessPartnerService', () => {
       await businessPartnerService.delete(1)
 
       expect(apiClient.delete).toHaveBeenCalledWith('/business-partners/1/')
+    })
+  })
+
+  describe('patch', () => {
+    it('patches business partner data', async () => {
+      const uiData = { name: 'Patched GmbH' }
+      const mockResponse = { data: { id: 1, company_name: 'Patched GmbH' } }
+      apiClient.patch.mockResolvedValue(mockResponse)
+
+      const result = await businessPartnerService.patch(1, uiData)
+
+      expect(apiClient.patch).toHaveBeenCalledWith('/business-partners/1/', expect.any(Object))
+      expect(result.name).toBe('Patched GmbH')
     })
   })
 })

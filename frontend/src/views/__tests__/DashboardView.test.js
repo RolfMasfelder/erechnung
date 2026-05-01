@@ -262,4 +262,151 @@ describe('DashboardView', () => {
       )
     }
   })
+
+  it('parseNumericValue handles finite number', async () => {
+    wrapper = mount(DashboardView, { global: { plugins: [router] } })
+    await wrapper.vm.$nextTick()
+    expect(wrapper.vm.parseNumericValue(42.5)).toBe(42.5)
+  })
+
+  it('parseNumericValue handles numeric string with comma', async () => {
+    wrapper = mount(DashboardView, { global: { plugins: [router] } })
+    await wrapper.vm.$nextTick()
+    expect(wrapper.vm.parseNumericValue('1.234,56')).toBeCloseTo(1234.56, 1)
+  })
+
+  it('parseNumericValue returns null for non-numeric string', async () => {
+    wrapper = mount(DashboardView, { global: { plugins: [router] } })
+    await wrapper.vm.$nextTick()
+    expect(wrapper.vm.parseNumericValue('not-a-number')).toBeNull()
+  })
+
+  it('parseNumericValue returns null for Infinity', async () => {
+    wrapper = mount(DashboardView, { global: { plugins: [router] } })
+    await wrapper.vm.$nextTick()
+    expect(wrapper.vm.parseNumericValue(Infinity)).toBeNull()
+  })
+
+  it('getSortableValue returns customer name from business_partner_details', async () => {
+    wrapper = mount(DashboardView, { global: { plugins: [router] } })
+    await wrapper.vm.$nextTick()
+    const invoice = { business_partner_details: { name: 'BP GmbH' }, customer_details: { name: 'Customer X' } }
+    expect(wrapper.vm.getSortableValue(invoice, 'customer_name')).toBe('BP GmbH')
+  })
+
+  it('getSortableValue returns customer name from customer_details when no bp', async () => {
+    wrapper = mount(DashboardView, { global: { plugins: [router] } })
+    await wrapper.vm.$nextTick()
+    const invoice = { customer_details: { name: 'Customer X' } }
+    expect(wrapper.vm.getSortableValue(invoice, 'customer_name')).toBe('Customer X')
+  })
+
+  it('getSortableValue returns 0 for customer_name when no details', async () => {
+    wrapper = mount(DashboardView, { global: { plugins: [router] } })
+    await wrapper.vm.$nextTick()
+    const invoice = {}
+    expect(wrapper.vm.getSortableValue(invoice, 'customer_name')).toBe('')
+  })
+
+  it('getSortableValue returns total_amount as number', async () => {
+    wrapper = mount(DashboardView, { global: { plugins: [router] } })
+    await wrapper.vm.$nextTick()
+    const invoice = { total_amount: 119 }
+    expect(wrapper.vm.getSortableValue(invoice, 'total_amount')).toBe(119)
+  })
+
+  it('getSortableValue returns 0 for null total_amount', async () => {
+    wrapper = mount(DashboardView, { global: { plugins: [router] } })
+    await wrapper.vm.$nextTick()
+    const invoice = { total_amount: null }
+    expect(wrapper.vm.getSortableValue(invoice, 'total_amount')).toBe(0)
+  })
+
+  it('getSortableValue returns timestamp for due_date', async () => {
+    wrapper = mount(DashboardView, { global: { plugins: [router] } })
+    await wrapper.vm.$nextTick()
+    const invoice = { due_date: '2026-06-01' }
+    const result = wrapper.vm.getSortableValue(invoice, 'due_date')
+    expect(typeof result).toBe('number')
+    expect(result).toBeGreaterThan(0)
+  })
+
+  it('getSortableValue returns 0 for missing due_date', async () => {
+    wrapper = mount(DashboardView, { global: { plugins: [router] } })
+    await wrapper.vm.$nextTick()
+    const invoice = {}
+    expect(wrapper.vm.getSortableValue(invoice, 'due_date')).toBe(0)
+  })
+
+  it('getSortableValue returns invoice field value for unknown key', async () => {
+    wrapper = mount(DashboardView, { global: { plugins: [router] } })
+    await wrapper.vm.$nextTick()
+    const invoice = { invoice_number: 'INV-999' }
+    expect(wrapper.vm.getSortableValue(invoice, 'invoice_number')).toBe('INV-999')
+  })
+
+  it('getStatusLabel returns known label', async () => {
+    wrapper = mount(DashboardView, { global: { plugins: [router] } })
+    await wrapper.vm.$nextTick()
+    expect(wrapper.vm.getStatusLabel('PAID')).toBe('Bezahlt')
+    expect(wrapper.vm.getStatusLabel('DRAFT')).toBe('Entwurf')
+  })
+
+  it('getStatusLabel returns status for unknown', async () => {
+    wrapper = mount(DashboardView, { global: { plugins: [router] } })
+    await wrapper.vm.$nextTick()
+    expect(wrapper.vm.getStatusLabel('UNKNOWN')).toBe('UNKNOWN')
+  })
+
+  it('formatCurrency handles null (returns 0,00 EUR)', async () => {
+    wrapper = mount(DashboardView, { global: { plugins: [router] } })
+    await wrapper.vm.$nextTick()
+    const result = wrapper.vm.formatCurrency(null)
+    expect(result).toContain('0')
+  })
+
+  it('formatCurrency handles numeric', async () => {
+    wrapper = mount(DashboardView, { global: { plugins: [router] } })
+    await wrapper.vm.$nextTick()
+    const result = wrapper.vm.formatCurrency(100)
+    expect(result).toContain('100')
+  })
+
+  it('formatDate handles null', async () => {
+    wrapper = mount(DashboardView, { global: { plugins: [router] } })
+    await wrapper.vm.$nextTick()
+    expect(wrapper.vm.formatDate(null)).toBe('-')
+  })
+
+  it('formatDate handles valid date', async () => {
+    wrapper = mount(DashboardView, { global: { plugins: [router] } })
+    await wrapper.vm.$nextTick()
+    const result = wrapper.vm.formatDate('2026-06-01')
+    expect(typeof result).toBe('string')
+    expect(result.length).toBeGreaterThan(0)
+  })
+
+  it('createInvoice navigates to invoices create', async () => {
+    const push = vi.spyOn(router, 'push')
+    wrapper = mount(DashboardView, { global: { plugins: [router] } })
+    await wrapper.vm.$nextTick()
+    await wrapper.vm.createInvoice()
+    expect(push).toHaveBeenCalledWith('/invoices?action=create')
+  })
+
+  it('createBusinessPartner navigates to bp create', async () => {
+    const push = vi.spyOn(router, 'push')
+    wrapper = mount(DashboardView, { global: { plugins: [router] } })
+    await wrapper.vm.$nextTick()
+    await wrapper.vm.createBusinessPartner()
+    expect(push).toHaveBeenCalledWith('/business-partners?action=create')
+  })
+
+  it('createProduct navigates to product create', async () => {
+    const push = vi.spyOn(router, 'push')
+    wrapper = mount(DashboardView, { global: { plugins: [router] } })
+    await wrapper.vm.$nextTick()
+    await wrapper.vm.createProduct()
+    expect(push).toHaveBeenCalledWith('/products?action=create')
+  })
 })
