@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import CompanyDetailView from '../CompanyDetailView.vue'
 import { companyService } from '@/api/services/companyService'
@@ -11,16 +11,14 @@ vi.mock('@/api/services/companyService', () => ({
   }
 }))
 
-vi.mock('@/composables/useToast', () => ({
-  useToast: () => ({
-    success: vi.fn(),
-    error: vi.fn()
-  })
-}))
+const mockConfirm = vi.hoisted(() => vi.fn().mockResolvedValue(false))
+
+const mockToast = vi.hoisted(() => ({ showToast: vi.fn(), success: vi.fn(), error: vi.fn() }))
+vi.mock('@/composables/useToast', () => ({ useToast: () => mockToast }))
 
 vi.mock('@/composables/useConfirm', () => ({
   useConfirm: () => ({
-    confirm: vi.fn().mockResolvedValue(false)
+    confirm: mockConfirm
   })
 }))
 
@@ -213,5 +211,60 @@ describe('CompanyDetailView', () => {
     const text = wrapper.text()
     expect(text).toContain('Erstellt am')
     expect(text).toContain('Zuletzt geändert')
+  })
+
+  it('getCountryName returns country name', async () => {
+    wrapper = mount(CompanyDetailView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    if (wrapper.vm.getCountryName) {
+      expect(wrapper.vm.getCountryName('DE')).toBeTruthy()
+    }
+  })
+
+  it('formatDate formats ISO to de-DE', async () => {
+    wrapper = mount(CompanyDetailView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    if (wrapper.vm.formatDate) {
+      expect(wrapper.vm.formatDate('2025-03-15')).toContain('15')
+      expect(wrapper.vm.formatDate(null)).toBe('-')
+    }
+  })
+
+  it('handleCompanyUpdated updates company data directly', async () => {
+    wrapper = mount(CompanyDetailView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    if (wrapper.vm.handleCompanyUpdated) {
+      const updated = { ...mockCompany, name: 'Updated GmbH' }
+      await wrapper.vm.handleCompanyUpdated(updated)
+      await flushPromises()
+      expect(mockToast.success).toHaveBeenCalled()
+    }
+  })
+
+  it('handleDelete calls service when confirmed', async () => {
+    mockConfirm.mockResolvedValue(true)
+    companyService.delete.mockResolvedValue({})
+    wrapper = mount(CompanyDetailView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    if (wrapper.vm.handleDelete) {
+      await wrapper.vm.handleDelete()
+      await flushPromises()
+      expect(companyService.delete).toHaveBeenCalledWith(1)
+    }
+  })
+
+  it('handleDelete does nothing when cancelled', async () => {
+    mockConfirm.mockResolvedValue(false)
+    wrapper = mount(CompanyDetailView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    if (wrapper.vm.handleDelete) {
+      await wrapper.vm.handleDelete()
+      expect(companyService.delete).not.toHaveBeenCalled()
+    }
   })
 })

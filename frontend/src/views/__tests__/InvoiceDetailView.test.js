@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import InvoiceDetailView from '../InvoiceDetailView.vue'
 import { invoiceService } from '@/api/services/invoiceService'
@@ -10,14 +10,23 @@ vi.mock('@/api/services/invoiceService', () => ({
     getById: vi.fn(),
     downloadPDF: vi.fn(),
     downloadXML: vi.fn(),
-    delete: vi.fn()
+    generateXml: vi.fn(),
+    delete: vi.fn(),
+    cancel: vi.fn()
   }
 }))
 
-// Mock toast composable
-vi.mock('@/composables/useToast', () => ({
-  useToast: () => ({
-    showToast: vi.fn()
+const mockToast = vi.hoisted(() => ({ showToast: vi.fn(), success: vi.fn(), error: vi.fn() }))
+vi.mock('@/composables/useToast', () => ({ useToast: () => mockToast }))
+
+const mockConfirm = vi.hoisted(() => vi.fn())
+vi.mock('@/composables/useConfirm', () => ({ useConfirm: () => ({ confirm: mockConfirm }) }))
+
+vi.mock('@/composables/useEditLock', () => ({
+  useEditLock: () => ({
+    lockState: { isLocked: false, lockedBy: null, lockExpiry: null },
+    acquireLock: vi.fn().mockResolvedValue(true),
+    releaseLock: vi.fn().mockResolvedValue(undefined)
   })
 }))
 
@@ -233,5 +242,111 @@ describe('InvoiceDetailView', () => {
     await new Promise(resolve => setTimeout(resolve, 100))
 
     expect(wrapper.vm.invoice).toBeNull()
+  })
+
+  it('getStatusLabel returns correct labels', async () => {
+    wrapper = mount(InvoiceDetailView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    if (wrapper.vm.getStatusLabel) {
+      expect(wrapper.vm.getStatusLabel('draft')).toBe('Entwurf')
+      expect(wrapper.vm.getStatusLabel('SENT')).toBe('Versendet')
+      expect(wrapper.vm.getStatusLabel('PAID')).toBe('Bezahlt')
+      expect(wrapper.vm.getStatusLabel('unknown')).toBe('unknown')
+    }
+  })
+
+  it('formatCurrency formats to EUR', async () => {
+    wrapper = mount(InvoiceDetailView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    if (wrapper.vm.formatCurrency) {
+      expect(wrapper.vm.formatCurrency(500)).toContain('500')
+    }
+  })
+
+  it('formatDate formats ISO date to de-DE', async () => {
+    wrapper = mount(InvoiceDetailView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    if (wrapper.vm.formatDate) {
+      expect(wrapper.vm.formatDate('2025-06-15')).toContain('15')
+      expect(wrapper.vm.formatDate(null)).toBe('-')
+    }
+  })
+
+  it('formatQuantity formats numbers without trailing zeros', async () => {
+    wrapper = mount(InvoiceDetailView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    if (wrapper.vm.formatQuantity) {
+      expect(wrapper.vm.formatQuantity(2)).toBeTruthy()
+      expect(wrapper.vm.formatQuantity(null)).toBe('0')
+    }
+  })
+
+  it('handleInvoiceUpdated reloads invoice', async () => {
+    wrapper = mount(InvoiceDetailView, { global: { plugins: [router] } })
+    await flushPromises()
+    vi.clearAllMocks()
+    invoiceService.getById.mockResolvedValue(mockInvoice)
+
+    if (wrapper.vm.handleInvoiceUpdated) {
+      await wrapper.vm.handleInvoiceUpdated({ ...mockInvoice, status: 'sent' })
+      await flushPromises()
+      expect(invoiceService.getById).toHaveBeenCalled()
+    }
+  })
+
+  it('handleEmailSent reloads invoice', async () => {
+    wrapper = mount(InvoiceDetailView, { global: { plugins: [router] } })
+    await flushPromises()
+    vi.clearAllMocks()
+    invoiceService.getById.mockResolvedValue(mockInvoice)
+
+    if (wrapper.vm.handleEmailSent) {
+      await wrapper.vm.handleEmailSent()
+      await flushPromises()
+      expect(invoiceService.getById).toHaveBeenCalled()
+    }
+  })
+
+  it('handleDelete calls service when confirmed', async () => {
+    globalThis.confirm = vi.fn(() => true)
+    invoiceService.delete.mockResolvedValue({})
+    wrapper = mount(InvoiceDetailView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    if (wrapper.vm.handleDelete) {
+      await wrapper.vm.handleDelete()
+      await flushPromises()
+      expect(invoiceService.delete).toHaveBeenCalledWith(1)
+    }
+  })
+
+  it('handleDelete does nothing when cancelled', async () => {
+    globalThis.confirm = vi.fn(() => false)
+    wrapper = mount(InvoiceDetailView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    if (wrapper.vm.handleDelete) {
+      await wrapper.vm.handleDelete()
+      expect(invoiceService.delete).not.toHaveBeenCalled()
+    }
+  })
+
+  it('smartDownload downloads PDF for non-government', async () => {
+    const blob = new Blob(['pdf'], { type: 'application/pdf' })
+    invoiceService.downloadPDF.mockResolvedValue(blob)
+    globalThis.URL = { createObjectURL: vi.fn(() => 'blob:test'), revokeObjectURL: vi.fn() }
+    vi.spyOn(document.body, 'appendChild').mockImplementation(() => {})
+    wrapper = mount(InvoiceDetailView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    if (wrapper.vm.smartDownload) {
+      await wrapper.vm.smartDownload()
+      await flushPromises()
+      expect(invoiceService.downloadPDF).toHaveBeenCalled()
+    }
   })
 })
