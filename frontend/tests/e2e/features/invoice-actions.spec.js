@@ -56,21 +56,22 @@ async function goToB2GInvoice(page) {
   await page.goto('/invoices')
   await page.waitForLoadState('networkidle')
 
-  // credit-note.spec.js may have created a Gutschrift (credit note) for the GOVERNMENT
-  // partner, which also shows .type-xrechnung. Skip credit notes (they have .type-credit-note).
+  // credit-note.spec.js storniert die XR-Rechnung → erzeugt eine Gutschrift (.type-credit-note)
+  // und setzt die Original-Rechnung auf CANCELLED (.status-cancelled). Beides überspringen.
   const rows = page.locator('table tbody tr')
   const rowCount = await rows.count()
   for (let i = 0; i < rowCount; i++) {
     const row = rows.nth(i)
     const hasXR = await row.locator('.type-xrechnung').count()
     const isCreditNote = await row.locator('.type-credit-note').count()
-    if (hasXR > 0 && isCreditNote === 0) {
+    const isCancelled = await row.locator('.status-cancelled').count()
+    if (hasXR > 0 && isCreditNote === 0 && isCancelled === 0) {
       await row.locator('a.invoice-link').click()
       await page.waitForLoadState('networkidle')
       return
     }
   }
-  throw new Error('Keine B2G-Rechnung (nicht Gutschrift) in der Liste gefunden')
+  throw new Error('Keine aktive B2G-Rechnung (nicht Gutschrift, nicht Storniert) in der Liste gefunden')
 }
 
 /**
@@ -133,15 +134,15 @@ test.describe('InvoiceDetailView: konsolidierte Action-Buttons', () => {
     })
 
     test('Vorschau-Button öffnet neuen Tab', async ({ page, context }) => {
+      // PDF generation on CI runners can take up to ~60s — give the full test 2 minutes
+      test.setTimeout(120_000)
       await goToB2BInvoice(page)
 
       const [newPage] = await Promise.all([
-        context.waitForEvent('page'),
+        context.waitForEvent('page', { timeout: 90_000 }),
         page.getByRole('button', { name: /Vorschau/i }).click(),
       ])
-      // blob: URLs do not reliably fire 'load' in headless Chromium — use domcontentloaded
-      await newPage.waitForLoadState('domcontentloaded')
-      // New tab should have opened (URL is a blob: URL containing PDF)
+      // blob: URLs are immediately loaded when the tab opens — no waitForLoadState needed
       expect(newPage.url()).toMatch(/^(?:blob:|.*application\/pdf)/)
       await newPage.close()
     })
@@ -268,7 +269,8 @@ test.describe('SendInvoiceModal: Delivery-Mode-Selector', () => {
     // Switch to Download
     await page.getByRole('button', { name: /Datei herunterladen/i }).click()
     await expect(page.getByLabel('Empfänger-E-Mail-Adresse')).not.toBeVisible()
-    await expect(page.getByText(/PDF\/A-3|ZUGFeRD/i)).toBeVisible()
+    // Use .first() to avoid strict-mode violation: the modal renders the text in two elements
+    await expect(page.getByText(/PDF\/A-3|ZUGFeRD/i).first()).toBeVisible()
 
     // Switch back to E-Mail
     await page.getByRole('button', { name: /E-Mail/i }).first().click()
