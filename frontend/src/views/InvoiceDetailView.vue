@@ -41,13 +41,6 @@
           📤 Per E-Mail versenden
         </BaseButton>
         <BaseButton
-          v-if="canSendEmail"
-          variant="primary"
-          @click="showSendModal = true"
-        >
-          📤 Per E-Mail versenden
-        </BaseButton>
-        <BaseButton
           v-if="invoice?.status?.toUpperCase() === 'DRAFT'"
           variant="danger"
           @click="handleDelete"
