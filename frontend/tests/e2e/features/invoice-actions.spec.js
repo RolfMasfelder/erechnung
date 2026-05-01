@@ -56,12 +56,21 @@ async function goToB2GInvoice(page) {
   await page.goto('/invoices')
   await page.waitForLoadState('networkidle')
 
-  const xrRow = page.locator('table tbody tr', {
-    has: page.locator('.type-xrechnung'),
-  }).first()
-  await expect(xrRow).toBeVisible({ timeout: 10000 })
-  await xrRow.locator('a.invoice-link').click()
-  await page.waitForLoadState('networkidle')
+  // credit-note.spec.js may have created a Gutschrift (credit note) for the GOVERNMENT
+  // partner, which also shows .type-xrechnung. Skip credit notes (they have .type-credit-note).
+  const rows = page.locator('table tbody tr')
+  const rowCount = await rows.count()
+  for (let i = 0; i < rowCount; i++) {
+    const row = rows.nth(i)
+    const hasXR = await row.locator('.type-xrechnung').count()
+    const isCreditNote = await row.locator('.type-credit-note').count()
+    if (hasXR > 0 && isCreditNote === 0) {
+      await row.locator('a.invoice-link').click()
+      await page.waitForLoadState('networkidle')
+      return
+    }
+  }
+  throw new Error('Keine B2G-Rechnung (nicht Gutschrift) in der Liste gefunden')
 }
 
 /**
@@ -130,7 +139,8 @@ test.describe('InvoiceDetailView: konsolidierte Action-Buttons', () => {
         context.waitForEvent('page'),
         page.getByRole('button', { name: /Vorschau/i }).click(),
       ])
-      await newPage.waitForLoadState()
+      // blob: URLs do not reliably fire 'load' in headless Chromium — use domcontentloaded
+      await newPage.waitForLoadState('domcontentloaded')
       // New tab should have opened (URL is a blob: URL containing PDF)
       expect(newPage.url()).toMatch(/^(?:blob:|.*application\/pdf)/)
       await newPage.close()
@@ -215,7 +225,8 @@ test.describe('SendInvoiceModal: Delivery-Mode-Selector', () => {
     await page.getByRole('button', { name: /Datei herunterladen/i }).click()
 
     await expect(page.getByText(/PDF\/A-3/i)).toBeVisible()
-    await expect(page.getByRole('button', { name: /PDF herunterladen/i })).toBeVisible()
+    // Scope to dialog to avoid strict mode conflict with smartDownload button on detail page
+    await expect(page.getByRole('dialog').getByRole('button', { name: /PDF herunterladen/i })).toBeVisible()
     // E-Mail-Formular verschwindet
     await expect(page.getByLabel('Empfänger-E-Mail-Adresse')).not.toBeVisible()
   })
