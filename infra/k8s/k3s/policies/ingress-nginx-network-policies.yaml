@@ -78,6 +78,16 @@ spec:
   - to:
     - namespaceSelector:
         matchLabels:
+          kubernetes.io/metadata.name: monitoring
+      podSelector:
+        matchLabels:
+          app: alertmanager
+    ports:
+    - protocol: TCP
+      port: 9093
+  - to:
+    - namespaceSelector:
+        matchLabels:
           kubernetes.io/metadata.name: kube-system
       podSelector:
         matchLabels:

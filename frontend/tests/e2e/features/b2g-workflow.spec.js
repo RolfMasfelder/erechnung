@@ -10,7 +10,7 @@ import { login } from '../fixtures/auth.js'
  *   2. Leitweg-ID Validierung (Pflichtfeld, Format)
  *   3. Rechnung an GOVERNMENT-Partner erstellen
  *   4. XRechnung-Badge "XR" in der Rechnungsliste
- *   5. XRechnung XML erzeugen Button in Detailansicht
+ *   5. Smart-Download Button in Detailansicht (XML herunterladen bei B2G, PDF herunterladen sonst)
  *
  * Prerequisites:
  *   - Backend running (docker compose up -d)
@@ -149,8 +149,8 @@ test.describe('B2G-Workflow (XRechnung)', () => {
       await xrRow.locator('a.invoice-link').click()
       await page.waitForLoadState('networkidle')
 
-      // Step 3: XRechnung XML button should be visible
-      await expect(page.getByRole('button', { name: /XRechnung XML/i })).toBeVisible()
+      // Step 3: Smart-Download button should show 'XML herunterladen' for B2G invoices
+      await expect(page.getByRole('button', { name: /XML herunterladen/i })).toBeVisible()
     })
 
     test('XRechnung XML Button ist bei normaler Rechnung NICHT sichtbar', async ({ page }) => {
@@ -177,10 +177,10 @@ test.describe('B2G-Workflow (XRechnung)', () => {
 
       expect(regularInvoiceFound).toBeTruthy()
 
-      // XRechnung XML button should NOT be visible
-      await expect(page.getByRole('button', { name: /XRechnung XML/i })).not.toBeVisible()
-      // Regular XML download should still be visible
-      await expect(page.getByRole('button', { name: /XML herunterladen/i })).toBeVisible()
+      // Smart-Download button should show 'PDF herunterladen' for regular B2B invoices
+      await expect(page.getByRole('button', { name: /PDF herunterladen/i })).toBeVisible()
+      // XML herunterladen label should NOT appear for B2B invoices
+      await expect(page.getByRole('button', { name: /XML herunterladen/i })).not.toBeVisible()
     })
   })
 })

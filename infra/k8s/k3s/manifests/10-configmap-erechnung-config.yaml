@@ -7,7 +7,7 @@ metadata:
 data:
   DJANGO_ENV: "production"  # Phase 1: Enable HTTPS Security Settings
   DJANGO_DEBUG: "False"
-  DJANGO_ALLOWED_HOSTS: "erechnung.local,api.erechnung.local,192.168.178.200,192.168.178.80,localhost,127.0.0.1,django-web-service"
+  DJANGO_ALLOWED_HOSTS: "erechnung.local,api.erechnung.local,192.168.178.200,192.168.178.80,localhost,127.0.0.1,django-web-service,django-web-service.erechnung.svc,django-web-service.erechnung.svc.cluster.local"
   # Python configuration
   PYTHONPATH: "/app/project_root"
   PYTHONUNBUFFERED: "1"

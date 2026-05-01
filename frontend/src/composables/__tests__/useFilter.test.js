@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useFilter } from '../useFilter'
-import { ref } from 'vue'
+import { ref, defineComponent } from 'vue'
+import { mount } from '@vue/test-utils'
 
 // Mock vue-router
 const mockPush = vi.fn()
@@ -422,6 +423,114 @@ describe('useFilter', () => {
       setFilter('status', 'paid')
 
       expect(mockReplace).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('initFromUrl with various value types', () => {
+    // Helper: mount composable in a Vue component to trigger onMounted
+    function mountFilter(options) {
+      let result
+      const TestComp = defineComponent({
+        setup() {
+          result = useFilter(options)
+          return result
+        },
+        template: '<div />'
+      })
+      mount(TestComp)
+      return result
+    }
+
+    it('reads boolean filter from URL (true)', () => {
+      mockRoute.value = { query: { active: 'true' } }
+      const { filters } = mountFilter({
+        defaultFilters: { active: false },
+        syncUrl: true
+      })
+      expect(filters.value.active).toBe(true)
+    })
+
+    it('reads number filter from URL', () => {
+      mockRoute.value = { query: { page: '3' } }
+      const { filters } = mountFilter({
+        defaultFilters: { page: 1 },
+        syncUrl: true
+      })
+      expect(filters.value.page).toBe(3)
+    })
+
+    it('reads array filter from URL (single value)', () => {
+      mockRoute.value = { query: { tags: 'foo' } }
+      const { filters } = mountFilter({
+        defaultFilters: { tags: [] },
+        syncUrl: true
+      })
+      expect(Array.isArray(filters.value.tags)).toBe(true)
+      expect(filters.value.tags).toContain('foo')
+    })
+
+    it('reads array filter from URL (multiple values)', () => {
+      mockRoute.value = { query: { tags: ['foo', 'bar'] } }
+      const { filters } = mountFilter({
+        defaultFilters: { tags: [] },
+        syncUrl: true
+      })
+      expect(filters.value.tags).toEqual(['foo', 'bar'])
+    })
+
+    it('reads Date filter from URL', () => {
+      mockRoute.value = { query: { createdAt: '2026-06-01' } }
+      const { filters } = mountFilter({
+        defaultFilters: { createdAt: new Date(0) },
+        syncUrl: true
+      })
+      expect(filters.value.createdAt instanceof Date).toBe(true)
+    })
+
+    it('skips unknown query keys', () => {
+      mockRoute.value = { query: { unknown: 'x', search: 'hello' } }
+      const { filters } = mountFilter({
+        defaultFilters: { search: '' },
+        syncUrl: true
+      })
+      expect(filters.value.search).toBe('hello')
+      expect(filters.value.unknown).toBeUndefined()
+    })
+  })
+
+  describe('syncToUrl with Date and Array values', () => {
+    it('serializes Date value to URL', async () => {
+      const { setFilter } = useFilter({
+        defaultFilters: { date: null },
+        syncUrl: true
+      })
+      setFilter('date', new Date('2026-05-15'))
+      await vi.runAllTimersAsync()
+      expect(mockReplace).toHaveBeenCalled()
+      const lastCall = mockReplace.mock.calls[mockReplace.mock.calls.length - 1][0]
+      expect(lastCall.query.date).toBe('2026-05-15')
+    })
+
+    it('serializes array of non-dates to URL', async () => {
+      const { setFilter } = useFilter({
+        defaultFilters: { tags: [] },
+        syncUrl: true
+      })
+      setFilter('tags', ['a', 'b'])
+      await vi.runAllTimersAsync()
+      const lastCall = mockReplace.mock.calls[mockReplace.mock.calls.length - 1][0]
+      expect(lastCall.query.tags).toEqual(['a', 'b'])
+    })
+
+    it('omits empty array from URL', async () => {
+      const { setFilter } = useFilter({
+        defaultFilters: { tags: ['x'] },
+        syncUrl: true
+      })
+      setFilter('tags', [])
+      await vi.runAllTimersAsync()
+      const lastCall = mockReplace.mock.calls[mockReplace.mock.calls.length - 1][0]
+      expect(lastCall.query.tags).toBeUndefined()
     })
   })
 })

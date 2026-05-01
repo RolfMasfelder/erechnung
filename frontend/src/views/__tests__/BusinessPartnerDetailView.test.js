@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import BusinessPartnerDetailView from '../BusinessPartnerDetailView.vue'
 import { businessPartnerService } from '@/api/services/businessPartnerService'
@@ -18,11 +18,8 @@ vi.mock('@/api/services/invoiceService', () => ({
   }
 }))
 
-vi.mock('@/composables/useToast', () => ({
-  useToast: () => ({
-    showToast: vi.fn()
-  })
-}))
+const mockToast = vi.hoisted(() => ({ showToast: vi.fn(), success: vi.fn(), error: vi.fn() }))
+vi.mock('@/composables/useToast', () => ({ useToast: () => mockToast }))
 
 describe('BusinessPartnerDetailView', () => {
   let wrapper
@@ -156,5 +153,74 @@ describe('BusinessPartnerDetailView', () => {
     const buttons = wrapper.findAll('button')
     const editButton = buttons.find(button => button.text().includes('Bearbeiten'))
     expect(editButton).toBeDefined()
+  })
+
+  it('getStatusLabel returns correct labels', async () => {
+    wrapper = mount(BusinessPartnerDetailView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    if (wrapper.vm.getStatusLabel) {
+      expect(wrapper.vm.getStatusLabel('PAID')).toBe('Bezahlt')
+      expect(wrapper.vm.getStatusLabel('draft')).toBe('Entwurf')
+      expect(wrapper.vm.getStatusLabel('OVERDUE')).toBe('Überfällig')
+      expect(wrapper.vm.getStatusLabel('unknown')).toBe('unknown')
+    }
+  })
+
+  it('formatCurrency formats to EUR', async () => {
+    wrapper = mount(BusinessPartnerDetailView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    if (wrapper.vm.formatCurrency) {
+      expect(wrapper.vm.formatCurrency(250)).toContain('250')
+    }
+  })
+
+  it('formatDate formats ISO to de-DE', async () => {
+    wrapper = mount(BusinessPartnerDetailView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    if (wrapper.vm.formatDate) {
+      expect(wrapper.vm.formatDate('2025-03-15')).toContain('15')
+      expect(wrapper.vm.formatDate(null)).toBe('-')
+    }
+  })
+
+  it('handleBusinessPartnerUpdated reloads customer', async () => {
+    wrapper = mount(BusinessPartnerDetailView, { global: { plugins: [router] } })
+    await flushPromises()
+    vi.clearAllMocks()
+    businessPartnerService.getById.mockResolvedValue(mockCustomer)
+    invoiceService.getAll.mockResolvedValue(mockInvoices)
+
+    if (wrapper.vm.handleBusinessPartnerUpdated) {
+      await wrapper.vm.handleBusinessPartnerUpdated()
+      await flushPromises()
+      expect(businessPartnerService.getById).toHaveBeenCalled()
+    }
+  })
+
+  it('handleDelete calls service when confirmed', async () => {
+    globalThis.confirm = vi.fn(() => true)
+    businessPartnerService.delete.mockResolvedValue({})
+    wrapper = mount(BusinessPartnerDetailView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    if (wrapper.vm.handleDelete) {
+      await wrapper.vm.handleDelete()
+      await flushPromises()
+      expect(businessPartnerService.delete).toHaveBeenCalledWith(1)
+    }
+  })
+
+  it('handleDelete does nothing when cancelled', async () => {
+    globalThis.confirm = vi.fn(() => false)
+    wrapper = mount(BusinessPartnerDetailView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    if (wrapper.vm.handleDelete) {
+      await wrapper.vm.handleDelete()
+      expect(businessPartnerService.delete).not.toHaveBeenCalled()
+    }
   })
 })

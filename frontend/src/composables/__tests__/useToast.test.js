@@ -167,5 +167,16 @@ describe('useToast', () => {
       expect(toast2.toasts.value).toHaveLength(1)
       expect(toast2.toasts.value[0].message).toBe('From instance 1')
     })
+
+    it('should not auto-remove toast when duration is 0', () => {
+      vi.useFakeTimers()
+      const toast = useToast()
+      toast.toasts.value = []
+
+      toast.showToast('Persistent', 'info', 0)
+      vi.advanceTimersByTime(60000)
+      expect(toast.toasts.value).toHaveLength(1)
+      vi.useRealTimers()
+    })
   })
 })

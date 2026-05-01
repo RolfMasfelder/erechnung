@@ -211,5 +211,90 @@ describe('ExportButton', () => {
 
       expect(mockExportCSV).toHaveBeenCalledWith(testData, columns)
     })
+
+    it('should emit error event when CSV export fails', async () => {
+      mockExportCSV.mockResolvedValueOnce(false)
+      const wrapper = createWrapper()
+
+      await wrapper.vm.handleExport('csv')
+      await flushPromises()
+
+      expect(wrapper.emitted('error')).toBeTruthy()
+    })
+
+    it('should emit error event when JSON export fails', async () => {
+      mockExportJSON.mockResolvedValueOnce(false)
+      const wrapper = createWrapper()
+
+      await wrapper.vm.handleExport('json')
+      await flushPromises()
+
+      expect(wrapper.emitted('error')).toBeTruthy()
+    })
+
+    it('should emit error event when exportSelected fails', async () => {
+      mockExportSelected.mockResolvedValueOnce(false)
+      const wrapper = createWrapper({ selectedIds: new Set([1]) })
+
+      await wrapper.vm.handleExportSelected('csv')
+      await flushPromises()
+
+      expect(wrapper.emitted('error')).toBeTruthy()
+    })
+
+    it('should emit export for JSON selected items', async () => {
+      const wrapper = createWrapper({ selectedIds: [1, 2] })
+
+      await wrapper.vm.handleExportSelected('json')
+      await flushPromises()
+
+      expect(wrapper.emitted('export')).toBeTruthy()
+      expect(wrapper.emitted('export')[0][0]).toEqual({
+        format: 'json',
+        count: 2,
+        selected: true
+      })
+    })
+  })
+
+  describe('handleClickOutside', () => {
+    it('closes dropdown when clicking outside .export-button-wrapper', () => {
+      const wrapper = createWrapper()
+      wrapper.vm.showDropdown = true
+
+      const event = {
+        target: {
+          closest: vi.fn().mockReturnValue(null)
+        }
+      }
+      wrapper.vm.handleClickOutside(event)
+      expect(wrapper.vm.showDropdown).toBe(false)
+    })
+
+    it('keeps dropdown open when clicking inside .export-button-wrapper', () => {
+      const wrapper = createWrapper()
+      wrapper.vm.showDropdown = true
+
+      const event = {
+        target: {
+          closest: vi.fn().mockReturnValue(document.createElement('div'))
+        }
+      }
+      wrapper.vm.handleClickOutside(event)
+      expect(wrapper.vm.showDropdown).toBe(true)
+    })
+  })
+
+  describe('selectionCount edge cases', () => {
+    it('should return 0 for empty array', () => {
+      const wrapper = createWrapper({ selectedIds: [] })
+      expect(wrapper.vm.selectionCount).toBe(0)
+      expect(wrapper.vm.hasSelection).toBe(false)
+    })
+
+    it('should return false for non-Set non-Array selectedIds', () => {
+      const wrapper = createWrapper({ selectedIds: null })
+      expect(wrapper.vm.hasSelection).toBe(false)
+    })
   })
 })

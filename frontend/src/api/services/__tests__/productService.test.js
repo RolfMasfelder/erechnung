@@ -8,6 +8,7 @@ vi.mock('@/api/client', () => ({
     get: vi.fn(),
     post: vi.fn(),
     put: vi.fn(),
+    patch: vi.fn(),
     delete: vi.fn()
   }
 }))
@@ -36,6 +37,15 @@ describe('productService', () => {
       expect(apiClient.get).toHaveBeenCalledWith('/products/', { params: {} })
       expect(result).toEqual(mockResponse.data)
       expect(result.results).toHaveLength(2)
+    })
+
+    it('handles non-paginated array response', async () => {
+      const mockResponse = { data: [{ id: 1, name: 'Produkt 1' }] }
+      apiClient.get.mockResolvedValue(mockResponse)
+
+      const result = await productService.getAll()
+
+      expect(Array.isArray(result)).toBe(true)
     })
 
     it('übergibt Query-Parameter korrekt', async () => {
@@ -143,6 +153,29 @@ describe('productService', () => {
       await expect(productService.getById(999)).rejects.toMatchObject({
         response: { status: 404 }
       })
+    })
+  })
+
+  describe('patch', () => {
+    it('patcht Produktdaten', async () => {
+      const mockResponse = { data: { id: 1, name: 'Gepatcht', unit_price: 99 } }
+      apiClient.patch.mockResolvedValue(mockResponse)
+
+      const result = await productService.patch(1, { name: 'Gepatcht' })
+
+      expect(apiClient.patch).toHaveBeenCalledWith('/products/1/', expect.any(Object))
+      expect(result.id).toBe(1)
+    })
+  })
+
+  describe('getTaxOptions', () => {
+    it('ruft Steueroptionen ab', async () => {
+      apiClient.get.mockResolvedValue({ data: [{ value: 19, label: '19%' }] })
+
+      const result = await productService.getTaxOptions()
+
+      expect(apiClient.get).toHaveBeenCalledWith('/products/tax-options/')
+      expect(Array.isArray(result)).toBe(true)
     })
   })
 })

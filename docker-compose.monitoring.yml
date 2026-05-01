@@ -24,6 +24,34 @@ services:
       - "com.erechnung.environment=development"
 
   # -----------------------------------------------------------------------
+  # Alertmanager — Alert routing → SMTP/IONOS (ADR-016)
+  # -----------------------------------------------------------------------
+  alertmanager:
+    image: prom/alertmanager:v0.32.1
+    container_name: erechnung_alertmanager
+    volumes:
+      - ./infra/monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro,z
+      - ./secrets/alertmanager_smtp_password:/etc/alertmanager/secrets/smtp_password:ro,z
+      - alertmanager_data:/alertmanager
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
+      - "--web.listen-address=:9093"
+    ports:
+      - "127.0.0.1:9093:9093"
+    networks:
+      - erechnung-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9093/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "com.erechnung.service=alertmanager"
+      - "com.erechnung.environment=monitoring"
+
+  # -----------------------------------------------------------------------
   # Prometheus — Time-series metrics store & alerting engine
   # -----------------------------------------------------------------------
   prometheus:
@@ -48,6 +76,9 @@ services:
       interval: 15s
       timeout: 5s
       retries: 3
+    depends_on:
+      alertmanager:
+        condition: service_healthy
     labels:
       - "com.erechnung.service=prometheus"
       - "com.erechnung.environment=monitoring"
@@ -176,6 +207,8 @@ services:
       - "com.erechnung.environment=monitoring"
 
 volumes:
+  alertmanager_data:
+    driver: local
   prometheus_data:
     driver: local
   grafana_data:

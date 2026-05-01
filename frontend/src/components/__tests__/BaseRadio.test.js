@@ -208,4 +208,44 @@ describe('BaseRadio', () => {
 
     expect(wrapper.find('input').attributes('value')).toBe('option-value')
   })
+
+  it('does not emit when disabled and changed', async () => {
+    const wrapper = mount(BaseRadio, {
+      props: {
+        name: 'test-radio',
+        value: 'option1',
+        modelValue: null,
+        disabled: true
+      }
+    })
+
+    await wrapper.find('input').trigger('change')
+    expect(wrapper.emitted('update:modelValue')).toBeFalsy()
+  })
+
+  it('applies error class when error prop set', () => {
+    const wrapper = mount(BaseRadio, {
+      props: {
+        name: 'test-radio',
+        value: 'option1',
+        modelValue: null,
+        error: 'Required'
+      }
+    })
+    expect(wrapper.find('input').classes()).toContain('base-radio-input--error')
+  })
+
+  it('does not apply error class when no error', () => {
+    const wrapper = mount(BaseRadio, {
+      props: { name: 'test-radio', value: 'option1', modelValue: null }
+    })
+    expect(wrapper.find('input').classes()).not.toContain('base-radio-input--error')
+  })
+
+  it('required attribute reflects required prop', () => {
+    const wrapper = mount(BaseRadio, {
+      props: { name: 'test-radio', value: 'option1', modelValue: null, required: true }
+    })
+    expect(wrapper.find('input').attributes('required')).toBeDefined()
+  })
 })

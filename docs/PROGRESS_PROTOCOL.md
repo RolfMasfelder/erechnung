@@ -5261,3 +5261,127 @@ During TODO.md review, discovered that legacy Organization templates and referen
 - URL patterns already updated to support company/customer separation
 
 ---
+
+## 2026-04-30 — Arbeitsauftrag P1 + P2 (Locale, Alertmanager, SLO, Runbooks)
+
+### Ziel
+
+Umsetzung aus `docs/work-assignments/2026-04-30.md`:
+- P1: PDF-Zahlen auf de_DE-Lokalisation umstellen
+- P2: Alertmanager + SMTP-Routing, SLO-Dashboard, Runbooks
+
+### P1: PDF de_DE Lokalisierung
+
+- `settings.py`: `LANGUAGE_CODE="de-de"`, `USE_L10N=True`, `USE_THOUSAND_SEPARATOR=False`, `LocaleMiddleware` hinzugefügt
+- `invoice_pdf.html`: `{% load l10n %}` + `|localize`-Filter für alle `floatformat`-Aufrufe (XML-Ausgabe bleibt EN 16931-konform mit Dezimalpunkten)
+- `test_crud_views.py`: 3 Assertions auf de_DE angepasst (erwartete Folge der Locale-Änderung)
+- 730 Tests: alle grün, exit code 0
+- Commit: `fix(pdf): localize numbers to de_DE in invoice PDF template` (a36b720)
+
+### P2: Alertmanager + Monitoring-Infrastruktur
+
+**Alertmanager:**
+- `infra/monitoring/alertmanager/alertmanager.yml`: Neue Config mit SMTP via smtp.ionos.de:587, Route (critical: 1h, default: 4h), Inhibit-Regeln
+- `docker-compose.monitoring.yml`: `alertmanager`-Service (prom/alertmanager:v0.32.1), Passwort-Mount via `./secrets/alertmanager_smtp_password`
+- `infra/monitoring/prometheus/prometheus.yml`: `alerting:`-Block auf docker-compose `alertmanager:9093`
+- `infra/k8s/k3s/manifests/98-alertmanager.yaml`: Vollständiges k3s-Manifest (ConfigMap, PVC, Deployment, Service)
+- `infra/k8s/k3s/kustomization.yaml`: `98-alertmanager.yaml` + `secrets/alertmanager-smtp.sealed.yaml` eingetragen
+- `infra/k8s/k3s/secrets/alertmanager-smtp.sealed.yaml`: Placeholder mit kubeseal-Anleitung
+- `scripts/seal-secret.sh`: Wrapper-Skript für kubeseal-Sealed-Secret-Erstellung
+- Commit: `feat(monitoring): add Alertmanager with SMTP routing (docker-compose + k3s)` (0875ff8)
+
+**Alert Rules (Recording Rules + Runbook-URLs):**
+- `infra/monitoring/prometheus/alert_rules.yml`: 5 Recording Rules (p50/p95/p99 Latenz, Error Rate, Invoice Rate) + `runbook_url` für alle 12 Alerts
+- `infra/k8s/k3s/manifests/92-configmap-prometheus.yaml`: Inline-Copy der alert_rules vollständig synchronisiert (recording rules + alle Alerts + runbook_url-Annotationen)
+
+**SLO-Dashboard:**
+- `infra/monitoring/grafana/dashboards/erechnung-slo.json`: Neues Dashboard (4 Sections: Latenz p50/p95/p99, Error Rate, Availability Stat, Invoice Throughput, PDF Failure Rate)
+- `infra/k8s/k3s/manifests/94-configmap-grafana-dashboards.yaml`: SLO-Dashboard als zweites ConfigMap-Data-Entry eingebettet
+- Commit: `feat(monitoring): add SLO Grafana dashboard (latency/error-rate/throughput)` (a797690)
+
+**Runbooks:**
+- `docs/runbooks/`: 12 Markdown-Runbooks erstellt (DjangoDown, HighErrorRate, HighRequestLatency, OverdueInvoicesHigh, PDFGenerationFailureRate, PDFGenerationSlow, XMLValidationErrors, PostgresDown, RedisDown, HighDatabaseConnections, RedisMemoryHigh, HighCeleryTaskFailureRate)
+- Commit: `docs: add runbooks for all 12 Prometheus alerts` (b97fe3a)
+
+### Push
+
+- `origin` (local mirror): ✅ bce6300..b97fe3a dev
+- `github` (GitHub): ✅ bce6300..b97fe3a dev
+
+### Offene Punkte P2
+
+- `infra/k8s/k3s/secrets/alertmanager-smtp.sealed.yaml`: Echtes SealedSecret per `scripts/seal-secret.sh` erstellt (Commit `f0154c0`). Im Cluster deployed — `kubectl get secret alertmanager-smtp -n monitoring` liefert Opaque/1 Key, SealedSecret-AGE 7h38m. ✅
+
+### P3: InvoiceDetailView UX-Refactoring (Branch: feature/invoice-actions-ux)
+
+**Ziel**: Aktionsleiste in der Rechnungsdetailansicht vereinfachen — weniger Buttons, kontextabhängiges Verhalten (B2B vs. B2G), Versand-Status-Anzeige, Delivery-Mode-Auswahl im SendInvoiceModal.
+
+**InvoiceDetailView.vue**:
+- 5 Buttons entfernt: `generatePDF`, `downloadPDF`, `downloadXML`, `generateXRechnung`, `handleMarkAsSent`
+- Neuer `smartDownload()`-Button: B2B → PDF-Blob download, B2G → XML generieren + download
+- Neuer `previewPDF()`-Button: PDF-Blob in neuem Tab öffnen (via `globalThis.open()`)
+- Computed: `isGovernment`, `smartDownloadLabel`, `smartDownloadTooltip`
+- Versand-Status-Sektion: zeigt `last_emailed_at` + `last_email_recipient` formatiert
+- Sticky Page-Header (position: sticky; top: 0)
+- `formatDateTime()` Hilfsfunktion hinzugefügt
+
+**SendInvoiceModal.vue**:
+- 3 Delivery-Mode-Tabs: `📧 E-Mail` (default), `📥 Datei herunterladen`, `🔗 Peppol/Portal` (disabled)
+- Download-Mode: B2B → PDF/A-3 ZUGFeRD, B2G → XRechnung XML; `handleDownload()` via `globalThis.URL.createObjectURL`
+- Peppol-Mode: "nicht verfügbar"-Warnung
+- Footer-Buttons kontextabhängig (Versenden / Herunterladen / nur Abbrechen)
+
+**E2E-Tests (frontend/tests/e2e/features/invoice-actions.spec.js)**:
+- 18 neue Tests in 5 Gruppen: SmartDownload-Button (4), Vorschau-Button (3), Entfernte-Buttons-Check (3), Versand-Status-Anzeige (1), SendInvoiceModal Delivery-Modes (7)
+- `b2g-workflow.spec.js`: 2 Assertions auf neue Button-Labels angepasst
+
+**Unit-Tests (Vitest)**:
+- 52 Dateien, 747 Tests — alle grün (exit code 0)
+- Coverage gesamt: 70.82% Stmts, 66.23% Branch, 59.23% Funcs, 71.49% Lines
+- `SendInvoiceModal.vue` wird durch E2E-Tests abgedeckt (kein separater Unit-Test)
+
+### Commits (Branch feature/invoice-actions-ux)
+
+- `7cfb6e1` — feat(ui): simplify InvoiceDetailView action bar — SmartDownload, Vorschau, Versand-Status, delivery modes in SendInvoiceModal
+- `98cd223` — test(e2e): add 18 E2E tests for P3 invoice-actions UX refactoring
+
+## 2026-05-01 — E2E-Tests stabilisieren + Branch mergen
+
+### Kontext
+
+E2E-Workflow auf GitHub CI (Run #46, 47, 48, 49) schlug fehl. Ursachen wurden iterativ analysiert und behoben.
+
+### Fixes (Branch feature/invoice-actions-ux)
+
+**Root Causes und Lösungen:**
+
+| Test | Problem | Fix |
+|---|---|---|
+| Vorschau-Button öffnet neuen Tab | `waitForLoadState`-Timeout 60 s auf CI | `waitForRequest(/download_pdf/)` + `context.waitForEvent('page')` statt URL-Tracking (Blob-URLs sind in Playwright nicht trackbar) |
+| Download-Tab B2B | Strict-mode: 2 Elemente für `/PDF herunterladen/i` | `page.getByRole('dialog').getByRole('button', ...)` |
+| Download-Tab B2G | Strict-mode: 2 Elemente für `/XML herunterladen/i` | `page.getByRole('dialog').getByRole('button', ...)` |
+| Tab-Wechsel E-Mail→Download→E-Mail | `/E-Mail/i` traf auch „Per E-Mail versenden" hinter Modal | `page.getByRole('dialog').getByRole('button', { name: /E-Mail/i })` |
+| `goToB2GInvoice()` | Landete auf Gutschrift (credit-note.spec.js #84 storniert die einzige B2G-Rechnung) | Schleife überspringt `.type-credit-note` UND `.status-cancelled` |
+
+**`playwright.config.js`:** `globalTimeout` erhöht auf 20 min (CI) / 25 min (lokal), da Suite mit PDF-Generierung ~12 min dauert.
+
+### Commits
+
+- `b5522f7` — test: expand frontend test coverage across services, components, views and composables
+- `6b87b8e` — fix: fix 4 flaky E2E tests in invoice-actions.spec.js
+- `cc1c499` — fix: fix 3 remaining flaky E2E tests in invoice-actions.spec.js
+- `ed97d04` — fix: correct 3 remaining E2E flaws (blob URL timing, strict-mode XML btn, E-Mail tab scope)
+- `65c8a1c` — fix: use waitForRequest+newTab to verify PDF preview instead of unreliable blob URL check
+
+### Merge + Abschluss
+
+- `d392f4a` — feat(invoice-ui): merge feature/invoice-actions-ux → dev
+- `docs/USER_MANUAL.md`: Abschnitte 3.3 + 3.4 auf neue Action-Bar aktualisiert, Screenshot-TODOs markiert
+- `TODO_2026.md`: §2.7, §2.9, §2.10 abgehakt (1 offener Punkt bleibt: §2.10 Alertkette E2E-Test)
+- Push: `origin` ✅ `github` ✅
+
+### Lokaler E2E-Lauf (Verifikation)
+
+149 Tests, **145 passed**, 4 skipped, 0 failed — exit code 0 (12.3 min)
+
+---

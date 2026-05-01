@@ -210,5 +210,78 @@ describe('importService', () => {
       expect(importService.parseBoolean('')).toBe(false)
       expect(importService.parseBoolean(false)).toBe(false)
     })
+
+    it('should parse non-string truthy/falsy', () => {
+      expect(importService.parseBoolean(1)).toBe(true)
+      expect(importService.parseBoolean(0)).toBe(false)
+      expect(importService.parseBoolean(null)).toBe(false)
+    })
+  })
+
+  describe('parseGermanDecimal', () => {
+    it('returns null for null/empty', () => {
+      expect(importService.parseGermanDecimal(null)).toBeNull()
+      expect(importService.parseGermanDecimal('')).toBeNull()
+    })
+
+    it('parses German decimal string', () => {
+      expect(importService.parseGermanDecimal('1.234,56')).toBeCloseTo(1234.56)
+    })
+
+    it('parses plain number value (not string)', () => {
+      expect(importService.parseGermanDecimal(99.99)).toBe(99.99)
+    })
+
+    it('parses non-string number-like value', () => {
+      expect(importService.parseGermanDecimal(42)).toBe(42)
+    })
+  })
+
+  describe('transformBusinessPartnerData with numeric fields', () => {
+    it('should parse payment_terms as integer', () => {
+      const data = [{ 'Zahlungsziel': '14' }]
+      const headers = ['Zahlungsziel']
+      const result = importService.transformBusinessPartnerData(data, headers)
+      expect(result[0].payment_terms).toBe(14)
+    })
+
+    it('should default payment_terms to 30 when invalid', () => {
+      const data = [{ 'Zahlungsziel': 'abc' }]
+      const headers = ['Zahlungsziel']
+      const result = importService.transformBusinessPartnerData(data, headers)
+      expect(result[0].payment_terms).toBe(30)
+    })
+
+    it('should parse credit_limit as decimal', () => {
+      const data = [{ 'Kreditlimit': '5.000,00' }]
+      const headers = ['Kreditlimit']
+      const result = importService.transformBusinessPartnerData(data, headers)
+      expect(result[0].credit_limit).toBeCloseTo(5000)
+    })
+  })
+
+  describe('transformProductData with bool/numeric fields', () => {
+    it('should parse is_sellable and track_inventory booleans', () => {
+      const data = [{ 'Verkäuflich': 'ja', 'Lager verfolgen': '0' }]
+      const headers = ['Verkäuflich', 'Lager verfolgen']
+      const result = importService.transformProductData(data, headers)
+      expect(result[0].is_sellable).toBe(true)
+      expect(result[0].track_inventory).toBe(false)
+    })
+
+    it('should parse reorder_level as integer', () => {
+      const data = [{ 'Meldebestand': '5' }]
+      const headers = ['Meldebestand']
+      const result = importService.transformProductData(data, headers)
+      expect(result[0].reorder_level).toBe(5)
+    })
+
+    it('should parse cost_price and tax_rate as decimal', () => {
+      const data = [{ 'EK-Preis': '19,00', 'MwSt-Satz': '19,0' }]
+      const headers = ['EK-Preis', 'MwSt-Satz']
+      const result = importService.transformProductData(data, headers)
+      expect(result[0].cost_price).toBeCloseTo(19)
+      expect(result[0].tax_rate).toBeCloseTo(19)
+    })
   })
 })

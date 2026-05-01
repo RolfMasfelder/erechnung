@@ -2,7 +2,7 @@
 
 ## Status
 
-**TODO** - Decision Pending
+**Accepted** — 2026-04-30
 
 ## Context
 
@@ -24,9 +24,22 @@ For the eRechnung Kubernetes deployment, we need to decide on the deployment app
 
 ## Decision
 
-**TO BE DETERMINED**
+**Two-stage approach: keep traditional `kubectl apply -k` short-term, introduce ArgoCD mid-term.**
 
-Need to evaluate whether GitOps is appropriate and which tool to use.
+1. **Short-term (status quo):** Continue using `kubectl apply -k infra/k8s/k3s/` driven by GitHub Actions. No change to the existing workflow.
+2. **Mid-term:** Install ArgoCD in the k3s cluster and migrate deployment to an App-of-Apps configuration that watches `infra/k8s/k3s/`. The traditional kustomize layout stays intact — ArgoCD only adds reconciliation on top.
+
+FluxCD and Jenkins X are explicitly rejected.
+
+### Rationale
+
+- **Market relevance / hireability:** ArgoCD is the dominant GitOps tool in current job postings and CNCF Graduated since December 2022. Adopting it strengthens the project's CV value.
+- **UI matters:** For a single-maintainer project doing GoBD-relevant audits, ArgoCD's resource tree and live diff are tangible operational wins. Flux's CLI-only approach loses most of its appeal in this context.
+- **Audit trail:** Sync history and reconciliation events live in the cluster, not only in CI logs — useful for compliance contexts.
+- **Low migration risk:** ArgoCD reads the existing kustomize tree as-is. Rollback to traditional `kubectl apply` is a one-command operation.
+- **Why not Flux:** Technically elegant and lightweight, but no first-party UI; the lone-maintainer scenario benefits more from visual feedback than from CLI minimalism.
+- **Why not Jenkins X:** Disproportionate complexity for a single-cluster, two-deployment project; declining popularity.
+- **Why not stay traditional forever:** Acceptable today, but lacks drift detection, self-healing, and in-cluster audit trail — gaps that will surface as the deployment scales (multi-cluster, additional environments, more contributors).
 
 ## Options to Evaluate
 
@@ -216,9 +229,7 @@ Legend: ✅✅✅ Excellent | ✅✅ Good | ⚠️ Acceptable | ❌ Poor
 - Drift detection becomes important
 - Multi-tenancy requirements
 
-## Implementation Notes (If GitOps Chosen)
-
-**TO BE COMPLETED AFTER DECISION**
+## Implementation Notes
 
 ### ArgoCD Specific:
 ```yaml
@@ -258,17 +269,23 @@ erechnung-k8s/
 
 ## Consequences
 
-**TO BE DOCUMENTED AFTER DECISION**
+### Positive
+- Drift detection and self-healing for the k3s deployment.
+- In-cluster audit trail (sync history, reconciliation events) supplementing CI/CD logs — relevant for GoBD operational evidence.
+- Web UI gives immediate visual feedback on cluster state vs. Git state.
+- Skill alignment with mainstream Kubernetes job market.
+- Coexists with the existing `kubectl apply -k` workflow during the transition; no big-bang migration required.
 
-### If Traditional CI/CD:
-- Positive: Simple, fast to implement, familiar
-- Negative: Manual drift detection, less audit trail
-- Mitigation: Document procedures, regular cluster validation
+### Negative
+- Additional runtime components in the k3s cluster (argocd-server, repo-server, application-controller, redis) — modest CPU/memory overhead.
+- Learning curve for App-of-Apps and ApplicationSet patterns.
+- One more component to upgrade and monitor.
+- The Docker Compose deployment is unaffected — ArgoCD applies only to the Kubernetes target, leaving the two deployments structurally asymmetric.
 
-### If GitOps (ArgoCD/Flux):
-- Positive: Drift detection, audit trail, declarative
-- Negative: Additional complexity, learning curve
-- Mitigation: Training, gradual adoption, good documentation
+### Mitigations
+- Pin ArgoCD to an explicit chart version (no `:latest`, per project rules).
+- Keep `kubectl apply -k` as documented fallback in `infra/k8s/k3s/README.md` for the duration of the transition.
+- Document the App-of-Apps layout in `docs/arc42/production-operations.md` once installed.
 
 ## Related Decisions
 
@@ -287,8 +304,8 @@ erechnung-k8s/
 ---
 
 **Next Steps:**
-1. Assess team expertise and operational capacity
-2. Determine scale and audit requirements
-3. Evaluate cost-benefit of GitOps tools
-4. Start with simpler approach, migrate if needed
-5. Document chosen deployment workflow
+1. Pin ArgoCD chart version and add manifests under `infra/k8s/k3s/argocd/`.
+2. Create App-of-Apps definition pointing at `infra/k8s/k3s/`.
+3. Validate sync against the existing cluster (read-only / `--dry-run` first).
+4. Cut over: enable `automated.selfHeal` and `prune`.
+5. Update `docs/arc42/production-operations.md` and `infra/k8s/k3s/README.md`.
