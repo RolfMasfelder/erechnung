@@ -61,4 +61,21 @@ git push origin main
 
 ## Why Both Pulls Are Necessary
 
-Dependabot auto-merges PRs on GitHub's `main`. These commits don't exist on `origin` or locally. Without `git pull github main`, the local `main` diverges from GitHub's `main`, causing rejected pushes after merge.
+Dependabot auto-merges PRs on GitHub's `dev` (since 2026-05-02). These commits don't exist on `origin` or locally. Without `git pull github dev`, the local `dev` diverges from GitHub's `dev`, causing conflicts on the next PR.
+
+## Daily Workflow (Dependabot sync)
+
+Dependabot merges minor/patch updates automatically into `dev` every Monday (or whenever a PR passes CI). To stay in sync:
+
+```bash
+# At the start of each working session:
+git checkout dev
+git pull github dev      # picks up Dependabot auto-merges into dev
+git push origin dev      # keep local mirror in sync
+
+# After your own work:
+git push origin dev
+git push github dev
+```
+
+This ensures `dev` never falls behind GitHub and PRs into `main` are always conflict-free.
