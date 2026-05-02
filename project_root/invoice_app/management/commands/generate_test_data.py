@@ -191,60 +191,11 @@ class Command(BaseCommand):
 
         random.seed(42)  # Deterministic for reproducibility
 
-        statuses = ["DRAFT"] * 4 + ["SENT"] * 3 + ["PAID"] * 2 + ["CANCELLED"]
-        invoices_created = 0
-
-        for _ in range(preset["invoices"]):
-            partner = random.choice([p for p in partners if p.is_customer])
-            status = random.choice(statuses)
-
-            invoice = InvoiceFactory(
-                company=company,
-                business_partner=partner,
-                status=status,
-                created_by=testuser,
-            )
-
-            # Create lines
-            for _ in range(preset["lines_per_invoice"]):
-                product = random.choice(products)
-                qty = Decimal(str(random.randint(1, 10)))
-                InvoiceLineFactory(
-                    invoice=invoice,
-                    description=product.name,
-                    product_code=product.product_code,
-                    quantity=qty,
-                    unit_price=product.base_price,
-                    tax_rate=product.default_tax_rate,
-                )
-
-            invoices_created += 1
-
-        self._log(self.style.SUCCESS(f"  Invoices: {invoices_created}"))
-
-        # 6b. B2G / XRechnung invoice (SENT so it appears in list with XR badge)
-        xr_invoice = InvoiceFactory(
-            company=company,
-            business_partner=gov_partner,
-            status="SENT",
-            created_by=testuser,
-        )
-        for _ in range(preset["lines_per_invoice"]):
-            product = random.choice(products)
-            InvoiceLineFactory(
-                invoice=xr_invoice,
-                description=product.name,
-                product_code=product.product_code,
-                quantity=Decimal("1"),
-                unit_price=product.base_price,
-                tax_rate=product.default_tax_rate,
-            )
-        invoices_created += 1
-        self._log(self.style.SUCCESS("  B2G (XRechnung) invoice: 1"))
+        invoices_created = self._create_invoices(preset, company, gov_partner, partners, products, testuser)
 
         # 7. Edge-case specific data
         if preset.get("special_characters"):
-            self._create_edge_data(company, testuser, partners)
+            self._create_edge_data()
 
         # 8. GoBD locks (for edge preset)
         if preset.get("gobd_locks"):
@@ -270,7 +221,57 @@ class Command(BaseCommand):
             )
         )
 
-    def _create_edge_data(self, company: Company, user: User, partners: list[BusinessPartner]) -> None:
+    def _create_invoices(
+        self,
+        preset: dict[str, Any],
+        company: Company,
+        gov_partner: BusinessPartner,
+        partners: list[BusinessPartner],
+        products: list[Product],
+        testuser: User,
+    ) -> int:
+        """Create invoices with lines. Returns total count."""
+        import random
+
+        statuses = ["DRAFT"] * 4 + ["SENT"] * 3 + ["PAID"] * 2 + ["CANCELLED"]
+        invoices_created = 0
+
+        for _ in range(preset["invoices"]):
+            partner = random.choice([p for p in partners if p.is_customer])
+            status = random.choice(statuses)
+            invoice = InvoiceFactory(company=company, business_partner=partner, status=status, created_by=testuser)
+            for _ in range(preset["lines_per_invoice"]):
+                product = random.choice(products)
+                qty = Decimal(str(random.randint(1, 10)))
+                InvoiceLineFactory(
+                    invoice=invoice,
+                    description=product.name,
+                    product_code=product.product_code,
+                    quantity=qty,
+                    unit_price=product.base_price,
+                    tax_rate=product.default_tax_rate,
+                )
+            invoices_created += 1
+
+        self._log(self.style.SUCCESS(f"  Invoices: {invoices_created}"))
+
+        # B2G / XRechnung invoice (SENT so it appears in list with XR badge)
+        xr_invoice = InvoiceFactory(company=company, business_partner=gov_partner, status="SENT", created_by=testuser)
+        for _ in range(preset["lines_per_invoice"]):
+            product = random.choice(products)
+            InvoiceLineFactory(
+                invoice=xr_invoice,
+                description=product.name,
+                product_code=product.product_code,
+                quantity=Decimal("1"),
+                unit_price=product.base_price,
+                tax_rate=product.default_tax_rate,
+            )
+        invoices_created += 1
+        self._log(self.style.SUCCESS("  B2G (XRechnung) invoice: 1"))
+        return invoices_created
+
+    def _create_edge_data(self) -> None:
         """Create data with special characters, max field lengths, etc."""
         edge_partners = [
             {

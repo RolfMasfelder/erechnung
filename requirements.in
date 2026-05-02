@@ -80,5 +80,7 @@ bandit
 pre-commit
 setuptools
 wheel
+django-stubs[compatible-mypy]
+djangorestframework-stubs
 
 # (Leave pip itself unmanaged here; GitHub runner provides a recent version.)

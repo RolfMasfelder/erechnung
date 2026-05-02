@@ -355,7 +355,7 @@ const canSendEmail = computed(() => {
 const hasDiscounts = computed(() => {
   if (!invoice.value?.lines) return false
   return invoice.value.lines.some(
-    (line) => parseFloat(line.discount_percentage) > 0 || parseFloat(line.discount_amount) > 0
+    (line) => Number.parseFloat(line.discount_percentage) > 0 || Number.parseFloat(line.discount_amount) > 0
   )
 })
 
@@ -373,18 +373,18 @@ const headerCharges = computed(() =>
 )
 
 const totalHeaderAllowances = computed(() =>
-  headerAllowances.value.reduce((sum, ac) => sum + parseFloat(ac.actual_amount), 0),
+  headerAllowances.value.reduce((sum, ac) => sum + Number.parseFloat(ac.actual_amount), 0),
 )
 
 const totalHeaderCharges = computed(() =>
-  headerCharges.value.reduce((sum, ac) => sum + parseFloat(ac.actual_amount), 0),
+  headerCharges.value.reduce((sum, ac) => sum + Number.parseFloat(ac.actual_amount), 0),
 )
 
 // Zeilensumme (Netto, vor Rechnungsebene-Korrekturen)
 // = invoice.subtotal (= Steuerbasis) + Allowances - Charges
 const linesSubtotal = computed(() => {
   return (
-    (parseFloat(invoice.value?.subtotal) || 0) +
+    (Number.parseFloat(invoice.value?.subtotal) || 0) +
     totalHeaderAllowances.value -
     totalHeaderCharges.value
   )
@@ -393,9 +393,9 @@ const linesSubtotal = computed(() => {
 // Nach Modell-Fix: invoice.subtotal = Steuerbasis (bereits korrekt),
 // invoice.tax_amount und invoice.total_amount werden vom Modell korrekt berechnet.
 // Die folgenden Werte kommen direkt aus dem Modell (kein Frontend-Recompute nötig).
-const netAfterAdjustments = computed(() => parseFloat(invoice.value?.subtotal) || 0)
-const correctedTaxAmount = computed(() => parseFloat(invoice.value?.tax_amount) || 0)
-const correctedGrandTotal = computed(() => parseFloat(invoice.value?.total_amount) || 0)
+const netAfterAdjustments = computed(() => Number.parseFloat(invoice.value?.subtotal) || 0)
+const correctedTaxAmount = computed(() => Number.parseFloat(invoice.value?.tax_amount) || 0)
+const correctedGrandTotal = computed(() => Number.parseFloat(invoice.value?.total_amount) || 0)
 
 const lineColumns = computed(() => {
   const cols = [
@@ -406,11 +406,15 @@ const lineColumns = computed(() => {
     { key: 'unit_price_net', label: 'Einzelpreis (Netto)' },
   ]
   if (hasDiscounts.value) {
-    cols.push({ key: 'discount_percentage', label: 'Rabatt %' })
-    cols.push({ key: 'discount_amount', label: 'Rabattbetrag' })
+    cols.push(
+      { key: 'discount_percentage', label: 'Rabatt %' },
+      { key: 'discount_amount', label: 'Rabattbetrag' },
+    )
   }
-  cols.push({ key: 'vat_rate', label: 'MwSt.' })
-  cols.push({ key: 'line_total', label: 'Gesamt (Brutto)' })
+  cols.push(
+    { key: 'vat_rate', label: 'MwSt.' },
+    { key: 'line_total', label: 'Gesamt (Brutto)' },
+  )
   return cols
 })
 
@@ -516,7 +520,7 @@ const formatDate = (value) => {
 const formatQuantity = (value) => {
   if (!value) return '0'
   // Convert to number and format without unnecessary decimals
-  const num = parseFloat(value)
+  const num = Number.parseFloat(value)
   return new Intl.NumberFormat('de-DE', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2
