@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 import { test, expect } from '@playwright/test'
 import { login } from '../fixtures/auth.js'
 
