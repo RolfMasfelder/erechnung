@@ -85,9 +85,12 @@ venv = "venv"
 pythonVersion = "3.13"
 djangoStubsSource = "django-stubs"
 typeCheckingMode = "basic"
-exclude = ["**/migrations/**"]
-exclude_dirs = ["project_root/invoice_app/tests", "project_root/invoice_app/migrations"]
-skips = ["B101"]  # assert used in production code for invariants (acceptable)
+exclude = [
+    "**/node_modules/**",
+    "**/__pycache__/**",
+    "**/.ruff_cache/**",
+    "**/migrations/**",
+]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "invoice_project.settings"
