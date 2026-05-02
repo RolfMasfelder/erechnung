@@ -575,7 +575,7 @@ Implementierung der EN16931-Schematron-Validierung für ZUGFeRD/Factur-X CII-Rec
 
 ### Test Results Summary
 
-```
+```txt
 test_modern_xml_validation.py: 10/10 ✅
 test_schematron_validation.py: 13/13 ✅
 test_xml_utils.py + test_xml_modernization.py + test_integration.py + test_invoice_references.py: 44/44 ✅
@@ -758,9 +758,9 @@ Vollständiges Monitoring-Stack mit Prometheus, Grafana, custom Business-KPIs un
 
 | Service | Docker Compose | Kubernetes |
 |---------|---------------|------------|
-| Prometheus | http://localhost:9090 | http://prometheus.erechnung:9090 |
-| Grafana | http://localhost:3000 (admin/erechnung) | http://grafana.erechnung:3000 |
-| Django Metrics | http://localhost:8000/metrics | internal |
+| Prometheus | <http://localhost:9090> | <http://prometheus.erechnung:9090> |
+| Grafana | <http://localhost:3000> (admin/erechnung) | <http://grafana.erechnung:3000> |
+| Django Metrics | <http://localhost:8000/metrics> | internal |
 
 ### Files Created / Modified
 
@@ -5267,6 +5267,7 @@ During TODO.md review, discovered that legacy Organization templates and referen
 ### Ziel
 
 Umsetzung aus `docs/work-assignments/2026-04-30.md`:
+
 - P1: PDF-Zahlen auf de_DE-Lokalisation umstellen
 - P2: Alertmanager + SMTP-Routing, SLO-Dashboard, Runbooks
 
@@ -5281,6 +5282,7 @@ Umsetzung aus `docs/work-assignments/2026-04-30.md`:
 ### P2: Alertmanager + Monitoring-Infrastruktur
 
 **Alertmanager:**
+
 - `infra/monitoring/alertmanager/alertmanager.yml`: Neue Config mit SMTP via smtp.ionos.de:587, Route (critical: 1h, default: 4h), Inhibit-Regeln
 - `docker-compose.monitoring.yml`: `alertmanager`-Service (prom/alertmanager:v0.32.1), Passwort-Mount via `./secrets/alertmanager_smtp_password`
 - `infra/monitoring/prometheus/prometheus.yml`: `alerting:`-Block auf docker-compose `alertmanager:9093`
@@ -5291,15 +5293,18 @@ Umsetzung aus `docs/work-assignments/2026-04-30.md`:
 - Commit: `feat(monitoring): add Alertmanager with SMTP routing (docker-compose + k3s)` (0875ff8)
 
 **Alert Rules (Recording Rules + Runbook-URLs):**
+
 - `infra/monitoring/prometheus/alert_rules.yml`: 5 Recording Rules (p50/p95/p99 Latenz, Error Rate, Invoice Rate) + `runbook_url` für alle 12 Alerts
 - `infra/k8s/k3s/manifests/92-configmap-prometheus.yaml`: Inline-Copy der alert_rules vollständig synchronisiert (recording rules + alle Alerts + runbook_url-Annotationen)
 
 **SLO-Dashboard:**
+
 - `infra/monitoring/grafana/dashboards/erechnung-slo.json`: Neues Dashboard (4 Sections: Latenz p50/p95/p99, Error Rate, Availability Stat, Invoice Throughput, PDF Failure Rate)
 - `infra/k8s/k3s/manifests/94-configmap-grafana-dashboards.yaml`: SLO-Dashboard als zweites ConfigMap-Data-Entry eingebettet
 - Commit: `feat(monitoring): add SLO Grafana dashboard (latency/error-rate/throughput)` (a797690)
 
 **Runbooks:**
+
 - `docs/runbooks/`: 12 Markdown-Runbooks erstellt (DjangoDown, HighErrorRate, HighRequestLatency, OverdueInvoicesHigh, PDFGenerationFailureRate, PDFGenerationSlow, XMLValidationErrors, PostgresDown, RedisDown, HighDatabaseConnections, RedisMemoryHigh, HighCeleryTaskFailureRate)
 - Commit: `docs: add runbooks for all 12 Prometheus alerts` (b97fe3a)
 
@@ -5317,6 +5322,7 @@ Umsetzung aus `docs/work-assignments/2026-04-30.md`:
 **Ziel**: Aktionsleiste in der Rechnungsdetailansicht vereinfachen — weniger Buttons, kontextabhängiges Verhalten (B2B vs. B2G), Versand-Status-Anzeige, Delivery-Mode-Auswahl im SendInvoiceModal.
 
 **InvoiceDetailView.vue**:
+
 - 5 Buttons entfernt: `generatePDF`, `downloadPDF`, `downloadXML`, `generateXRechnung`, `handleMarkAsSent`
 - Neuer `smartDownload()`-Button: B2B → PDF-Blob download, B2G → XML generieren + download
 - Neuer `previewPDF()`-Button: PDF-Blob in neuem Tab öffnen (via `globalThis.open()`)
@@ -5326,16 +5332,19 @@ Umsetzung aus `docs/work-assignments/2026-04-30.md`:
 - `formatDateTime()` Hilfsfunktion hinzugefügt
 
 **SendInvoiceModal.vue**:
+
 - 3 Delivery-Mode-Tabs: `📧 E-Mail` (default), `📥 Datei herunterladen`, `🔗 Peppol/Portal` (disabled)
 - Download-Mode: B2B → PDF/A-3 ZUGFeRD, B2G → XRechnung XML; `handleDownload()` via `globalThis.URL.createObjectURL`
 - Peppol-Mode: "nicht verfügbar"-Warnung
 - Footer-Buttons kontextabhängig (Versenden / Herunterladen / nur Abbrechen)
 
 **E2E-Tests (frontend/tests/e2e/features/invoice-actions.spec.js)**:
+
 - 18 neue Tests in 5 Gruppen: SmartDownload-Button (4), Vorschau-Button (3), Entfernte-Buttons-Check (3), Versand-Status-Anzeige (1), SendInvoiceModal Delivery-Modes (7)
 - `b2g-workflow.spec.js`: 2 Assertions auf neue Button-Labels angepasst
 
 **Unit-Tests (Vitest)**:
+
 - 52 Dateien, 747 Tests — alle grün (exit code 0)
 - Coverage gesamt: 70.82% Stmts, 66.23% Branch, 59.23% Funcs, 71.49% Lines
 - `SendInvoiceModal.vue` wird durch E2E-Tests abgedeckt (kein separater Unit-Test)

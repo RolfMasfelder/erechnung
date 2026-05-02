@@ -49,6 +49,7 @@ jobs:
       - name: Create .env files
         run: |
           # Django .env
+          # NOTE: DATABASE_URL uses CI-only dummy credentials (not used in production)
           cat > .env << EOF
           DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY || 'django-insecure-ci-dummy-key-for-e2e-testing-only' }}
           DJANGO_DEBUG=True
