@@ -24,8 +24,8 @@
 
 Rufen Sie das Frontend auf:
 
-- **Entwicklung:** http://localhost:5173
-- **Kubernetes:** http://192.168.178.80
+- **Entwicklung:** <http://localhost:5173>
+- **Kubernetes:** <http://192.168.178.80>
 
 Geben Sie Ihren **Benutzernamen** und Ihr **Passwort** ein und klicken Sie auf _Anmelden_.
 
@@ -57,7 +57,7 @@ Nach der Anmeldung sehen Sie das Dashboard mit einer Übersicht:
 
 Jede Rechnung durchläuft folgende Status-Stufen:
 
-```
+```txt
 DRAFT → SENT → PAID
          ↓
       OVERDUE
@@ -95,10 +95,12 @@ DRAFT → SENT → PAID
 <!-- TODO: Screenshot 30.04.2026 — neue Action-Bar mit Vorschau-Button und Smart-Download-Button (B2B: "PDF herunterladen", B2G: "XML herunterladen") -->
 
 **Vorschau:**
+
 1. Öffnen Sie die Rechnung
 2. Klicken Sie auf **Vorschau** — das PDF öffnet sich in einem neuen Browser-Tab
 
 **Herunterladen:**
+
 1. Klicken Sie auf **PDF herunterladen** (B2B) bzw. **XML herunterladen** (B2G/XRechnung)
 2. Die Datei wird direkt heruntergeladen
 
@@ -226,7 +228,7 @@ Das System verwendet rollenbasierte Zugangskontrolle (RBAC).
 
 ### Benutzer anlegen (Admin)
 
-1. Öffnen Sie das **Django-Admin-Interface:** http://localhost:8000/admin/
+1. Öffnen Sie das **Django-Admin-Interface:** <http://localhost:8000/admin/>
 2. Navigieren Sie zu **Users → Hinzufügen**
 3. Erstellen Sie den Benutzer mit Benutzername und Passwort
 4. Navigieren Sie zu **User Roles → Hinzufügen**
@@ -257,7 +259,7 @@ Für jede Rolle kann ein **maximaler Rechnungsbetrag** (`max_invoice_amount`) fe
 
 ## 9. Django-Admin-Interface
 
-Das Django-Admin-Interface unter http://localhost:8000/admin/ bietet erweiterte Verwaltungsfunktionen, die im Frontend nicht verfügbar sind.
+Das Django-Admin-Interface unter <http://localhost:8000/admin/> bietet erweiterte Verwaltungsfunktionen, die im Frontend nicht verfügbar sind.
 
 **Zugang:** Nur für Benutzer mit `is_staff = True` oder `is_superuser = True`.
 
@@ -274,7 +276,7 @@ Das Django-Admin-Interface unter http://localhost:8000/admin/ bietet erweiterte 
 
 ### Passwort zurücksetzen
 
-1. **Django Admin:** http://localhost:8000/admin/auth/user/
+1. **Django Admin:** <http://localhost:8000/admin/auth/user/>
 2. Benutzer auswählen → **Passwort ändern**
 
 Oder per Kommandozeile (Adminzugriff erforderlich):
@@ -316,8 +318,8 @@ Jeder Log-Eintrag enthält:
 Bei technischen Problemen:
 
 - **Logs prüfen:** `docker compose logs -f web` (nur Admins mit Serverzegang)
-- **Health-Check:** http://localhost:8000/health/detailed/ (erfordert Login)
-- **Swagger UI:** http://localhost:8000/api/docs/ (API direkt testen)
+- **Health-Check:** <http://localhost:8000/health/detailed/> (erfordert Login)
+- **Swagger UI:** <http://localhost:8000/api/docs/> (API direkt testen)
 
 ---
 
@@ -328,7 +330,7 @@ Bei technischen Problemen:
 Vor jedem Update:
 
 1. **Backup erstellen:** `./scripts/backup.sh` (sichert Datenbank + Mediadateien)
-2. **aktuelle Version notieren:** `docker compose exec web python project_root/manage.py version` oder http://localhost:8000/api/version/
+2. **aktuelle Version notieren:** `docker compose exec web python project_root/manage.py version` oder <http://localhost:8000/api/version/>
 3. **Changelog lesen:** Prüfen Sie die Datei `CHANGELOG.md` auf Breaking Changes
 
 ### 11.2 Docker-Update (KMU-Installation)
