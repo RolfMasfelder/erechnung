@@ -18,7 +18,9 @@ Usage:
     docker compose exec web python project_root/manage.py generate_test_data --clear --preset standard
 """
 
+from argparse import ArgumentParser
 from decimal import Decimal
+from typing import Any
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
@@ -52,7 +54,7 @@ from invoice_app.tests.factories import (
 )
 
 
-PRESETS = {
+PRESETS: dict[str, dict[str, Any]] = {
     "minimal": {
         "partners": 3,
         "products": 5,
@@ -93,7 +95,7 @@ PRESETS = {
 class Command(BaseCommand):
     help = "Generate realistic test data using factory_boy factories"
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument(
             "--preset",
             choices=PRESETS.keys(),
@@ -106,12 +108,12 @@ class Command(BaseCommand):
             help="Clear existing test data before generating",
         )
 
-    def _log(self, msg):
+    def _log(self, msg: str) -> None:
         if self.verbosity >= 1:
             self.stdout.write(msg)
 
     @transaction.atomic
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         self.verbosity = options.get("verbosity", 1)
         preset = PRESETS[options["preset"]]
 
@@ -155,7 +157,7 @@ class Command(BaseCommand):
         self._log(self.style.SUCCESS("  Users & roles created"))
 
         # 4. Business Partners (mix of types)
-        partners = []
+        partners: list[BusinessPartner] = []
         n = preset["partners"]
         # 60% domestic business, 15% individual, 15% EU, 10% third-country
         for _ in range(max(1, int(n * 0.6))):
@@ -174,7 +176,7 @@ class Command(BaseCommand):
         self._log(self.style.SUCCESS(f"  Partners: {len(partners)}"))
 
         # 5. Products (mix of types)
-        products = []
+        products: list[Product] = []
         m = preset["products"]
         for _ in range(max(1, int(m * 0.5))):
             products.append(ProductFactory())
@@ -268,7 +270,7 @@ class Command(BaseCommand):
             )
         )
 
-    def _create_edge_data(self, company, user, partners):
+    def _create_edge_data(self, company: Company, user: User, partners: list[BusinessPartner]) -> None:
         """Create data with special characters, max field lengths, etc."""
         edge_partners = [
             {
@@ -309,13 +311,13 @@ class Command(BaseCommand):
             )
         self._log(self.style.SUCCESS(f"  Edge-case partners: {len(edge_partners)}"))
 
-    def _create_audit_entries(self, user, invoice_count):
+    def _create_audit_entries(self, user: User, invoice_count: int) -> None:
         """Create 2,000 audit log entries for stress testing."""
         import random
 
         random.seed(42)
         actions = list(AuditLog.ActionType.values)
-        batch = []
+        batch: list[AuditLog] = []
         for i in range(2000):
             batch.append(
                 AuditLog(
