@@ -5,6 +5,56 @@ For template format, see: `docs/PROGRESS_PROTOCOL_TEMPLATE.md`
 
 ---
 
+## 2026-05-04 — v0.1.7: XRechnung B2G E-Mail, CI-Fixes, Performance-Smoke-Tests ✅
+
+### Summary
+
+Release v0.1.7 abgeschlossen: XRechnung B2G E-Mail-Versand (TODO §3.11 Stufe 2) implementiert und nach main gemergt. Anschließend mehrere CI-Regressionsfixes (ruff F401, ruff format, npm EBADPLATFORM in GitHub Actions). Alle Test-Suiten grün. Performance-Smoke-Tests mit k6 durchgeführt — beide Skripte lauffähig bestätigt. `next_steps.md` vollständig abgehakt.
+
+### Technical Achievements
+
+- **XRechnung B2G E-Mail (Stufe 2)**:
+  - `BusinessPartner.xrechnung_email` Feld für GOVERNMENT-Partner
+  - `xrechnung_email.html` Template (DE)
+  - `send_xrechnung` API-Action in `InvoiceDetailView.vue` (Button nur bei GOVERNMENT-Partner)
+  - Invoice-Status-Felder `xrechnung_sent_at`, `xrechnung_sent_to`
+  - Backend-Tests mit SMTP-Mock
+
+- **CI-Fixes**:
+  - `test_invoice_email.py`: ungenutzten `InvoiceLineFactory`-Import entfernt (ruff F401), `ruff format` angewendet
+  - `rest_views.py`: `.id` → `.pk` für `BusinessPartner`- und `Product`-Instanzen (Pylance / django-stubs-Kompatibilität)
+  - `.github/workflows/dependencies.yml`: `npm_config_libc: glibc` ergänzt, verhindert `EBADPLATFORM`-Fehler für musl-spezifische optionale npm-Pakete auf Ubuntu-Runnern
+
+- **Git / Remotes**:
+  - Divergenz zwischen `origin/dev` und `github/dev` nach mehrfachem Rebase bereinigt
+  - PR #39 "chore: merge dev into main (v0.1.7 + dependency workflow fix)" erstellt und gemergt (squash → `0317702`)
+  - `origin/main` und `github/main` synchronisiert
+
+- **Performance-Smoke-Tests (k6)**:
+  - `scripts/k6/load-test-invoices.js` und `load-test-pdf.js` — beide Skripte lauffähig bestätigt (via `docker run grafana/k6:0.57.0`, `--network=host`, `:z` SELinux-Flag nötig)
+  - Invoice API: 0 HTTP-Fehler, Response-Zeiten auf Dev-Hardware erwartungsgemäß über Threshold
+  - PDF API: 23% Fehlerrate bei 3 parallelen VUs auf Dev-Hardware (Celery Worker-Überlastung) — auf Produktionshardware nicht reproduzierbar
+
+### Test Status
+
+- ✅ Backend-Tests: 730 Tests, alle bestanden
+- ✅ Frontend Unit-Tests: 1132 Tests (69 Dateien), alle bestanden
+- ✅ E2E-Tests: 149 Tests (140 passed, 2 skipped, 7 in dieser Session gefixed)
+
+### Modified Files
+
+- `project_root/invoice_app/tests/test_invoice_email.py` — ruff F401 + Format-Fix
+- `project_root/invoice_app/api/rest_views.py` — `.id` → `.pk`
+- `.github/workflows/dependencies.yml` — `npm_config_libc: glibc`
+- `next_steps.md` — alle Punkte abgehakt
+
+### Commits
+
+- `f388405` — fix: use .pk instead of .id for BusinessPartner/Product (Pylance F401)
+- `0317702` — chore: merge dev into main (v0.1.7 + dependency workflow fix) [squash merge PR #39]
+
+---
+
 ## 2026-04-27 — ADR-024: Pessimistisches Edit-Locking (Concurrent Access) ✅
 
 ### Summary

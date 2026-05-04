@@ -55,6 +55,7 @@ class InvoiceEmailService:
         recipient: str,
         *,
         message: str = "",
+        attach_pdf: bool = True,
         attach_xml: bool = False,
         request=None,
         user=None,
@@ -63,6 +64,8 @@ class InvoiceEmailService:
 
         Generates PDF (and XML if requested) on demand if missing. Records an
         AuditLog entry (action=SEND_EMAIL) and updates ``last_emailed_at``.
+        Set ``attach_pdf=False`` for XRechnung (B2G) where only the XML is the
+        legal document and no PDF is expected.
         """
         if not getattr(settings, "INVOICE_EMAIL_ENABLED", True):
             raise EmailDisabledError("E-Mail-Versand ist deaktiviert (INVOICE_EMAIL_ENABLED=False).")
@@ -72,7 +75,7 @@ class InvoiceEmailService:
 
         # Ensure files exist (auto-generate on demand).
         invoice_service = InvoiceService()
-        if not invoice.pdf_file or not invoice.pdf_file.storage.exists(invoice.pdf_file.name):
+        if attach_pdf and (not invoice.pdf_file or not invoice.pdf_file.storage.exists(invoice.pdf_file.name)):
             invoice_service.generate_invoice_files(invoice, zugferd_profile="COMFORT")
             invoice.refresh_from_db()
         if attach_xml and (not invoice.xml_file or not invoice.xml_file.storage.exists(invoice.xml_file.name)):
@@ -108,7 +111,8 @@ class InvoiceEmailService:
         email.attach_alternative(html_body, "text/html")
 
         attached: list[str] = []
-        attached.append(self._attach_file(email, invoice.pdf_file, default_ext=".pdf"))
+        if attach_pdf and invoice.pdf_file:
+            attached.append(self._attach_file(email, invoice.pdf_file, default_ext=".pdf"))
         if attach_xml and invoice.xml_file:
             attached.append(self._attach_file(email, invoice.xml_file, default_ext=".xml"))
 
@@ -182,6 +186,7 @@ class InvoiceEmailService:
             invoice,
             recipient,
             message=message,
+            attach_pdf=False,
             attach_xml=True,
             request=request,
             user=user,
