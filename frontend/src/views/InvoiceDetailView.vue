@@ -41,6 +41,14 @@
           📤 Per E-Mail versenden
         </BaseButton>
         <BaseButton
+          v-if="canSendEmail && isGovernment"
+          variant="primary"
+          :loading="sendingXRechnung"
+          @click="handleSendXRechnung"
+        >
+          🏛️ XRechnung versenden
+        </BaseButton>
+        <BaseButton
           v-if="invoice?.status?.toUpperCase() === 'DRAFT'"
           variant="danger"
           @click="handleDelete"
@@ -59,6 +67,10 @@
       <div v-if="invoice?.last_emailed_at" class="versand-status">
         📧 Zuletzt versendet: {{ formatDateTime(invoice.last_emailed_at) }}
         <span v-if="invoice.last_email_recipient"> an <strong>{{ invoice.last_email_recipient }}</strong></span>
+      </div>
+      <div v-if="invoice?.xrechnung_sent_at" class="versand-status">
+        🏛️ XRechnung versendet: {{ formatDateTime(invoice.xrechnung_sent_at) }}
+        <span v-if="invoice.xrechnung_sent_to"> an <strong>{{ invoice.xrechnung_sent_to }}</strong></span>
       </div>
     </div><!-- end page-header -->
 
@@ -315,6 +327,7 @@ const router = useRouter()
 const toast = useToast()
 const loading = ref(false)
 const downloading = ref(false)
+const sendingXRechnung = ref(false)
 const invoice = ref(null)
 const showEditModal = ref(false)
 const showSendModal = ref(false)
@@ -538,6 +551,26 @@ const handleEmailSent = () => {
   showSendModal.value = false
   // Rechnung neu laden, damit last_emailed_at und ggf. neuer Status (DRAFT→SENT) angezeigt werden.
   loadInvoice()
+}
+
+const handleSendXRechnung = async () => {
+  if (!invoice.value) return
+  const partner = invoice.value.business_partner_details ?? {}
+  const recipient = partner.email ?? ''
+  if (!recipient) {
+    alert('Kein E-Mail-Empfänger: Bitte eine E-Mail-Adresse am Geschäftspartner hinterlegen.')
+    return
+  }
+  sendingXRechnung.value = true
+  try {
+    await invoiceService.sendXRechnung(invoice.value.id, { recipient })
+    await loadInvoice()
+  } catch (err) {
+    const msg = err?.response?.data?.detail ?? err?.response?.data?.error ?? 'Fehler beim Versenden der XRechnung.'
+    alert(msg)
+  } finally {
+    sendingXRechnung.value = false
+  }
 }
 
 const handleDelete = async () => {

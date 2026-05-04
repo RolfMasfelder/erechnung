@@ -552,6 +552,12 @@ class InvoiceSerializer(serializers.ModelSerializer):
             # Concurrent Edit Lock
             "editing_by_display",
             "editing_since",
+            # E-Mail Tracking
+            "last_emailed_at",
+            "last_email_recipient",
+            # XRechnung B2G-Versand
+            "xrechnung_sent_at",
+            "xrechnung_sent_to",
         ]
         read_only_fields = [
             "pdf_file",
@@ -572,6 +578,10 @@ class InvoiceSerializer(serializers.ModelSerializer):
             "cancels_invoice_id",
             "editing_by_display",
             "editing_since",
+            "last_emailed_at",
+            "last_email_recipient",
+            "xrechnung_sent_at",
+            "xrechnung_sent_to",
         ]
 
     def validate(self, attrs):

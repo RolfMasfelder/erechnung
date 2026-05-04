@@ -125,9 +125,25 @@
       :selection-count="bulkSelect.selectionCount.value"
       :show="bulkSelect.hasSelection.value"
       @clear="bulkSelect.clearSelection"
-      @export="handleBulkExport"
-      @delete="handleBulkDelete"
-    />
+    >
+      <template #actions>
+        <ExportButton
+          :data="invoices"
+          :columns="columns"
+          :selected-ids="bulkSelect.selectedIds.value"
+          filename="rechnungen_export"
+          size="sm"
+        />
+        <BaseButton
+          variant="danger"
+          size="sm"
+          @click="handleBulkDelete"
+        >
+          <span class="action-icon">🗑️</span>
+          Löschen
+        </BaseButton>
+      </template>
+    </BulkActionBar>
     <!-- Create Invoice Modal -->
     <InvoiceCreateModal
       v-if="showCreateModal"
@@ -147,6 +163,7 @@ import BasePagination from '@/components/BasePagination.vue'
 import BaseLoader from '@/components/BaseLoader.vue'
 import BaseFilterBar from '@/components/BaseFilterBar.vue'
 import BulkActionBar from '@/components/BulkActionBar.vue'
+import ExportButton from '@/components/ExportButton.vue'
 import InvoiceCreateModal from '@/components/InvoiceCreateModal.vue'
 import { invoiceService } from '@/api/services/invoiceService'
 import { useToast } from '@/composables/useToast'
@@ -323,44 +340,6 @@ const handleSelectAll = ({ ids, selected }) => {
 const handleSelectRange = ({ ids }) => {
   const items = invoices.value.filter(inv => ids.includes(inv.id))
   bulkSelect.selectItems(items)
-}
-
-const handleBulkExport = async () => {
-  try {
-    const selectedInvoices = invoices.value.filter(inv =>
-      bulkSelect.selectedIds.value.has(inv.id)
-    )
-
-    // CSV Export (German format with semicolon delimiter)
-    const headers = ['Rechnungsnr.', 'Kunde', 'Datum', 'Betrag', 'Status']
-    const rows = selectedInvoices.map(inv => [
-      inv.invoice_number,
-      (inv.business_partner_details?.name || inv.customer_details?.name) || '-',
-      formatDate(inv.issue_date),
-      inv.total_amount,
-      getStatusLabel(inv.status)
-    ])
-
-    const csvContent = [
-      headers.join(';'),
-      ...rows.map(row => row.join(';'))
-    ].join('\n')
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `rechnungen_export_${new Date().toISOString().split('T')[0]}.csv`
-    document.body.appendChild(a)
-    a.click()
-    window.URL.revokeObjectURL(url)
-    document.body.removeChild(a)
-
-    toast.success(`${selectedInvoices.length} Rechnungen exportiert`)
-  } catch (error) {
-    console.error('Export failed:', error)
-    toast.error('Fehler beim Exportieren')
-  }
 }
 
 const handleBulkDelete = async () => {

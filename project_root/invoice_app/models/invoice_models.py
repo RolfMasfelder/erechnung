@@ -259,7 +259,20 @@ class Invoice(models.Model):
         blank=True,
     )
 
-    # Default managers: exclude archived by default
+    # ── XRechnung B2G-Versand ────────────────────────────────────────────────
+    xrechnung_sent_at = models.DateTimeField(
+        _("XRechnung versendet am"),
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text=_("Zeitpunkt der B2G-Zustellung per E-Mail."),
+    )
+    xrechnung_sent_to = models.EmailField(
+        _("XRechnung versendet an"),
+        max_length=254,
+        blank=True,
+        help_text=_("E-Mail-Adresse, an die die XRechnung zugestellt wurde."),
+    )
     objects = models.Manager()  # includes archived
 
     class Meta:
@@ -309,6 +322,9 @@ class Invoice(models.Model):
                     "archived_at",
                     "last_emailed_at",
                     "last_email_recipient",
+                    # XRechnung B2G delivery tracking (also allowed on locked invoices)
+                    "xrechnung_sent_at",
+                    "xrechnung_sent_to",
                     # PDF/XML are derived artifacts (re)generated on demand,
                     # not legally relevant content per GoBD §7.1.
                     "pdf_file",

@@ -118,9 +118,7 @@ test.describe('Modal Interactions', () => {
     expect(bodyAfterClose).not.toBe('hidden')
   })
 
-  // SKIP: BusinessPartnerListView uses #actions slot but doesn't pass :actions prop
-  // to BaseTable, so v-if="actions" hides the actions column. Needs UI fix first.
-  test.skip('should open edit modal with pre-filled data', async ({ page }) => {
+  test('should open edit modal with pre-filled data', async ({ page }) => {
     // Requires at least one business partner in the database.
     // Seed via: docker compose exec web python project_root/manage.py shell
     //   BusinessPartner.objects.get_or_create(company_name='E2E Test GmbH', ...)
