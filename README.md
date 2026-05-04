@@ -25,6 +25,7 @@ See [Installation Guide](docs/INSTALLATION.md) for full setup instructions.
 - **API Gateway** — nginx with rate limiting and security headers
 - **Health Monitoring** — Three-tier health checks (liveness, detailed, readiness)
 - **GoBD Compliance** — German digital bookkeeping requirements
+- **XRechnung B2G** — Direct email dispatch of XRechnung XML to public contracting authorities (`send_xrechnung` endpoint)
 
 ## Technology Stack
 
