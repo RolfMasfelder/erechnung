@@ -148,7 +148,7 @@
 
     <!-- Edit Modal -->
     <CompanyEditModal
-      v-if="showEditModal"
+      v-if="showEditModal && company"
       :company-id="company.id"
       @close="showEditModal = false"
       @updated="handleCompanyUpdated"
