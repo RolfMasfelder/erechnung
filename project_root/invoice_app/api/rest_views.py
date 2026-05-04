@@ -1206,7 +1206,7 @@ class BusinessPartnerImportView(APIView):
                         if country:
                             existing.country = country
                         existing.save()
-                        imported_ids.append(existing.id)
+                        imported_ids.append(existing.pk)
                         imported_count += 1
                     elif skip_duplicates:
                         skipped_count += 1
@@ -1225,7 +1225,7 @@ class BusinessPartnerImportView(APIView):
                         country=country,
                         **row_data,
                     )
-                    imported_ids.append(partner.id)
+                    imported_ids.append(partner.pk)
                     imported_count += 1
 
             except (IntegrityError, OperationalError, KeyError, ValueError) as e:
@@ -1308,7 +1308,7 @@ class ProductImportView(APIView):
                             if value is not None and value != "":
                                 setattr(existing, key, value)
                         existing.save()
-                        imported_ids.append(existing.id)
+                        imported_ids.append(existing.pk)
                         imported_count += 1
                     elif skip_duplicates:
                         skipped_count += 1
@@ -1325,13 +1325,13 @@ class ProductImportView(APIView):
                     # Generate product_code if not provided
                     if not product_code:
                         # Simple auto-generation: P + 5 digits
-                        last_product = Product.objects.order_by("-id").first()
-                        next_id = (last_product.id + 1) if last_product else 1
+                        last_product = Product.objects.order_by("-pk").first()
+                        next_id = (last_product.pk + 1) if last_product else 1
                         row_data["product_code"] = f"P{next_id:05d}"
 
                     # Create new record
                     product = Product.objects.create(**row_data)
-                    imported_ids.append(product.id)
+                    imported_ids.append(product.pk)
                     imported_count += 1
 
             except (IntegrityError, OperationalError, KeyError, ValueError) as e:
