@@ -96,6 +96,9 @@ export const invoiceFields = createFieldMapper({
     // E-Mail-Versand-Tracking (read-only, set by server on send_email)
     last_emailed_at:       'last_emailed_at',
     last_email_recipient:  'last_email_recipient',
+    // XRechnung B2G-Versand (read-only, set by server on send_xrechnung)
+    xrechnung_sent_at:     'xrechnung_sent_at',
+    xrechnung_sent_to:     'xrechnung_sent_to',
   },
 })
 

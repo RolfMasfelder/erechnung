@@ -845,6 +845,105 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        summary="XRechnung per E-Mail versenden (B2G)",
+        request=inline_serializer(
+            name="SendXRechnungRequest",
+            fields={
+                "recipient": serializers.EmailField(required=False, allow_blank=True),
+                "message": serializers.CharField(required=False, allow_blank=True, default=""),
+            },
+        ),
+        responses={
+            200: inline_serializer(
+                name="SendXRechnungResponse",
+                fields={
+                    "message": serializers.CharField(),
+                    "recipient": serializers.EmailField(),
+                    "subject": serializers.CharField(),
+                    "attached_files": serializers.ListField(child=serializers.CharField()),
+                    "sent_at": serializers.DateTimeField(),
+                },
+            ),
+            400: OpenApiResponse(description="Kein GOVERNMENT-Partner oder keine E-Mail-Adresse"),
+            503: OpenApiResponse(description="E-Mail-Versand deaktiviert oder SMTP-Fehler"),
+        },
+    )
+    @action(detail=True, methods=["post"], url_path="send_xrechnung")
+    def send_xrechnung(self, request, pk=None):
+        """Send the XRechnung (XML mandatory) to the B2G partner's e-mail address.
+
+        The recipient defaults to the business partner's email if not provided.
+        Only allowed for invoices with a GOVERNMENT-type business partner.
+        """
+        from invoice_app.services.email_service import (
+            EmailDeliveryError,
+            EmailDisabledError,
+            InvoiceEmailService,
+        )
+
+        invoice = self.get_object()
+
+        # Validate: only for GOVERNMENT partners.
+        partner = invoice.business_partner
+        if not partner or partner.partner_type != partner.PartnerType.GOVERNMENT:
+            return Response(
+                {"detail": "XRechnung-Versand ist nur für Rechnungen an Behörden (GOVERNMENT) möglich."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Resolve recipient: explicit param > partner's email.
+        recipient = (request.data.get("recipient") or partner.email or "").strip()
+        if not recipient:
+            return Response(
+                {"detail": "Keine E-Mail-Adresse angegeben und beim Geschäftspartner nicht hinterlegt."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        message = request.data.get("message") or ""
+
+        # DRAFT auto-transition.
+        if invoice.status == Invoice.InvoiceStatus.DRAFT:
+            invoice.status = Invoice.InvoiceStatus.SENT
+            invoice.save()
+            invoice.refresh_from_db()
+
+        try:
+            result = InvoiceEmailService().send_xrechnung(
+                invoice,
+                recipient,
+                message=message,
+                request=request,
+                user=request.user,
+            )
+        except EmailDisabledError:
+            return Response(
+                {"detail": "E-Mail-Versand ist derzeit nicht verfügbar."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except EmailDeliveryError as exc:
+            logger.error("XRechnung SMTP delivery failed for invoice %s: %s", invoice.id, exc)
+            return Response(
+                {"detail": "E-Mail-Versand fehlgeschlagen. Bitte später erneut versuchen."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except ValueError as exc:
+            return Response(
+                {"detail": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {
+                "message": f"XRechnung {invoice.invoice_number} an {result.recipient} versendet.",
+                "recipient": result.recipient,
+                "subject": result.subject,
+                "attached_files": result.attached_filenames,
+                "sent_at": result.sent_at,
+            },
+            status=status.HTTP_200_OK,
+        )
+
 
 class InvoiceLineViewSet(viewsets.ModelViewSet):
     """

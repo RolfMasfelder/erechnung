@@ -94,6 +94,8 @@ jobs:
 
     - name: Update npm dependencies
       working-directory: frontend
+      env:
+        npm_config_libc: glibc  # Prevent EBADPLATFORM for musl/Alpine optional packages
       run: |
         npm update --omit=optional
         npm audit fix --omit=optional || true

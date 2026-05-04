@@ -5,6 +5,24 @@ Alle wesentlichen Änderungen an diesem Projekt werden in dieser Datei dokumenti
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.1.7] - 2026-05-04
+
+### Hinzugefügt
+
+- XRechnung-Versand für B2G-Rechnungen (`POST /api/invoices/{id}/send_xrechnung/`),
+  verschickt XRechnung XML per E-Mail an öffentliche Auftraggeber
+- Tracking-Felder `xrechnung_sent_at` und `xrechnung_sent_to` (Migration 0014)
+- Frontend-Button "🏗️ XRechnung versenden" in der Rechnungsdetailansicht
+  inkl. Versandstatus-Anzeige
+- k6 Last-Tests für Invoice-List-API und PDF/XML-Generierung
+
+### Behoben
+
+- E2E-Tests `export.spec.js`: Dropdown-Flow nach Klick auf "Exportieren" korrekt
+  abgebildet, JSON-Felder an API-Namen angepasst
+- E2E-Test `company-logo.spec.js`: Race Condition beim Öffnen des Bearbeiten-Dialogs
+  behoben (`h1.page-title`-Locator, `v-if="showEditModal && company"`)
+
 ## [0.1.6] - 2026-04-29
 
 ### Hinzugefügt

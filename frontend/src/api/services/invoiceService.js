@@ -257,6 +257,21 @@ export const invoiceService = {
     return response.data
   },
 
+  /**
+   * XRechnung per E-Mail an einen B2G-Empfänger senden.
+   * @param {number} id
+   * @param {{ recipient?: string, message?: string }} [data]
+   * @returns {Promise<object>}
+   * @throws {AxiosError} 400 wenn kein GOVERNMENT-Partner oder keine E-Mail
+   */
+  async sendXRechnung(id, { recipient = '', message = '' } = {}) {
+    const response = await apiClient.post(`/invoices/${id}/send_xrechnung/`, {
+      recipient,
+      message,
+    })
+    return response.data
+  },
+
   // ── Concurrent Edit Lock ────────────────────────────────────────────────
 
   /**

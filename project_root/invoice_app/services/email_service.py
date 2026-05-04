@@ -163,6 +163,37 @@ class InvoiceEmailService:
         email.attach(filename, content, mimetype or "application/octet-stream")
         return filename
 
+    def send_xrechnung(
+        self,
+        invoice: Invoice,
+        recipient: str,
+        *,
+        message: str = "",
+        request=None,
+        user=None,
+    ) -> EmailSendResult:
+        """Send XRechnung (XML mandatory) to a B2G recipient and track the delivery.
+
+        Delegates actual sending to ``send_invoice`` with ``attach_xml=True``,
+        then records the B2G-specific tracking fields ``xrechnung_sent_at`` and
+        ``xrechnung_sent_to``.
+        """
+        result = self.send_invoice(
+            invoice,
+            recipient,
+            message=message,
+            attach_xml=True,
+            request=request,
+            user=user,
+        )
+
+        # Persist B2G-specific tracking (separate from general last_emailed_at).
+        invoice.xrechnung_sent_at = result.sent_at
+        invoice.xrechnung_sent_to = recipient
+        invoice.save(update_fields=["xrechnung_sent_at", "xrechnung_sent_to", "updated_at"])
+
+        return result
+
 
 def send_invoice_email(
     invoice: Invoice,

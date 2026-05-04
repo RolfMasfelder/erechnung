@@ -45,12 +45,20 @@ test.describe('CSV Export', () => {
     await selectAllCheckbox.check()
     await page.waitForTimeout(500)
 
-    // Setup download handler
-    const downloadPromise = page.waitForEvent('download')
-
-    // Click export button in bulk action bar (exports directly as CSV)
+    // Click export button to open dropdown
     const exportButton = page.getByRole('button', { name: /Export|Exportieren/i })
     await exportButton.click()
+
+    // Wait for dropdown to be visible
+    const dropdown = page.locator('.export-dropdown')
+    await expect(dropdown).toBeVisible({ timeout: 3000 })
+
+    // Setup download handler BEFORE clicking option
+    const downloadPromise = page.waitForEvent('download')
+
+    // Click CSV option
+    const csvOption = page.locator('.export-option:has-text("CSV: Alle")')
+    await csvOption.click()
 
     // Wait for download
     const download = await downloadPromise
@@ -80,17 +88,13 @@ test.describe('CSV Export', () => {
     const header = lines[0]
     expect(header).toMatch(/Rechnungsnr|Rechnungsnummer|Invoice/)
     expect(header).toMatch(/Kunde|Customer/)
-    expect(header).toMatch(/Betrag|Amount/)
+    expect(header).toMatch(/Betrag|Amount/i)
 
     // Cleanup
     fs.unlinkSync(tempPath)
   })
 
-  test.skip('should export all data as JSON', async ({ page }) => {
-    // SKIPPED: BulkActionBar emits @export which triggers direct CSV download.
-    // ExportButton.vue with JSON dropdown exists but is not yet integrated into InvoiceListView.
-    // TODO: Replace BulkActionBar's default export button with ExportButton component
-    // to enable format selection (CSV/JSON) before download.
+  test('should export all data as JSON', async ({ page }) => {
     // Select all items using "Alle auswählen" checkbox
     const selectAllCheckbox = page.locator('thead input[type="checkbox"], th input[type="checkbox"]')
     await selectAllCheckbox.check()
@@ -136,8 +140,8 @@ test.describe('CSV Export', () => {
     // Check first item has expected properties
     const firstItem = data[0]
     expect(firstItem).toHaveProperty('invoice_number')
-    expect(firstItem).toHaveProperty('customer')
-    expect(firstItem).toHaveProperty('total_gross')
+    expect(firstItem).toHaveProperty('business_partner')
+    expect(firstItem).toHaveProperty('total_amount')
 
     // Cleanup
     fs.unlinkSync(tempPath)
@@ -157,9 +161,15 @@ test.describe('CSV Export', () => {
     // Setup download handler
     const downloadPromise = page.waitForEvent('download')
 
-    // Click export button in bulk action bar (exports directly as CSV)
+    // Click export button to open dropdown
     const exportButton = page.getByRole('button', { name: /Export|Exportieren/i })
     await exportButton.click()
+
+    // Click CSV Auswahl option in dropdown
+    const dropdown = page.locator('.export-dropdown')
+    await expect(dropdown).toBeVisible({ timeout: 3000 })
+    const csvOption = page.locator('.export-option:has-text("CSV: Auswahl")')
+    await csvOption.click()
 
     // Wait for download
     const download = await downloadPromise
@@ -185,11 +195,17 @@ test.describe('CSV Export', () => {
     await page.waitForTimeout(300)
 
     // Setup download handler but don't wait yet
-    const downloadPromise = page.waitForEvent('download', { timeout: 5000 })
+    const downloadPromise = page.waitForEvent('download', { timeout: 10000 })
 
-    // Click export button (exports directly)
+    // Click export button to open dropdown
     const exportButton = page.getByRole('button', { name: /Export|Exportieren/i })
     await exportButton.click()
+
+    // Click CSV Alle Daten option in dropdown
+    const dropdown = page.locator('.export-dropdown')
+    await expect(dropdown).toBeVisible({ timeout: 3000 })
+    const csvOption = page.locator('.export-option:has-text("CSV: Alle")')
+    await csvOption.click()
 
     // Check for loading indicator (might be brief)
     const loadingIndicator = page.locator('.loading, .spinner, [data-loading]')
@@ -222,9 +238,15 @@ test.describe('CSV Export', () => {
     // Setup download handler
     const downloadPromise = page.waitForEvent('download')
 
-    // Click export button (exports directly as CSV)
+    // Click export button to open dropdown
     const exportButton = page.getByRole('button', { name: /Export|Exportieren/i })
     await exportButton.click()
+
+    // Click CSV Alle Daten option in dropdown
+    const dropdown = page.locator('.export-dropdown')
+    await expect(dropdown).toBeVisible({ timeout: 3000 })
+    const csvOption = page.locator('.export-option:has-text("CSV: Alle")')
+    await csvOption.click()
 
     // Wait for download
     const download = await downloadPromise
@@ -257,9 +279,15 @@ test.describe('CSV Export', () => {
     // Setup download handler
     const downloadPromise = page.waitForEvent('download')
 
-    // Click export button (exports directly as CSV)
+    // Click export button to open dropdown
     const exportButton = page.getByRole('button', { name: /Export|Exportieren/i })
     await exportButton.click()
+
+    // Click CSV Alle Daten option in dropdown
+    const dropdown = page.locator('.export-dropdown')
+    await expect(dropdown).toBeVisible({ timeout: 3000 })
+    const csvOption = page.locator('.export-option:has-text("CSV: Alle")')
+    await csvOption.click()
 
     // Wait for download
     const download = await downloadPromise

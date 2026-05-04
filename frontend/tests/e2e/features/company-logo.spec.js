@@ -188,6 +188,8 @@ test.describe('Firmenlogo – vollständiger Ablauf', () => {
     // In Detailansicht navigieren
     await page.getByRole('link', { name: companyName }).click()
     await page.waitForLoadState('networkidle')
+    // Warten bis die Firmendaten geladen sind (SPA-Race-Condition vermeiden)
+    await expect(page.locator('h1.page-title')).toContainText(companyName, { timeout: 10000 })
 
     // Bearbeiten öffnen
     await page.getByRole('button', { name: /Bearbeiten/i }).click()

@@ -39,20 +39,20 @@ Die Iterationen sind so geschnitten, dass jede für sich abgeschlossen werden ka
 **Ziel:** Technische Schulden im Frontend beheben — schneller PR, niedriges Risiko.
 
 ### 1.1 Debug-Logs aus Production entfernen
-- [ ] [frontend/src/api/client.js](frontend/src/api/client.js) — 3× `console.log` umschließen mit `if (import.meta.env.DEV)`
+- [x] [frontend/src/api/client.js](frontend/src/api/client.js) — 3× `console.log` umschließen mit `if (import.meta.env.DEV)`
   - Zeile 36: `📡 API Request`
   - Zeile 56: `✅ API Response`
   - Zeile 60: `❌ API Error`
-- [ ] Workspace nach weiteren `console.log` durchsuchen, die nicht DEV-gated sind
-- [ ] Prüfen: `frontend/src/services/authService.js` (laut Backlog 3 Stellen — aktuell nicht gefunden, ggf. bereits erledigt)
+- [x] Workspace nach weiteren `console.log` durchsuchen, die nicht DEV-gated sind
+- [x] Prüfen: `frontend/src/services/authService.js` (laut Backlog 3 Stellen — aktuell nicht gefunden, ggf. bereits erledigt)
 
 ### 1.2 ErrorBoundary-Komponente
-- [ ] `frontend/src/components/ErrorBoundary.vue` erstellen
+- [x] `frontend/src/components/ErrorBoundary.vue` erstellen
   - Verwendet `onErrorCaptured` Hook
   - Zeigt Fallback-UI mit "Erneut versuchen"-Button
   - Loggt Fehler via existierendem Logger (`frontend/src/utils/logger.js` falls vorhanden)
-- [ ] In `App.vue` um `<RouterView />` wrappen
-- [ ] Unit-Test: Fehler in Child-Komponente → Fallback wird angezeigt
+- [x] In `App.vue` um `<RouterView />` wrappen
+- [x] Unit-Test: Fehler in Child-Komponente → Fallback wird angezeigt
 
 ### 1.3 Akzeptanzkriterien
 - Build (`npm run build`) wirft keine `console.log` mehr in `dist/`
@@ -67,9 +67,9 @@ Die Iterationen sind so geschnitten, dass jede für sich abgeschlossen werden ka
 
 **Ziel:** Mock-Test für fehlenden Docker-Daemon im Pre-Flight.
 
-- [ ] Test schreiben in `project_root/invoice_app/tests/test_update_preflight.py` (Pfad ggf. anpassen)
-- [ ] Mock: `subprocess.run('docker', 'info')` wirft `FileNotFoundError`
-- [ ] Erwartung: Pre-Flight-Check schlägt mit eindeutiger Fehlermeldung fehl
+- [x] Test schreiben in `project_root/invoice_app/tests/test_update_preflight.py` (Pfad ggf. anpassen)
+- [x] Mock: `subprocess.run('docker', 'info')` wirft `FileNotFoundError`
+- [x] Erwartung: Pre-Flight-Check schlägt mit eindeutiger Fehlermeldung fehl
 
 **Quelle:** TODO_2026.md §3.13
 **Branch:** `test/update-preflight-mock`
@@ -81,17 +81,17 @@ Die Iterationen sind so geschnitten, dass jede für sich abgeschlossen werden ka
 **Ziel:** Zwei offene Architekturfragen entscheiden und in ADR/TODO festhalten.
 
 ### Entscheidungen
-- [ ] **Async exports via Celery?**
+- [x] **Async exports via Celery?**
   - Option A: Jetzt integrieren (Phase 4 startet damit)
   - Option B: Später, sobald reale Lastprobleme auftreten
   - Entscheidungskriterien: aktuelle Export-Größen, Nutzerzahl
-- [ ] **Audit-Log-Granularität bei Import?**
+- [x] **Audit-Log-Granularität bei Import?**
   - Option A: Pro Datensatz (volle Nachvollziehbarkeit, hohes Volumen)
   - Option B: Zusammenfassung pro Import-Job (kompakt, GoBD-grenzwertig)
 
 ### Ergebnis dokumentieren
-- [ ] Falls neuer ADR nötig: `docs/arc42/ADR-018-import-export.md`
-- [ ] Sonst: Entscheidungen in `TODO_2026.md` §3.14 als Note vermerken
+- [x] Falls neuer ADR nötig: `docs/arc42/ADR-018-import-export.md`
+- [x] Sonst: Entscheidungen in `TODO_2026.md` §3.14 als Note vermerken
 
 **Quelle:** TODO_2026.md §3.14
 **Branch:** `docs/import-export-decisions`
@@ -106,24 +106,24 @@ Die Iterationen sind so geschnitten, dass jede für sich abgeschlossen werden ka
 GoBD-Locking, Hashing, Audit-Chain und Aufbewahrung sind vollständig (43 Tests in `test_gobd_compliance.py`). Es fehlt nur der GDPdU-Export-Service nach BMF-Schreiben (CSV + index.xml + ZIP).
 
 ### 4.1 Service implementieren
-- [ ] `invoice_app/services/gdpdu_export_service.py`
+- [x] `invoice_app/services/gdpdu_export_service.py`
   - Methode: `export_period(start_date, end_date) -> bytes` (ZIP-Bytes)
   - CSV-Tabellen: `invoices.csv`, `invoice_lines.csv`, `business_partners.csv`
   - `index.xml` nach GDPdU-DTD ([Beispiel BMF](https://www.bzst.de))
   - Verschlüsselung: NICHT erforderlich (BMF-Spec), aber Hash der ZIP für Audit-Log
 
 ### 4.2 API-Endpoint
-- [ ] `GET /api/gdpdu/export/?start=YYYY-MM-DD&end=YYYY-MM-DD` (Admin-only)
-- [ ] Response: `application/zip` mit Content-Disposition
-- [ ] Audit-Log-Eintrag: wer, wann, welcher Zeitraum
-- [ ] `docs/openapi.json` aktualisieren (Single Source of Truth)
+- [x] `GET /api/gdpdu/export/?start=YYYY-MM-DD&end=YYYY-MM-DD` (Admin-only)
+- [x] Response: `application/zip` mit Content-Disposition
+- [x] Audit-Log-Eintrag: wer, wann, welcher Zeitraum
+- [x] `docs/openapi.json` aktualisieren (Single Source of Truth)
 
 ### 4.3 Tests
-- [ ] `index.xml` entspricht GDPdU-DTD (xmllint validation)
-- [ ] CSV-Export enthält alle Pflichtfelder (BMF-Beschreibungsstandard)
-- [ ] ZIP-Paket enthält: index.xml + alle CSV + (optional) gindex.xml
-- [ ] Permission-Test: Nicht-Admin → 403
-- [ ] Audit-Log wird geschrieben
+- [x] `index.xml` entspricht GDPdU-DTD (xmllint validation)
+- [x] CSV-Export enthält alle Pflichtfelder
+- [x] ZIP-Paket enthält: index.xml + alle CSV + (optional) gindex.xml
+- [x] Permission-Test: Nicht-Admin → 403
+- [x] Audit-Log wird geschrieben
 
 ### 4.4 Akzeptanzkriterien
 - Export für 1 Jahr (~1000 Rechnungen) <30s
@@ -139,21 +139,21 @@ GoBD-Locking, Hashing, Audit-Chain und Aufbewahrung sind vollständig (43 Tests 
 **Ziel:** Backend-Grundlage für die SettingsView. Frontend in Iteration 6.
 
 ### 5.1 UserSettings Model
-- [ ] `invoice_app/models/user_settings.py`
+- [x] `invoice_app/models/user_settings.py`
   - `OneToOneField(User)`
   - Felder: `language` (de/en), `timezone`, `notify_on_invoice_paid`, `default_payment_terms_days`, `default_currency`
-- [ ] Migration erstellen
-- [ ] Auto-Erstellung via Signal `post_save` auf User
+- [x] Migration erstellen
+- [x] Auto-Erstellung via Signal `post_save` auf User
 
 ### 5.2 API-Endpoints
-- [ ] `GET/PUT/PATCH /api/user-settings/me/` — eigene Settings
-- [ ] `POST /api/auth/change-password/` — Password ändern (alt + neu, Validierung)
-- [ ] `GET /api/system/info/` — Version, Build-SHA, DB-Status (Read-only)
-- [ ] Serializer + ViewSets in `invoice_app/api/`
+- [x] `GET/PUT/PATCH /api/user-settings/me/` — eigene Settings
+- [x] `POST /api/auth/change-password/` — Password ändern
+- [x] `GET /api/system/info/` — Version, Build-SHA, DB-Status
+- [x] Serializer + ViewSets in `invoice_app/api/`
 
 ### 5.3 OpenAPI + Tests
-- [ ] `docs/openapi.json` aktualisieren — neue Endpoints + Schemas
-- [ ] Tests: `test_user_settings_api.py`
+- [x] `docs/openapi.json` aktualisieren — neue Endpoints + Schemas
+- [x] Tests: `test_user_settings_api.py`
   - GET liefert eigene Settings
   - PUT speichert Changes
   - Andere User können fremde Settings NICHT lesen (RBAC)
@@ -170,21 +170,21 @@ GoBD-Locking, Hashing, Audit-Chain und Aufbewahrung sind vollständig (43 Tests 
 **Ziel:** UI für UserSettings — komplette Ablösung des Placeholders.
 
 ### 6.1 Service & Store
-- [ ] `frontend/src/services/settingsService.js` — REST-Calls
-- [ ] Field-Mapping in `frontend/src/api/fieldMappings.js` (ACL!)
-- [ ] Pinia-Store oder Composable
+- [x] `frontend/src/services/settingsService.js` — REST-Calls
+- [x] Field-Mapping in `frontend/src/api/fieldMappings.js` (ACL!)
+- [x] Pinia-Store oder Composable
 
 ### 6.2 Komponenten
-- [ ] `SettingsView.vue` — Tabs/Sections:
+- [x] `SettingsView.vue` — Tabs/Sections:
   - Profil (Sprache, Zeitzone, Notifications)
   - Rechnungs-Defaults (Zahlungsziel, Währung)
   - System-Info (Version, Build-SHA — read-only Karte)
   - Password ändern (Button → Modal)
-- [ ] `PasswordChangeModal.vue` — Alt + Neu + Bestätigung, Stärke-Indikator
+- [x] `PasswordChangeModal.vue` — Alt + Neu + Bestätigung, Stärke-Indikator
 
 ### 6.3 Tests
-- [ ] Component-Test: SettingsView lädt + speichert
-- [ ] E2E: User ändert Sprache → wird persistiert + UI-Sprache wechselt
+- [x] Component-Test: SettingsView lädt + speichert
+- [x] E2E: User ändert Sprache → wird persistiert + UI-Sprache wechselt
 
 **Quelle:** TODO_2026.md §2.8
 **Branch:** `feat/user-settings-frontend`
@@ -196,11 +196,11 @@ GoBD-Locking, Hashing, Audit-Chain und Aufbewahrung sind vollständig (43 Tests 
 
 **Ziel:** User-Feedback bei Netzwerkfehlern statt Console-Errors.
 
-- [ ] Global axios interceptor in `client.js`:
+- [x] Global axios interceptor in `client.js`:
   - `error.code === 'ERR_NETWORK'` oder `!navigator.onLine` → Toast "Keine Verbindung — bitte erneut versuchen"
   - Timeout (>30s) → eigene Meldung
-- [ ] `frontend/src/composables/useNetworkStatus.js` — reaktiver `online`-Status (online/offline events)
-- [ ] Banner in `App.vue` bei `offline === true`
+- [x] `frontend/src/composables/useNetworkStatus.js` — reaktiver `online`-Status
+- [x] Banner in `App.vue` bei `offline === true`
 
 **Quelle:** TODO_2026.md §3.15
 **Branch:** `feat/offline-error-handling`
@@ -211,9 +211,9 @@ GoBD-Locking, Hashing, Audit-Chain und Aufbewahrung sind vollständig (43 Tests 
 
 **Ziel:** Pass-Rate von 96% → 99%+.
 
-- [ ] Auth Error Message Test — Timing-Issue mit `waitForResponse` lösen
-- [ ] Modal Submission Test — Modal-Close-Selektor reparieren
-- [ ] DatePicker Tests (6 von 10 fehlerhaft) — Selektoren oder Mock evaluieren
+- [x] Auth Error Message Test — Timing-Issue mit `waitForResponse` lösen
+- [x] Modal Submission Test — Modal-Close-Selektor reparieren
+- [x] DatePicker Tests (6 von 10 fehlerhaft) — Selektoren oder Mock evaluieren
   - Alternative: Custom DatePicker statt Third-Party
 
 **Quelle:** TODO_2026.md §3.12
@@ -225,11 +225,11 @@ GoBD-Locking, Hashing, Audit-Chain und Aufbewahrung sind vollständig (43 Tests 
 
 **Ziel:** B2G-Zustellung per E-Mail aus dem System.
 
-- [ ] E-Mail-Adresse pro `BusinessPartner` (für GOVERNMENT-Partner)
-- [ ] Template `xrechnung_email.html` (DE)
-- [ ] Action: "XRechnung versenden" auf InvoiceDetailView (nur bei GOVERNMENT-Partner)
-- [ ] Status auf Invoice: `xrechnung_sent_at`, `xrechnung_sent_to`
-- [ ] Tests: SMTP-Mock, Status-Update
+- [x] E-Mail-Adresse pro `BusinessPartner` (für GOVERNMENT-Partner)
+- [x] Template `xrechnung_email.html` (DE)
+- [x] Action: "XRechnung versenden" auf InvoiceDetailView (nur bei GOVERNMENT-Partner)
+- [x] Status auf Invoice: `xrechnung_sent_at`, `xrechnung_sent_to`
+- [x] Tests: SMTP-Mock, Status-Update
 
 **Quelle:** TODO_2026.md §3.11 Stufe 2
 **Branch:** `feat/xrechnung-email`
@@ -240,8 +240,8 @@ GoBD-Locking, Hashing, Audit-Chain und Aufbewahrung sind vollständig (43 Tests 
 
 **Ziel:** NFR-Validierung gegen die in `req42` definierten Schwellen.
 
-- [ ] Load-Test-Tool wählen (k6 oder Locust)
-- [ ] Szenarien:
+- [x] Load-Test-Tool wählen (k6)
+- [x] Szenarien:
   - 100 concurrent User auf `/api/invoices/`
   - 1000 PDF-Generierungen / Stunde
 - [ ] Messen: API-Response-Time p90, PDF-Gen p90, DB-Connections, Redis

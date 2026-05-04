@@ -22,6 +22,7 @@
                         "name": "action",
                         "schema": {
                             "type": "string",
+                            "title": "Aktion",
                             "enum": [
                                 "ACCESS_DENIED",
                                 "BACKUP",
@@ -41,7 +42,7 @@
                                 "UPDATE"
                             ]
                         },
-                        "description": "* `CREATE` - Create\n* `READ` - Read\n* `UPDATE` - Update\n* `DELETE` - Delete\n* `LOGIN` - Login\n* `LOGOUT` - Logout\n* `LOGIN_FAILED` - Login Failed\n* `ACCESS_DENIED` - Access Denied\n* `EXPORT` - Export\n* `IMPORT` - Import\n* `GENERATE_PDF` - Generate PDF\n* `SEND_EMAIL` - Send Email\n* `BACKUP` - Backup\n* `RESTORE` - Restore\n* `CONFIG_CHANGE` - Configuration Change\n* `SECURITY_EVENT` - Security Event"
+                        "description": "* `CREATE` - Create\n* `READ` - Read\n* `UPDATE` - Update\n* `DELETE` - Löschen\n* `LOGIN` - Login\n* `LOGOUT` - Logout\n* `LOGIN_FAILED` - Login Failed\n* `ACCESS_DENIED` - Access Denied\n* `EXPORT` - Export\n* `IMPORT` - Import\n* `GENERATE_PDF` - Generate PDF\n* `SEND_EMAIL` - Send Email\n* `BACKUP` - Backup\n* `RESTORE` - Restore\n* `CONFIG_CHANGE` - Configuration Change\n* `SECURITY_EVENT` - Security Event"
                     },
                     {
                         "in": "query",
@@ -68,7 +69,7 @@
                         "name": "ordering",
                         "required": false,
                         "in": "query",
-                        "description": "Which field to use when ordering the results.",
+                        "description": "Feld, das zum Sortieren der Ergebnisse verwendet werden soll.",
                         "schema": {
                             "type": "string"
                         }
@@ -77,7 +78,7 @@
                         "name": "page",
                         "required": false,
                         "in": "query",
-                        "description": "A page number within the paginated result set.",
+                        "description": "Eine Seitenzahl in der paginierten Ergebnismenge.",
                         "schema": {
                             "type": "integer"
                         }
@@ -86,7 +87,7 @@
                         "name": "page_size",
                         "required": false,
                         "in": "query",
-                        "description": "Number of results to return per page.",
+                        "description": "Anzahl der pro Seite zurückzugebenden Ergebnisse.",
                         "schema": {
                             "type": "integer"
                         }
@@ -95,7 +96,7 @@
                         "name": "search",
                         "required": false,
                         "in": "query",
-                        "description": "A search term.",
+                        "description": "Ein Suchbegriff.",
                         "schema": {
                             "type": "string"
                         }
@@ -164,7 +165,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Audit Log.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Audit Log identifiziert.",
                         "required": true
                     }
                 ],
@@ -479,7 +480,7 @@
                         "name": "ordering",
                         "required": false,
                         "in": "query",
-                        "description": "Which field to use when ordering the results.",
+                        "description": "Feld, das zum Sortieren der Ergebnisse verwendet werden soll.",
                         "schema": {
                             "type": "string"
                         }
@@ -488,7 +489,7 @@
                         "name": "page",
                         "required": false,
                         "in": "query",
-                        "description": "A page number within the paginated result set.",
+                        "description": "Eine Seitenzahl in der paginierten Ergebnismenge.",
                         "schema": {
                             "type": "integer"
                         }
@@ -497,7 +498,7 @@
                         "name": "page_size",
                         "required": false,
                         "in": "query",
-                        "description": "Number of results to return per page.",
+                        "description": "Anzahl der pro Seite zurückzugebenden Ergebnisse.",
                         "schema": {
                             "type": "integer"
                         }
@@ -520,7 +521,7 @@
                         "name": "search",
                         "required": false,
                         "in": "query",
-                        "description": "A search term.",
+                        "description": "Ein Suchbegriff.",
                         "schema": {
                             "type": "string"
                         }
@@ -635,7 +636,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Business Partner.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Business Partner identifiziert.",
                         "required": true
                     }
                 ],
@@ -679,7 +680,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Business Partner.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Business Partner identifiziert.",
                         "required": true
                     }
                 ],
@@ -743,7 +744,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Business Partner.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Business Partner identifiziert.",
                         "required": true
                     }
                 ],
@@ -806,7 +807,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Business Partner.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Business Partner identifiziert.",
                         "required": true
                     }
                 ],
@@ -922,7 +923,7 @@
                         "name": "ordering",
                         "required": false,
                         "in": "query",
-                        "description": "Which field to use when ordering the results.",
+                        "description": "Feld, das zum Sortieren der Ergebnisse verwendet werden soll.",
                         "schema": {
                             "type": "string"
                         }
@@ -931,7 +932,7 @@
                         "name": "page",
                         "required": false,
                         "in": "query",
-                        "description": "A page number within the paginated result set.",
+                        "description": "Eine Seitenzahl in der paginierten Ergebnismenge.",
                         "schema": {
                             "type": "integer"
                         }
@@ -940,7 +941,7 @@
                         "name": "page_size",
                         "required": false,
                         "in": "query",
-                        "description": "Number of results to return per page.",
+                        "description": "Anzahl der pro Seite zurückzugebenden Ergebnisse.",
                         "schema": {
                             "type": "integer"
                         }
@@ -949,7 +950,7 @@
                         "name": "search",
                         "required": false,
                         "in": "query",
-                        "description": "A search term.",
+                        "description": "Ein Suchbegriff.",
                         "schema": {
                             "type": "string"
                         }
@@ -1064,7 +1065,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Company.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Company identifiziert.",
                         "required": true
                     }
                 ],
@@ -1108,7 +1109,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Company.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Company identifiziert.",
                         "required": true
                     }
                 ],
@@ -1172,7 +1173,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Company.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Company identifiziert.",
                         "required": true
                     }
                 ],
@@ -1235,7 +1236,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Company.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Company identifiziert.",
                         "required": true
                     }
                 ],
@@ -1328,7 +1329,7 @@
                         "name": "ordering",
                         "required": false,
                         "in": "query",
-                        "description": "Which field to use when ordering the results.",
+                        "description": "Feld, das zum Sortieren der Ergebnisse verwendet werden soll.",
                         "schema": {
                             "type": "string"
                         }
@@ -1337,7 +1338,7 @@
                         "name": "page",
                         "required": false,
                         "in": "query",
-                        "description": "A page number within the paginated result set.",
+                        "description": "Eine Seitenzahl in der paginierten Ergebnismenge.",
                         "schema": {
                             "type": "integer"
                         }
@@ -1346,7 +1347,7 @@
                         "name": "page_size",
                         "required": false,
                         "in": "query",
-                        "description": "Number of results to return per page.",
+                        "description": "Anzahl der pro Seite zurückzugebenden Ergebnisse.",
                         "schema": {
                             "type": "integer"
                         }
@@ -1355,7 +1356,7 @@
                         "name": "search",
                         "required": false,
                         "in": "query",
-                        "description": "A search term.",
+                        "description": "Ein Suchbegriff.",
                         "schema": {
                             "type": "string"
                         }
@@ -1553,7 +1554,7 @@
                         "name": "page",
                         "required": false,
                         "in": "query",
-                        "description": "A page number within the paginated result set.",
+                        "description": "Eine Seitenzahl in der paginierten Ergebnismenge.",
                         "schema": {
                             "type": "integer"
                         }
@@ -1562,7 +1563,7 @@
                         "name": "page_size",
                         "required": false,
                         "in": "query",
-                        "description": "Number of results to return per page.",
+                        "description": "Anzahl der pro Seite zurückzugebenden Ergebnisse.",
                         "schema": {
                             "type": "integer"
                         }
@@ -1586,7 +1587,7 @@
                         "name": "search",
                         "required": false,
                         "in": "query",
-                        "description": "A search term.",
+                        "description": "Ein Suchbegriff.",
                         "schema": {
                             "type": "string"
                         }
@@ -1687,7 +1688,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Einwilligungsnachweis.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Einwilligungsnachweis identifiziert.",
                         "required": true
                     }
                 ],
@@ -1731,7 +1732,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Einwilligungsnachweis.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Einwilligungsnachweis identifiziert.",
                         "required": true
                     }
                 ],
@@ -1795,7 +1796,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Einwilligungsnachweis.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Einwilligungsnachweis identifiziert.",
                         "required": true
                     }
                 ],
@@ -1858,7 +1859,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Einwilligungsnachweis.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Einwilligungsnachweis identifiziert.",
                         "required": true
                     }
                 ],
@@ -1895,7 +1896,7 @@
                         "name": "ordering",
                         "required": false,
                         "in": "query",
-                        "description": "Which field to use when ordering the results.",
+                        "description": "Feld, das zum Sortieren der Ergebnisse verwendet werden soll.",
                         "schema": {
                             "type": "string"
                         }
@@ -1904,7 +1905,7 @@
                         "name": "page",
                         "required": false,
                         "in": "query",
-                        "description": "A page number within the paginated result set.",
+                        "description": "Eine Seitenzahl in der paginierten Ergebnismenge.",
                         "schema": {
                             "type": "integer"
                         }
@@ -1913,7 +1914,7 @@
                         "name": "page_size",
                         "required": false,
                         "in": "query",
-                        "description": "Number of results to return per page.",
+                        "description": "Anzahl der pro Seite zurückzugebenden Ergebnisse.",
                         "schema": {
                             "type": "integer"
                         }
@@ -2044,7 +2045,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Datenschutz-Folgenabschätzung.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Datenschutz-Folgenabschätzung identifiziert.",
                         "required": true
                     }
                 ],
@@ -2088,7 +2089,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Datenschutz-Folgenabschätzung.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Datenschutz-Folgenabschätzung identifiziert.",
                         "required": true
                     }
                 ],
@@ -2152,7 +2153,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Datenschutz-Folgenabschätzung.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Datenschutz-Folgenabschätzung identifiziert.",
                         "required": true
                     }
                 ],
@@ -2215,7 +2216,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Datenschutz-Folgenabschätzung.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Datenschutz-Folgenabschätzung identifiziert.",
                         "required": true
                     }
                 ],
@@ -2252,7 +2253,7 @@
                         "name": "ordering",
                         "required": false,
                         "in": "query",
-                        "description": "Which field to use when ordering the results.",
+                        "description": "Feld, das zum Sortieren der Ergebnisse verwendet werden soll.",
                         "schema": {
                             "type": "string"
                         }
@@ -2261,7 +2262,7 @@
                         "name": "page",
                         "required": false,
                         "in": "query",
-                        "description": "A page number within the paginated result set.",
+                        "description": "Eine Seitenzahl in der paginierten Ergebnismenge.",
                         "schema": {
                             "type": "integer"
                         }
@@ -2270,7 +2271,7 @@
                         "name": "page_size",
                         "required": false,
                         "in": "query",
-                        "description": "Number of results to return per page.",
+                        "description": "Anzahl der pro Seite zurückzugebenden Ergebnisse.",
                         "schema": {
                             "type": "integer"
                         }
@@ -2279,7 +2280,7 @@
                         "name": "search",
                         "required": false,
                         "in": "query",
-                        "description": "A search term.",
+                        "description": "Ein Suchbegriff.",
                         "schema": {
                             "type": "string"
                         }
@@ -2380,7 +2381,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Verarbeitungstätigkeit.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Verarbeitungstätigkeit identifiziert.",
                         "required": true
                     }
                 ],
@@ -2424,7 +2425,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Verarbeitungstätigkeit.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Verarbeitungstätigkeit identifiziert.",
                         "required": true
                     }
                 ],
@@ -2488,7 +2489,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Verarbeitungstätigkeit.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Verarbeitungstätigkeit identifiziert.",
                         "required": true
                     }
                 ],
@@ -2551,7 +2552,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Verarbeitungstätigkeit.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Verarbeitungstätigkeit identifiziert.",
                         "required": true
                     }
                 ],
@@ -2588,7 +2589,7 @@
                         "name": "ordering",
                         "required": false,
                         "in": "query",
-                        "description": "Which field to use when ordering the results.",
+                        "description": "Feld, das zum Sortieren der Ergebnisse verwendet werden soll.",
                         "schema": {
                             "type": "string"
                         }
@@ -2597,7 +2598,7 @@
                         "name": "page",
                         "required": false,
                         "in": "query",
-                        "description": "A page number within the paginated result set.",
+                        "description": "Eine Seitenzahl in der paginierten Ergebnismenge.",
                         "schema": {
                             "type": "integer"
                         }
@@ -2606,7 +2607,7 @@
                         "name": "page_size",
                         "required": false,
                         "in": "query",
-                        "description": "Number of results to return per page.",
+                        "description": "Anzahl der pro Seite zurückzugebenden Ergebnisse.",
                         "schema": {
                             "type": "integer"
                         }
@@ -2632,7 +2633,7 @@
                         "name": "search",
                         "required": false,
                         "in": "query",
-                        "description": "A search term.",
+                        "description": "Ein Suchbegriff.",
                         "schema": {
                             "type": "string"
                         }
@@ -2762,7 +2763,7 @@
                             "type": "string",
                             "format": "uuid"
                         },
-                        "description": "A UUID string identifying this Betroffenenanfrage (DSGVO).",
+                        "description": "Ein UUID-String, der Betroffenenanfrage (DSGVO) identifiziert.",
                         "required": true
                     }
                 ],
@@ -2807,7 +2808,7 @@
                             "type": "string",
                             "format": "uuid"
                         },
-                        "description": "A UUID string identifying this Betroffenenanfrage (DSGVO).",
+                        "description": "Ein UUID-String, der Betroffenenanfrage (DSGVO) identifiziert.",
                         "required": true
                     }
                 ],
@@ -2872,7 +2873,7 @@
                             "type": "string",
                             "format": "uuid"
                         },
-                        "description": "A UUID string identifying this Betroffenenanfrage (DSGVO).",
+                        "description": "Ein UUID-String, der Betroffenenanfrage (DSGVO) identifiziert.",
                         "required": true
                     }
                 ],
@@ -2936,7 +2937,7 @@
                             "type": "string",
                             "format": "uuid"
                         },
-                        "description": "A UUID string identifying this Betroffenenanfrage (DSGVO).",
+                        "description": "Ein UUID-String, der Betroffenenanfrage (DSGVO) identifiziert.",
                         "required": true
                     }
                 ],
@@ -2976,7 +2977,7 @@
                             "type": "string",
                             "format": "uuid"
                         },
-                        "description": "A UUID string identifying this Betroffenenanfrage (DSGVO).",
+                        "description": "Ein UUID-String, der Betroffenenanfrage (DSGVO) identifiziert.",
                         "required": true
                     }
                 ],
@@ -3040,7 +3041,7 @@
                         "name": "ordering",
                         "required": false,
                         "in": "query",
-                        "description": "Which field to use when ordering the results.",
+                        "description": "Feld, das zum Sortieren der Ergebnisse verwendet werden soll.",
                         "schema": {
                             "type": "string"
                         }
@@ -3049,7 +3050,7 @@
                         "name": "page",
                         "required": false,
                         "in": "query",
-                        "description": "A page number within the paginated result set.",
+                        "description": "Eine Seitenzahl in der paginierten Ergebnismenge.",
                         "schema": {
                             "type": "integer"
                         }
@@ -3058,7 +3059,7 @@
                         "name": "page_size",
                         "required": false,
                         "in": "query",
-                        "description": "Number of results to return per page.",
+                        "description": "Anzahl der pro Seite zurückzugebenden Ergebnisse.",
                         "schema": {
                             "type": "integer"
                         }
@@ -3084,7 +3085,7 @@
                         "name": "search",
                         "required": false,
                         "in": "query",
-                        "description": "A search term.",
+                        "description": "Ein Suchbegriff.",
                         "schema": {
                             "type": "string"
                         }
@@ -3172,7 +3173,7 @@
                         "name": "page",
                         "required": false,
                         "in": "query",
-                        "description": "A page number within the paginated result set.",
+                        "description": "Eine Seitenzahl in der paginierten Ergebnismenge.",
                         "schema": {
                             "type": "integer"
                         }
@@ -3181,7 +3182,7 @@
                         "name": "page_size",
                         "required": false,
                         "in": "query",
-                        "description": "Number of results to return per page.",
+                        "description": "Anzahl der pro Seite zurückzugebenden Ergebnisse.",
                         "schema": {
                             "type": "integer"
                         }
@@ -3190,7 +3191,7 @@
                         "name": "search",
                         "required": false,
                         "in": "query",
-                        "description": "A search term.",
+                        "description": "Ein Suchbegriff.",
                         "schema": {
                             "type": "string"
                         }
@@ -3291,7 +3292,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice Allowance/Charge.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice Allowance/Charge identifiziert.",
                         "required": true
                     }
                 ],
@@ -3335,7 +3336,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice Allowance/Charge.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice Allowance/Charge identifiziert.",
                         "required": true
                     }
                 ],
@@ -3399,7 +3400,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice Allowance/Charge.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice Allowance/Charge identifiziert.",
                         "required": true
                     }
                 ],
@@ -3462,7 +3463,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice Allowance/Charge.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice Allowance/Charge identifiziert.",
                         "required": true
                     }
                 ],
@@ -3506,7 +3507,7 @@
                         "name": "page",
                         "required": false,
                         "in": "query",
-                        "description": "A page number within the paginated result set.",
+                        "description": "Eine Seitenzahl in der paginierten Ergebnismenge.",
                         "schema": {
                             "type": "integer"
                         }
@@ -3515,7 +3516,7 @@
                         "name": "page_size",
                         "required": false,
                         "in": "query",
-                        "description": "Number of results to return per page.",
+                        "description": "Anzahl der pro Seite zurückzugebenden Ergebnisse.",
                         "schema": {
                             "type": "integer"
                         }
@@ -3524,7 +3525,7 @@
                         "name": "search",
                         "required": false,
                         "in": "query",
-                        "description": "A search term.",
+                        "description": "Ein Suchbegriff.",
                         "schema": {
                             "type": "string"
                         }
@@ -3625,7 +3626,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice Attachment.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice Attachment identifiziert.",
                         "required": true
                     }
                 ],
@@ -3669,7 +3670,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice Attachment.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice Attachment identifiziert.",
                         "required": true
                     }
                 ],
@@ -3733,7 +3734,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice Attachment.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice Attachment identifiziert.",
                         "required": true
                     }
                 ],
@@ -3796,7 +3797,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice Attachment.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice Attachment identifiziert.",
                         "required": true
                     }
                 ],
@@ -3840,7 +3841,7 @@
                         "name": "page",
                         "required": false,
                         "in": "query",
-                        "description": "A page number within the paginated result set.",
+                        "description": "Eine Seitenzahl in der paginierten Ergebnismenge.",
                         "schema": {
                             "type": "integer"
                         }
@@ -3849,7 +3850,7 @@
                         "name": "page_size",
                         "required": false,
                         "in": "query",
-                        "description": "Number of results to return per page.",
+                        "description": "Anzahl der pro Seite zurückzugebenden Ergebnisse.",
                         "schema": {
                             "type": "integer"
                         }
@@ -3858,7 +3859,7 @@
                         "name": "search",
                         "required": false,
                         "in": "query",
-                        "description": "A search term.",
+                        "description": "Ein Suchbegriff.",
                         "schema": {
                             "type": "string"
                         }
@@ -3959,7 +3960,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice Line.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice Line identifiziert.",
                         "required": true
                     }
                 ],
@@ -4003,7 +4004,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice Line.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice Line identifiziert.",
                         "required": true
                     }
                 ],
@@ -4067,7 +4068,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice Line.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice Line identifiziert.",
                         "required": true
                     }
                 ],
@@ -4130,7 +4131,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice Line.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice Line identifiziert.",
                         "required": true
                     }
                 ],
@@ -4245,7 +4246,7 @@
                         "name": "ordering",
                         "required": false,
                         "in": "query",
-                        "description": "Which field to use when ordering the results.",
+                        "description": "Feld, das zum Sortieren der Ergebnisse verwendet werden soll.",
                         "schema": {
                             "type": "string"
                         }
@@ -4254,7 +4255,7 @@
                         "name": "page",
                         "required": false,
                         "in": "query",
-                        "description": "A page number within the paginated result set.",
+                        "description": "Eine Seitenzahl in der paginierten Ergebnismenge.",
                         "schema": {
                             "type": "integer"
                         }
@@ -4263,7 +4264,7 @@
                         "name": "page_size",
                         "required": false,
                         "in": "query",
-                        "description": "Number of results to return per page.",
+                        "description": "Anzahl der pro Seite zurückzugebenden Ergebnisse.",
                         "schema": {
                             "type": "integer"
                         }
@@ -4272,7 +4273,7 @@
                         "name": "search",
                         "required": false,
                         "in": "query",
-                        "description": "A search term.",
+                        "description": "Ein Suchbegriff.",
                         "schema": {
                             "type": "string"
                         }
@@ -4387,7 +4388,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice identifiziert.",
                         "required": true
                     }
                 ],
@@ -4431,7 +4432,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice identifiziert.",
                         "required": true
                     }
                 ],
@@ -4494,7 +4495,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice identifiziert.",
                         "required": true
                     }
                 ],
@@ -4557,7 +4558,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice identifiziert.",
                         "required": true
                     }
                 ],
@@ -4596,7 +4597,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice identifiziert.",
                         "required": true
                     }
                 ],
@@ -4664,7 +4665,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice identifiziert.",
                         "required": true
                     }
                 ],
@@ -4729,7 +4730,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice identifiziert.",
                         "required": true
                     }
                 ],
@@ -4774,7 +4775,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice identifiziert.",
                         "required": true
                     }
                 ],
@@ -4819,7 +4820,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice identifiziert.",
                         "required": true
                     },
                     {
@@ -4886,7 +4887,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice identifiziert.",
                         "required": true
                     },
                     {
@@ -4956,7 +4957,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice identifiziert.",
                         "required": true
                     }
                 ],
@@ -5021,7 +5022,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice identifiziert.",
                         "required": true
                     }
                 ],
@@ -5089,7 +5090,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice identifiziert.",
                         "required": true
                     }
                 ],
@@ -5157,7 +5158,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice identifiziert.",
                         "required": true
                     }
                 ],
@@ -5222,7 +5223,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Invoice.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice identifiziert.",
                         "required": true
                     }
                 ],
@@ -5283,6 +5284,78 @@
                 }
             }
         },
+        "/api/invoices/{id}/send_xrechnung/": {
+            "post": {
+                "operationId": "invoices_send_xrechnung_create",
+                "description": "Send the XRechnung (XML mandatory) to the B2G partner's e-mail address.\n\nThe recipient defaults to the business partner's email if not provided.\nOnly allowed for invoices with a GOVERNMENT-type business partner.",
+                "summary": "XRechnung per E-Mail versenden (B2G)",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice identifiziert.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "invoices"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendXRechnungRequestRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendXRechnungRequestRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendXRechnungRequestRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SendXRechnungResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Kein GOVERNMENT-Partner oder keine E-Mail-Adresse"
+                    },
+                    "503": {
+                        "description": "E-Mail-Versand deaktiviert oder SMTP-Fehler"
+                    }
+                }
+            }
+        },
         "/api/products/": {
             "get": {
                 "operationId": "products_list",
@@ -5320,7 +5393,7 @@
                         "name": "ordering",
                         "required": false,
                         "in": "query",
-                        "description": "Which field to use when ordering the results.",
+                        "description": "Feld, das zum Sortieren der Ergebnisse verwendet werden soll.",
                         "schema": {
                             "type": "string"
                         }
@@ -5329,7 +5402,7 @@
                         "name": "page",
                         "required": false,
                         "in": "query",
-                        "description": "A page number within the paginated result set.",
+                        "description": "Eine Seitenzahl in der paginierten Ergebnismenge.",
                         "schema": {
                             "type": "integer"
                         }
@@ -5338,7 +5411,7 @@
                         "name": "page_size",
                         "required": false,
                         "in": "query",
-                        "description": "Number of results to return per page.",
+                        "description": "Anzahl der pro Seite zurückzugebenden Ergebnisse.",
                         "schema": {
                             "type": "integer"
                         }
@@ -5361,7 +5434,7 @@
                         "name": "search",
                         "required": false,
                         "in": "query",
-                        "description": "A search term.",
+                        "description": "Ein Suchbegriff.",
                         "schema": {
                             "type": "string"
                         }
@@ -5491,7 +5564,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Product.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Product identifiziert.",
                         "required": true
                     }
                 ],
@@ -5535,7 +5608,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Product.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Product identifiziert.",
                         "required": true
                     }
                 ],
@@ -5599,7 +5672,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Product.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Product identifiziert.",
                         "required": true
                     }
                 ],
@@ -5662,7 +5735,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Product.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Product identifiziert.",
                         "required": true
                     }
                 ],
@@ -5701,7 +5774,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "A unique integer value identifying this Product.",
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Product identifiziert.",
                         "required": true
                     }
                 ],
@@ -6208,7 +6281,7 @@
                     "SECURITY_EVENT"
                 ],
                 "type": "string",
-                "description": "* `CREATE` - Create\n* `READ` - Read\n* `UPDATE` - Update\n* `DELETE` - Delete\n* `LOGIN` - Login\n* `LOGOUT` - Logout\n* `LOGIN_FAILED` - Login Failed\n* `ACCESS_DENIED` - Access Denied\n* `EXPORT` - Export\n* `IMPORT` - Import\n* `GENERATE_PDF` - Generate PDF\n* `SEND_EMAIL` - Send Email\n* `BACKUP` - Backup\n* `RESTORE` - Restore\n* `CONFIG_CHANGE` - Configuration Change\n* `SECURITY_EVENT` - Security Event"
+                "description": "* `CREATE` - Create\n* `READ` - Read\n* `UPDATE` - Update\n* `DELETE` - Löschen\n* `LOGIN` - Login\n* `LOGOUT` - Logout\n* `LOGIN_FAILED` - Login Failed\n* `ACCESS_DENIED` - Access Denied\n* `EXPORT` - Export\n* `IMPORT` - Import\n* `GENERATE_PDF` - Generate PDF\n* `SEND_EMAIL` - Send Email\n* `BACKUP` - Backup\n* `RESTORE` - Restore\n* `CONFIG_CHANGE` - Configuration Change\n* `SECURITY_EVENT` - Security Event"
             },
             "AttachmentTypeEnum": {
                 "enum": [
@@ -6240,7 +6313,8 @@
                                 "$ref": "#/components/schemas/ActionEnum"
                             }
                         ],
-                        "readOnly": true
+                        "readOnly": true,
+                        "title": "Aktion"
                     },
                     "action_display": {
                         "type": "string",
@@ -6260,7 +6334,8 @@
                     },
                     "username": {
                         "type": "string",
-                        "readOnly": true
+                        "readOnly": true,
+                        "title": "Benutzername"
                     },
                     "username_display": {
                         "type": "string",
@@ -6422,6 +6497,7 @@
                     "email": {
                         "type": "string",
                         "format": "email",
+                        "title": "E-Mail-Adresse",
                         "maxLength": 254
                     },
                     "website": {
@@ -6753,6 +6829,7 @@
                     "email": {
                         "type": "string",
                         "format": "email",
+                        "title": "E-Mail-Adresse",
                         "maxLength": 254
                     },
                     "website": {
@@ -6936,6 +7013,7 @@
                     "email": {
                         "type": "string",
                         "format": "email",
+                        "title": "E-Mail-Adresse",
                         "maxLength": 254
                     },
                     "website": {
@@ -7071,6 +7149,7 @@
                     "email": {
                         "type": "string",
                         "format": "email",
+                        "title": "E-Mail-Adresse",
                         "maxLength": 254
                     },
                     "website": {
@@ -7869,6 +7948,34 @@
                         "readOnly": true,
                         "nullable": true,
                         "title": "In Bearbeitung seit"
+                    },
+                    "last_emailed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true,
+                        "title": "Zuletzt per E-Mail versendet am"
+                    },
+                    "last_email_recipient": {
+                        "type": "string",
+                        "format": "email",
+                        "readOnly": true,
+                        "title": "Letzter E-Mail-Empfänger"
+                    },
+                    "xrechnung_sent_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true,
+                        "title": "XRechnung versendet am",
+                        "description": "Zeitpunkt der B2G-Zustellung per E-Mail."
+                    },
+                    "xrechnung_sent_to": {
+                        "type": "string",
+                        "format": "email",
+                        "readOnly": true,
+                        "title": "XRechnung versendet an",
+                        "description": "E-Mail-Adresse, an die die XRechnung zugestellt wurde."
                     }
                 },
                 "required": [
@@ -7892,6 +7999,8 @@
                     "is_locked",
                     "is_overdue",
                     "is_paid",
+                    "last_email_recipient",
+                    "last_emailed_at",
                     "lines",
                     "lock_reason",
                     "locked_at",
@@ -7899,7 +8008,9 @@
                     "retention_until",
                     "status_display",
                     "updated_at",
-                    "xml_file"
+                    "xml_file",
+                    "xrechnung_sent_at",
+                    "xrechnung_sent_to"
                 ]
             },
             "InvoiceAllowanceCharge": {
@@ -8043,6 +8154,7 @@
                     "file": {
                         "type": "string",
                         "format": "uri",
+                        "title": "Datei",
                         "pattern": "(?:pdf|png|jpg|jpeg|csv|xlsx)$"
                     },
                     "original_filename": {
@@ -8088,6 +8200,7 @@
                     "file": {
                         "type": "string",
                         "format": "binary",
+                        "title": "Datei",
                         "pattern": "(?:pdf|png|jpg|jpeg|csv|xlsx)$"
                     },
                     "description": {
@@ -8395,7 +8508,7 @@
                     "es"
                 ],
                 "type": "string",
-                "description": "* `en` - English\n* `de` - German\n* `fr` - French\n* `es` - Spanish"
+                "description": "* `en` - Englisch\n* `de` - Deutsch\n* `fr` - Französisch\n* `es` - Spanisch"
             },
             "LegalBasisEnum": {
                 "enum": [
@@ -8954,6 +9067,7 @@
                     "email": {
                         "type": "string",
                         "format": "email",
+                        "title": "E-Mail-Adresse",
                         "maxLength": 254
                     },
                     "website": {
@@ -9069,6 +9183,7 @@
                     "email": {
                         "type": "string",
                         "format": "email",
+                        "title": "E-Mail-Adresse",
                         "maxLength": 254
                     },
                     "website": {
@@ -9266,6 +9381,7 @@
                     "file": {
                         "type": "string",
                         "format": "binary",
+                        "title": "Datei",
                         "pattern": "(?:pdf|png|jpg|jpeg|csv|xlsx)$"
                     },
                     "description": {
@@ -10598,6 +10714,51 @@
                 ]
             },
             "SendInvoiceEmailResponse": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "recipient": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "subject": {
+                        "type": "string"
+                    },
+                    "attached_files": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "sent_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "attached_files",
+                    "message",
+                    "recipient",
+                    "sent_at",
+                    "subject"
+                ]
+            },
+            "SendXRechnungRequestRequest": {
+                "type": "object",
+                "properties": {
+                    "recipient": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "message": {
+                        "type": "string",
+                        "default": ""
+                    }
+                }
+            },
+            "SendXRechnungResponse": {
                 "type": "object",
                 "properties": {
                     "message": {

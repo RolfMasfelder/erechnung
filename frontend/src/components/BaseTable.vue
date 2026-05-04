@@ -37,7 +37,7 @@
               </span>
             </div>
           </th>
-          <th v-if="actions" class="th-actions">Aktionen</th>
+          <th v-if="actions || $slots.actions" class="th-actions">Aktionen</th>
         </tr>
       </thead>
 
@@ -67,7 +67,7 @@
             </slot>
           </td>
 
-          <td v-if="actions" class="td-actions">
+          <td v-if="actions || $slots.actions" class="td-actions">
             <slot name="actions" :row="row">
               <div class="action-buttons">
                 <button
