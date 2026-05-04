@@ -204,7 +204,7 @@ class TestSendXRechnungEndpoint:
         invoice.xml_file.save(
             f"{invoice.invoice_number}.xml",
             ContentFile(stub_xml),
-            save=False,   # don't trigger model.save() → avoids GoBD lock check
+            save=False,  # don't trigger model.save() → avoids GoBD lock check
         )
         Invoice.objects.filter(pk=invoice.pk).update(xml_file=invoice.xml_file.name)
         invoice.refresh_from_db()
@@ -235,9 +235,7 @@ class TestSendXRechnungEndpoint:
     def test_send_xrechnung_non_government_returns_400(self, authenticated_admin_client, business_invoice):
         """Non-GOVERNMENT partner must yield 400."""
         url = reverse("api-invoice-send-xrechnung", kwargs={"pk": business_invoice.pk})
-        response = authenticated_admin_client.post(
-            url, {"recipient": "test@example.com"}, format="json"
-        )
+        response = authenticated_admin_client.post(url, {"recipient": "test@example.com"}, format="json")
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert mail.outbox == []
@@ -255,23 +253,18 @@ class TestSendXRechnungEndpoint:
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert mail.outbox == []
-    def test_send_xrechnung_explicit_recipient_overrides_partner_email(
-        self, authenticated_admin_client, gov_invoice
-    ):
+
+    def test_send_xrechnung_explicit_recipient_overrides_partner_email(self, authenticated_admin_client, gov_invoice):
         """Explicit recipient in request body takes precedence over partner email."""
         url = reverse("api-invoice-send-xrechnung", kwargs={"pk": gov_invoice.pk})
-        response = authenticated_admin_client.post(
-            url, {"recipient": "custom@example.org"}, format="json"
-        )
+        response = authenticated_admin_client.post(url, {"recipient": "custom@example.org"}, format="json")
 
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["recipient"] == "custom@example.org"
         gov_invoice.refresh_from_db()
         assert gov_invoice.xrechnung_sent_to == "custom@example.org"
 
-    def test_send_xrechnung_draft_auto_transitions_to_sent(
-        self, authenticated_admin_client, company
-    ):
+    def test_send_xrechnung_draft_auto_transitions_to_sent(self, authenticated_admin_client, company):
         """DRAFT invoice is auto-marked SENT when XRechnung is sent."""
         partner = GovernmentPartnerFactory(email="behoerde@example.de")
         draft = InvoiceFactory(
@@ -290,4 +283,3 @@ class TestSendXRechnungEndpoint:
         assert response.status_code == status.HTTP_200_OK
         draft.refresh_from_db()
         assert draft.status == Invoice.InvoiceStatus.SENT
-
