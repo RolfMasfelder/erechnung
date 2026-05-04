@@ -18,7 +18,7 @@ from invoice_app.services.email_service import (
     EmailDisabledError,
     InvoiceEmailService,
 )
-from invoice_app.tests.factories import GovernmentPartnerFactory, InvoiceFactory, InvoiceLineFactory
+from invoice_app.tests.factories import GovernmentPartnerFactory, InvoiceFactory
 
 
 pytestmark = pytest.mark.django_db
