@@ -56,6 +56,29 @@
           📤 Per E-Mail versenden
         </BaseButton>
         <BaseButton
+         
+          variant="secondary"
+          title="PDF im Browser öffnen (Vorschau)"
+          @click="previewPDF"
+        >
+          🏛️ XRechnung versenden
+        </BaseButton>
+        <BaseButton
+          v-if="canSendEmail"
+          variant="primary"
+          @click="showSendModal = true"
+        >
+          📤 Per E-Mail versenden
+        </BaseButton>
+        <BaseButton
+          v-if="canSendEmail && isGovernment"
+          variant="primary"
+          :loading="sendingXRechnung"
+          @click="handleSendXRechnung"
+        >
+          🏛️ XRechnung versenden
+        </BaseButton>
+        <BaseButton
           v-if="invoice?.status?.toUpperCase() === 'DRAFT'"
           variant="danger"
           @click="handleDelete"
