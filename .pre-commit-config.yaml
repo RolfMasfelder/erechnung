@@ -41,6 +41,17 @@ repos:
         exclude: (conftest\.py|factories\.py)$
       - id: requirements-txt-fixer
 
+  # Frontend unit tests (Vitest) — runs on pre-push, not pre-commit (too slow + requires Docker)
+  # npm must not run on host (see copilot-instructions.md), so we use docker compose
+  - repo: local
+    hooks:
+      - id: vitest
+        name: Vitest unit tests (frontend)
+        entry: docker compose exec -T frontend npx vitest run
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
   # dependency management
   # - repo: local
   #   hooks:
