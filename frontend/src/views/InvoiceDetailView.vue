@@ -41,7 +41,7 @@
           📤 Per E-Mail versenden
         </BaseButton>
         <BaseButton
-         
+
           variant="secondary"
           title="PDF im Browser öffnen (Vorschau)"
           @click="previewPDF"
@@ -56,7 +56,7 @@
           📤 Per E-Mail versenden
         </BaseButton>
         <BaseButton
-         
+
           variant="secondary"
           title="PDF im Browser öffnen (Vorschau)"
           @click="previewPDF"
