@@ -29,6 +29,9 @@ Für allgemeine Beitragsregeln siehe [CONTRIBUTING.md](CONTRIBUTING.md).
 git clone <repo-url>
 cd erechnung
 
+# Einmalige Einrichtung der Git-Hooks
+Hinweis für alle anderen Entwickler: Nach dem git clone muss einmalig pre-commit install && pre-commit install --hook-type pre-push ausgeführt werden.
+
 # Beide Remotes setzen
 git remote set-url origin <local-mirror-url>
 git remote add github <github-url>
@@ -45,10 +48,10 @@ docker compose exec web python project_root/manage.py loaddata invoice_app/fixtu
 
 Nach dem Start:
 
-- **Frontend:** http://localhost:5173
-- **Backend API:** http://localhost:8000/api/
-- **Swagger UI:** http://localhost:8000/api/docs/
-- **Django Admin:** http://localhost:8000/admin/
+- **Frontend:** <http://localhost:5173>
+- **Backend API:** <http://localhost:8000/api/>
+- **Swagger UI:** <http://localhost:8000/api/docs/>
+- **Django Admin:** <http://localhost:8000/admin/>
 
 ### Umgebungsvariablen
 
@@ -67,7 +70,7 @@ VITE_API_BASE_URL=http://localhost:8000/api
 
 ## 2. Projektstruktur
 
-```
+```txt
 erechnung/
 ├── project_root/              # Django-Root (alles Manage-py-Bezogene)
 │   ├── manage.py
