@@ -244,9 +244,9 @@ GoBD-Locking, Hashing, Audit-Chain und Aufbewahrung sind vollständig (43 Tests 
 - [x] Szenarien:
   - 100 concurrent User auf `/api/invoices/`
   - 1000 PDF-Generierungen / Stunde
-- [ ] Messen: API-Response-Time p90, PDF-Gen p90, DB-Connections, Redis
-- [ ] Bericht: `docs/PERFORMANCE_REPORT_v0.1.4.md`
-- [ ] Falls Regressionen: Caching-Strategie (Redis) als Folge-Iteration
+- [x] Messen: API-Response-Time p90, PDF-Gen p90, DB-Connections, Redis
+- [x] Bericht: `docs/PERFORMANCE_REPORT_v0.1.4.md`
+- [x] Falls Regressionen: Caching-Strategie (Redis) als Folge-Iteration
 
 **Quelle:** TODO_2026.md §3.7
 **Branch:** `perf/load-tests`

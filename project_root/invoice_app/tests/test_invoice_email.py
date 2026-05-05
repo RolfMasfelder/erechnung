@@ -227,7 +227,8 @@ class TestSendXRechnungEndpoint:
         assert data["sent_at"] is not None
         assert len(mail.outbox) == 1
         filenames = [a[0] for a in mail.outbox[0].attachments]
-        assert any(name.endswith(".xml") for name in filenames)
+        assert any(name.endswith(".xml") for name in filenames), "XRechnung muss XML-Anhang enthalten"
+        assert not any(name.endswith(".pdf") for name in filenames), "XRechnung darf keinen PDF-Anhang enthalten"
         gov_invoice.refresh_from_db()
         assert gov_invoice.xrechnung_sent_at is not None
         assert gov_invoice.xrechnung_sent_to == "behoerde@example.de"

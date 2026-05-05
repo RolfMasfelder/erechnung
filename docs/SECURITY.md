@@ -2,7 +2,7 @@
 
 ## Reporting Security Vulnerabilities
 
-If you discover a security vulnerability in the eRechnung Django App, please report it by emailing **[your-security-email@domain.com]**.
+If you discover a security vulnerability in the eRechnung Django App, please report it by emailing **github@nector-it-gmbh.de**.
 
 **Please do not report security vulnerabilities through public GitHub issues.**
 

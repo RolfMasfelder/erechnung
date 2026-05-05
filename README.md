@@ -1,5 +1,11 @@
 # eRechnung
 
+[![CI/CD](https://github.com/RolfMasfelder/erechnung/actions/workflows/ci-cd.yml/badge.svg?branch=dev)](https://github.com/RolfMasfelder/erechnung/actions/workflows/ci-cd.yml)
+[![CodeQL](https://github.com/RolfMasfelder/erechnung/actions/workflows/codeql.yml/badge.svg)](https://github.com/RolfMasfelder/erechnung/actions/workflows/codeql.yml)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
+[![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
+[![Django 5.2](https://img.shields.io/badge/django-5.2-green.svg)](https://docs.djangoproject.com/)
+
 Electronic invoice management system compliant with ZUGFeRD/Factur-X (EN 16931). Full-stack application with Django REST backend, Vue.js SPA frontend, and PDF/A-3 generation with embedded XML.
 
 ## Quick Start
