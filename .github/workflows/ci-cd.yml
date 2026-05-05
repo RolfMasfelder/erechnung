@@ -3,7 +3,7 @@ name: eRechnung CI/CD Pipeline
 # Only run on GitHub pushes, not on local development
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, dev ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:  # Ermöglicht manuelles Auslösen über GitHub UI
