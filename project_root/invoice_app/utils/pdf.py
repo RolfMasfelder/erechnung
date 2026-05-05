@@ -406,7 +406,7 @@ class PdfA3Generator:
                 size / 1024,
             )
             return pdf_path
-        except Exception as e:  # noqa: BLE001 - broad to log any backend issue
+        except Exception:  # noqa: BLE001 - broad to log any backend issue
             logger.exception("Error embedding XML into PDF")
             raise
 
@@ -510,7 +510,7 @@ class PdfA3Generator:
                     pdf_path,
                     size / 1024,
                 )
-        except Exception as e:  # noqa: BLE001
+        except Exception:  # noqa: BLE001
             logger.exception("Error embedding attachments into PDF")
             raise
 
@@ -565,7 +565,7 @@ class PdfA3Generator:
                 xml_generator = ZugferdXmlGenerator(profile="COMFORT", enable_validation=True)
                 xml_content = xml_generator.generate_xml(invoice_data)
                 logger.info(f"Generated ZUGFeRD XML for invoice {invoice_number}")
-            except Exception as e:
+            except Exception:
                 logger.exception("Failed to generate ZUGFeRD XML")
                 # Fallback: re-raise so callers see the real error
                 raise
