@@ -40,7 +40,6 @@ from invoice_app.models import (
 
 from .exceptions import (
     EditLockError,
-    EditLockError,
     FileServingError,
     InsufficientPermissionError,
     InvalidDateFormatError,
@@ -416,7 +415,9 @@ class InvoiceViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         description="Release the edit lock held by the current user.",
-        responses={200: inline_serializer(name="ReleaseEditLockResponse", fields={"message": serializers.CharField()})},
+        responses={
+            200: inline_serializer(name="ReleaseEditLockResponse", fields={"message": serializers.CharField()})
+        },
     )
     @action(detail=True, methods=["post"], url_path="release_edit_lock")
     def release_edit_lock(self, request, pk=None):
