@@ -222,7 +222,7 @@ class PdfA3Generator:
             base_url=f"file://{settings.BASE_DIR}/",
         ).write_pdf(output_path)
 
-        logger.info(f"WeasyPrint rendered PDF: {output_path}")
+        logger.info("WeasyPrint rendered PDF successfully")
         return output_path
 
     def _build_pdfa_def_ps(self, tmp_dir: str) -> str:
@@ -407,7 +407,7 @@ class PdfA3Generator:
             )
             return pdf_path
         except Exception as e:  # noqa: BLE001 - broad to log any backend issue
-            logger.error("Error embedding XML into PDF: %s", e)
+            logger.exception("Error embedding XML into PDF")
             raise
 
     def embed_attachments(self, pdf_path, attachments):
@@ -511,7 +511,7 @@ class PdfA3Generator:
                     size / 1024,
                 )
         except Exception as e:  # noqa: BLE001
-            logger.error("Error embedding attachments into PDF: %s", e)
+            logger.exception("Error embedding attachments into PDF")
             raise
 
         return embedded_names
@@ -566,7 +566,7 @@ class PdfA3Generator:
                 xml_content = xml_generator.generate_xml(invoice_data)
                 logger.info(f"Generated ZUGFeRD XML for invoice {invoice_number}")
             except Exception as e:
-                logger.error(f"Failed to generate ZUGFeRD XML: {e}")
+                logger.exception("Failed to generate ZUGFeRD XML")
                 # Fallback: re-raise so callers see the real error
                 raise
 

@@ -517,7 +517,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             )
 
         except (OSError, ValueError) as e:
-            logger.error(f"Failed to generate PDF: {str(e)}")
+            logger.error("Failed to generate PDF: %s", type(e).__name__)
             raise PDFGenerationError() from None
 
     @extend_schema(
@@ -594,7 +594,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
                 result = invoice_service.generate_invoice_files(invoice, zugferd_profile="COMFORT")
                 logger.info(f"Auto-generated PDF for invoice {invoice.id}: {result['pdf_path']}")
             except (OSError, ValueError) as e:
-                logger.error(f"Failed to generate PDF for invoice {invoice.id}: {str(e)}")
+                logger.error("Failed to generate PDF for invoice %s: %s", invoice.id, type(e).__name__)
                 raise PDFGenerationError() from None
 
         # Serve the file
@@ -609,7 +609,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             )
             return response
         except (FileNotFoundError, OSError) as e:
-            logger.error(f"Failed to serve PDF for invoice {invoice.id}: {str(e)}")
+            logger.error("Failed to serve PDF for invoice %s: %s", invoice.id, type(e).__name__)
             raise FileServingError() from None
 
     @extend_schema(
@@ -638,7 +638,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
                 result = invoice_service.generate_invoice_files(invoice, zugferd_profile="COMFORT")
                 logger.info(f"Auto-generated XML for invoice {invoice.id}: {result['xml_path']}")
             except (OSError, ValueError) as e:
-                logger.error(f"Failed to generate XML for invoice {invoice.id}: {str(e)}")
+                logger.error("Failed to generate XML for invoice %s: %s", invoice.id, type(e).__name__)
                 raise XMLGenerationError() from None
 
         # Serve the file
@@ -653,7 +653,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             )
             return response
         except (FileNotFoundError, OSError) as e:
-            logger.error(f"Failed to serve XML for invoice {invoice.id}: {str(e)}")
+            logger.error("Failed to serve XML for invoice %s: %s", invoice.id, type(e).__name__)
             raise FileServingError() from None
 
     @extend_schema(
@@ -701,12 +701,13 @@ class InvoiceViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_200_OK,
             )
         except ValueError as e:
+            logger.warning("XML generation rejected: %s", type(e).__name__)
             return Response(
-                {"status": "error", "detail": str(e)},
+                {"status": "error", "detail": "Ungültige Eingabedaten für XML-Generierung."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         except OSError as e:
-            logger.error(f"Failed to generate XML: {str(e)}")
+            logger.error("Failed to generate XML: %s", type(e).__name__)
             raise XMLGenerationError() from None
 
     @extend_schema(
@@ -928,8 +929,9 @@ class InvoiceViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         except ValueError as exc:
+            logger.warning("XRechnung send rejected: %s", type(exc).__name__)
             return Response(
-                {"detail": str(exc)},
+                {"detail": "Ungültige Eingabedaten für XRechnung-Versand."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -1095,7 +1097,7 @@ class DashboardStatsView(APIView):
             )
 
         except (OperationalError, DatabaseError) as e:
-            logger.error(f"Error fetching dashboard stats: {str(e)}")
+            logger.error("Error fetching dashboard stats: %s", type(e).__name__)
             raise ServiceUnavailableError("Dashboard-Statistiken konnten nicht abgerufen werden.") from None
 
 
@@ -1228,7 +1230,16 @@ class BusinessPartnerImportView(APIView):
                     imported_ids.append(partner.pk)
                     imported_count += 1
 
-            except (IntegrityError, OperationalError, KeyError, ValueError) as e:
+            except (IntegrityError, OperationalError) as e:
+                logger.warning("BusinessPartner import DB error row %d: %s", idx, type(e).__name__)
+                errors.append(
+                    {
+                        "row": idx,
+                        "message": "Datenbankfehler: Datensatz kann nicht importiert werden.",
+                    }
+                )
+                error_count += 1
+            except (KeyError, ValueError) as e:
                 errors.append(
                     {
                         "row": idx,
@@ -1334,7 +1345,16 @@ class ProductImportView(APIView):
                     imported_ids.append(product.pk)
                     imported_count += 1
 
-            except (IntegrityError, OperationalError, KeyError, ValueError) as e:
+            except (IntegrityError, OperationalError) as e:
+                logger.warning("Product import DB error row %d: %s", idx, type(e).__name__)
+                errors.append(
+                    {
+                        "row": idx,
+                        "message": "Datenbankfehler: Datensatz kann nicht importiert werden.",
+                    }
+                )
+                error_count += 1
+            except (KeyError, ValueError) as e:
                 errors.append(
                     {
                         "row": idx,

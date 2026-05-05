@@ -77,8 +77,9 @@ class ZugferdXmlGenerator:
             result = self._validator.validate_xml(xml_string)
             if not result.is_valid:
                 logger.warning(
-                    f"Generated XML for invoice {invoice_data.get('invoice_number', '?')} "
-                    f"failed validation: {result.errors}"
+                    "Generated XML for invoice '%s' failed validation with %d error(s)",
+                    "***",
+                    len(result.errors),
                 )
 
         return xml_string

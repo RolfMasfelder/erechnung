@@ -72,10 +72,9 @@ test.describe('CSV Export', () => {
     const tempPath = path.join('/tmp', filename)
     await download.saveAs(tempPath)
 
-    // Verify file exists and has content
-    expect(fs.existsSync(tempPath)).toBeTruthy()
-    const fileSize = fs.statSync(tempPath).size
-    expect(fileSize).toBeGreaterThan(0)
+    // Verify file exists and has content (single stat call to avoid TOCTOU race)
+    const fileStat = fs.statSync(tempPath)
+    expect(fileStat.size).toBeGreaterThan(0)
 
     // Read and validate CSV content
     const content = fs.readFileSync(tempPath, 'utf-8')
