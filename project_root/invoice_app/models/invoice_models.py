@@ -259,6 +259,19 @@ class Invoice(models.Model):
         blank=True,
     )
 
+    # ── E-Mail-Versand ───────────────────────────────────────────────────────
+    last_emailed_at = models.DateTimeField(
+        _("Zuletzt per E-Mail versendet am"),
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+    last_email_recipient = models.EmailField(
+        _("Letzter E-Mail-Empfänger"),
+        max_length=254,
+        blank=True,
+    )
+
     # ── XRechnung B2G-Versand ────────────────────────────────────────────────
     xrechnung_sent_at = models.DateTimeField(
         _("XRechnung versendet am"),
