@@ -20,6 +20,17 @@ spec:
         # Opt out of Linkerd sidecar injection (stateful service)
         linkerd.io/inject: disabled
     spec:
+      # Pin to the server node — data volumes are local to this host.
+      # Must be updated if the server node is renamed.
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - cirrus7-neu
       # DEVELOPMENT ONLY: Relaxed Security for Postgres on this local k3s setup
       # In production Kubernetes, use strict SecurityContext with dedicated UID/GID
       containers:
