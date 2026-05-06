@@ -5,6 +5,32 @@ For template format, see: `docs/PROGRESS_PROTOCOL_TEMPLATE.md`
 
 ---
 
+## 2026-05-06 — §2.10: Monitoring-Stack Alertkette E2E-Test ✅
+
+### Summary
+
+TODO §2.10 (Alertmanager + SLO/Runbook) vollständig abgeschlossen. End-to-End-Test der Alert-Benachrichtigungskette erfolgreich: synthetischer Alert → Alertmanager → IONOS SMTP → Posteingang `github@nector-it-gmbh.de`. Außerdem falschen E-Mail-Empfänger (`ops@nector-it-gmbh.de` existierte nicht) in beiden Konfigurationsdateien korrigiert.
+
+### Technical Achievements
+
+- **Alertmanager SMTP-Konfiguration korrigiert**:
+  - `infra/monitoring/alertmanager/alertmanager.yml`: Empfänger `ops@` → `github@nector-it-gmbh.de`
+  - `infra/k8s/k3s/manifests/98-alertmanager.yaml`: gleiche Korrektur für k3s-Deployment
+  - `secrets/alertmanager_smtp_password`: SMTP-Passwort-Datei für Docker-Compose-Stack angelegt (gitignored)
+
+- **E2E-Test der Alertkette** (06.05.2026, 13:40 UTC):
+  - Synthetischer Alert `TestAlert` (severity=critical) per `POST /api/v2/alerts` an Alertmanager gesendet
+  - Alertmanager → IONOS `smtp.ionos.de:587` (STARTTLS) → E-Mail an `github@nector-it-gmbh.de`
+  - Alertmanager-Log bestätigt: `Notify success … receiver=ops-mail integration=email[0] … attempts=1 duration=396ms`
+  - E-Mail im Posteingang eingegangen ✅
+
+### Status
+
+- §2.10 alle Checkboxen erledigt ✅
+- Alertmanager läuft produktiv im Docker-Compose-Stack
+
+---
+
 ## 2026-05-04 — v0.1.7: XRechnung B2G E-Mail, CI-Fixes, Performance-Smoke-Tests ✅
 
 ### Summary

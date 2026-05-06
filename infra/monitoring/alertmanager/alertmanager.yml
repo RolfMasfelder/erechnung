@@ -28,7 +28,7 @@ route:
 receivers:
   - name: ops-mail
     email_configs:
-      - to: ops@nector-it-gmbh.de
+      - to: github@nector-it-gmbh.de
         send_resolved: true
         headers:
           Subject: '[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .GroupLabels.alertname }}'
