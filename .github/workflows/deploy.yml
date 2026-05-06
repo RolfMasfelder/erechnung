@@ -33,7 +33,7 @@ jobs:
         # Set image tags via kustomize (no sed hacks on manifest files)
         cd infra/k8s/k3s
         kustomize edit set image \
-          erechnung-django-app="${IMAGE_REGISTRY}/erechnung-django-app:${VERSION}" \
+          erechnung="${IMAGE_REGISTRY}/erechnung:${VERSION}" \
           erechnung-api-gateway="${IMAGE_REGISTRY}/erechnung-api-gateway:${VERSION}"
 
         # Apply manifests

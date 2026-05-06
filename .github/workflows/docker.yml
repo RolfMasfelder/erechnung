@@ -30,8 +30,20 @@ jobs:
         platforms: linux/amd64
         target: production
         push: false
+        load: true
+        tags: erechnung:pr-scan
         cache-from: type=gha
         cache-to: type=gha,mode=max
+
+    - name: Scan image with Trivy
+      uses: aquasecurity/trivy-action@v0.35.0
+      with:
+        image-ref: erechnung:pr-scan
+        format: table
+        exit-code: '1'
+        ignore-unfixed: true
+        vuln-type: os,library
+        severity: CRITICAL,HIGH
 
   publish-release:
     name: Publish Release Image
@@ -69,8 +81,8 @@ jobs:
         platforms: linux/amd64
         push: true
         tags: |
-          ghcr.io/rolfmasfelder/erechnung-django-app:${{ steps.version.outputs.VERSION }}
-          ghcr.io/rolfmasfelder/erechnung-django-app:latest
+          ghcr.io/rolfmasfelder/erechnung:${{ steps.version.outputs.VERSION }}
+          ghcr.io/rolfmasfelder/erechnung:latest
         labels: |
           org.opencontainers.image.title=eRechnung Django App
           org.opencontainers.image.description=German e-invoicing system with ZUGFeRD/Factur-X
@@ -88,9 +100,9 @@ jobs:
         COSIGN_EXPERIMENTAL: "true"
       run: |
         cosign sign --yes \
-          ghcr.io/rolfmasfelder/erechnung-django-app:${{ steps.version.outputs.VERSION }}
+          ghcr.io/rolfmasfelder/erechnung:${{ steps.version.outputs.VERSION }}
         cosign sign --yes \
-          ghcr.io/rolfmasfelder/erechnung-django-app:latest
+          ghcr.io/rolfmasfelder/erechnung:latest
 
     - name: Verify image signature
       env:
@@ -99,4 +111,21 @@ jobs:
         cosign verify \
           --certificate-identity-regexp="https://github.com/RolfMasfelder/erechnung" \
           --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
-          ghcr.io/rolfmasfelder/erechnung-django-app:${{ steps.version.outputs.VERSION }}
+          ghcr.io/rolfmasfelder/erechnung:${{ steps.version.outputs.VERSION }}
+
+    - name: Scan published image with Trivy
+      uses: aquasecurity/trivy-action@v0.35.0
+      with:
+        image-ref: ghcr.io/rolfmasfelder/erechnung:${{ steps.version.outputs.VERSION }}
+        format: sarif
+        output: trivy-results.sarif
+        ignore-unfixed: true
+        vuln-type: os,library
+        severity: CRITICAL,HIGH
+
+    - name: Upload Trivy SARIF to GitHub Security
+      uses: actions/upload-artifact@v7
+      if: always()
+      with:
+        name: trivy-sarif
+        path: trivy-results.sarif
