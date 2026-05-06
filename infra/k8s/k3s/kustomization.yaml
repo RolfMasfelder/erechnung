@@ -19,6 +19,7 @@ resources:
   - manifests/51-svc-django-web.yaml
   - manifests/52-deploy-celery-worker.yaml
   - manifests/53-pdb-django-web.yaml
+  - manifests/54-hpa.yaml
   - manifests/60-deploy-api-gateway.yaml
   - manifests/61-svc-api-gateway.yaml
   - manifests/63-pdb-api-gateway.yaml

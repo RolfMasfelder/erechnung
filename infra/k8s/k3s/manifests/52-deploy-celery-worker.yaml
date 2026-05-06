@@ -5,7 +5,7 @@ metadata:
   name: celery-worker
   namespace: erechnung
 spec:
-  replicas: 1
+  # replicas managed by HPA (54-hpa.yaml)
   revisionHistoryLimit: 5
   minReadySeconds: 10
   strategy:
