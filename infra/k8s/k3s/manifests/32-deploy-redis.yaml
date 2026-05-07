@@ -50,6 +50,7 @@ spec:
             drop:
             - ALL
           readOnlyRootFilesystem: false  # Redis needs write access
+        command: ["redis-server", "--appendonly", "yes", "--maxmemory", "200mb", "--maxmemory-policy", "allkeys-lru"]
         ports:
         - containerPort: 6379
         volumeMounts:

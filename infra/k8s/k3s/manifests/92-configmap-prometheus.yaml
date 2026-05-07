@@ -223,7 +223,7 @@ data:
               runbook_url: "https://github.com/RolfMasfelder/erechnung/blob/main/docs/runbooks/HighDatabaseConnections.md"
 
           - alert: RedisMemoryHigh
-            expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.85
+            expr: (redis_memory_used_bytes / redis_memory_max_bytes > 0.85) and redis_memory_max_bytes > 0
             for: 5m
             labels:
               severity: warning
