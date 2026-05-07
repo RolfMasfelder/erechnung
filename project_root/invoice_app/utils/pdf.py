@@ -401,8 +401,7 @@ class PdfA3Generator:
 
             size = os.path.getsize(pdf_path)
             logger.info(
-                "Successfully embedded XML into PDF using pikepdf (PDF/A-3 metadata preserved): %s (size: %.1f KB)",
-                pdf_path,
+                "Successfully embedded XML into PDF using pikepdf (PDF/A-3 metadata preserved, size: %.1f KB)",
                 size / 1024,
             )
             return pdf_path
@@ -505,9 +504,8 @@ class PdfA3Generator:
             if embedded_names:
                 size = os.path.getsize(pdf_path)
                 logger.info(
-                    "Embedded %d supplementary files into PDF/A-3: %s (size: %.1f KB)",
+                    "Embedded %d supplementary files into PDF/A-3 (size: %.1f KB)",
                     len(embedded_names),
-                    pdf_path,
                     size / 1024,
                 )
         except Exception:  # noqa: BLE001
@@ -564,7 +562,7 @@ class PdfA3Generator:
                 # Enable validation with our working schema files - use COMFORT profile for EN16931 compliance
                 xml_generator = ZugferdXmlGenerator(profile="COMFORT", enable_validation=True)
                 xml_content = xml_generator.generate_xml(invoice_data)
-                logger.info(f"Generated ZUGFeRD XML for invoice {invoice_number}")
+                logger.info("Generated ZUGFeRD XML successfully")
             except Exception:
                 logger.exception("Failed to generate ZUGFeRD XML")
                 # Fallback: re-raise so callers see the real error
