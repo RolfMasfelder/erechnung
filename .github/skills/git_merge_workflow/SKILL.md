@@ -43,9 +43,17 @@ git push github dev
 # (use mcp_github_create_pull_request or GitHub UI)
 # Wait for all CI checks to pass, then merge via PR UI
 
-# 4. After GitHub merges the PR, sync origin:
+# 4. After GitHub merges the PR: sync main, then merge back into dev
 git pull github main
-git push origin main
+git push origin main    # keep local mirror in sync
+
+# 5. Merge main back into dev (required for squash merges!)
+# GitHub uses squash merge → main gets a new SHA, dev diverges from main.
+# Without this step, the next PR from dev → main will re-show the old commits.
+git checkout dev
+git merge main
+git push origin dev
+git push github dev
 ```
 
 ## When This Applies
