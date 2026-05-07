@@ -193,3 +193,57 @@ kubectl rollout restart deployment/django-web deployment/celery-worker -n erechn
      - traefik
    ```
    Falls Traefik nach einem Upgrade wieder auftaucht: `kubectl delete helmchart -n kube-system traefik` entfernt ihn sofort (kein k3s-Restart nötig). Die config.yaml verhindert Neuinstallation.
+
+---
+
+## Zweiter Node (cirrus7) — Agent-Join & Validierung
+
+> **Status (Stand 07.05.2026):** zurückgestellt. Noch ausstehend: belastbare Tests zur Pod-Verteilung über beide Nodes, insbesondere HPA-Skalierung. Die Abschnitte unten dokumentieren den Stand und was bei Wiederaufnahme zu tun ist.
+
+### Agent-Node joinen (Referenz-Kommandos)
+
+**Schritt 1: Token vom Server-Node holen** (auf cirrus7-neu ausführen)
+
+```bash
+sudo cat /var/lib/rancher/k3s/server/node-token
+```
+
+**Schritt 2: k3s-Agent auf cirrus7 installieren** (auf cirrus7 ausführen)
+
+```bash
+curl -sfL https://get.k3s.io | \
+  K3S_URL=https://192.168.178.80:6443 \
+  K3S_TOKEN=<token-aus-schritt-1> \
+  sh -
+```
+
+**Schritt 3: Firewall-Interfaces auf cirrus7 in `trusted` Zone setzen**
+
+```bash
+sudo firewall-cmd --permanent --zone=trusted --add-interface=cni0
+sudo firewall-cmd --permanent --zone=trusted --add-interface=flannel.1
+sudo firewall-cmd --reload
+```
+
+> **Wichtig:** Schritt 3 muss auf cirrus7 (Agent) genauso wie auf cirrus7-neu (Server) gemacht werden. Ohne dies bricht flannel VXLAN-Traffic und DNS schlägt fehl (CrashLoopBackOff auf Pods die auf cirrus7 landen).
+
+**Prüfen ob Join erfolgreich war** (auf cirrus7-neu)
+
+```bash
+kubectl get nodes -o wide
+# NAME          STATUS   ROLES                  AGE   VERSION         INTERNAL-IP
+# cirrus7-neu   Ready    control-plane,master   ...   v1.35.4+k3s1   192.168.178.80
+# cirrus7       Ready    <none>                 ...   v1.35.4+k3s1   192.168.178.53
+```
+
+### nodeAffinity schützt stateful Workloads
+
+Postgres und Redis sind durch `nodeAffinity` hart an cirrus7-neu gebunden. Das ist Pflicht, weil lokale PVCs nicht zwischen Nodes wandern können. Die Deployments `django-web` und `celery-worker` dürfen (und sollen) auf beide Nodes verteilt werden — dafür brauchen sie **keine** nodeAffinity.
+
+### Offene Validierungen (bei Wiederaufnahme)
+
+- [ ] **Flannel VXLAN auf cirrus7 verifizieren:** `kubectl exec` in einem Pod auf cirrus7 → `nslookup postgres-service.erechnung.svc.cluster.local` muss auflösen
+- [ ] **Pod-Verteilung erzwingen und testen:** Manuell skalieren (`kubectl scale deployment django-web --replicas=4 -n erechnung`) und mit `kubectl get pods -o wide` prüfen, dass Pods auf beiden Nodes landen
+- [ ] **HPA über zwei Nodes:** Last erzeugen (z.B. mit k6) und beobachten ob HPA-Skalierung Pods korrekt verteilt
+- [ ] **CoreDNS-Erreichbarkeit von cirrus7:** Falls CoreDNS auf cirrus7-neu läuft und ein Pod auf cirrus7 DNS aufruft, muss VXLAN die Anfrage weiterleiten — das ist der kritische Pfad der in Fallstrick #1 beschrieben wird
+- [ ] **Staging-Overlay:** Nach dem Refactoring (TODO §3.3) muss `kubectl apply -k infra/k8s/k3s/overlays/staging/` auch im Zwei-Node-Setup funktionieren
