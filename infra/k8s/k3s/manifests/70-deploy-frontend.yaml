@@ -21,6 +21,13 @@ spec:
       labels:
         app: frontend
     spec:
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app: frontend
       # Production security context for nginx-based frontend
       securityContext:
         runAsNonRoot: true
