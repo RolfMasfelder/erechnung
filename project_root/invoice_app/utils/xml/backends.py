@@ -132,7 +132,8 @@ class XsdOnlyBackend(ValidationBackend):
                     result.add_error(f"XSD: {error.message}")
 
         except Exception as e:
-            result.add_error(f"XSD validation error: {e}")
+            logger.error("XSD validation error: %s", e)
+            result.add_error("XSD-Validierung fehlgeschlagen. Bitte Protokoll prüfen.")
 
         result.validation_time_ms = (time.time() - start_time) * 1000
         return result
@@ -168,7 +169,8 @@ class SchematronBackend(ValidationBackend):
                     result.add_error(f"Schematron: {error.message}")
 
         except Exception as e:
-            result.add_error(f"Schematron validation error: {e}")
+            logger.error("Schematron validation error: %s", e)
+            result.add_error("Schematron-Validierung fehlgeschlagen. Bitte Protokoll prüfen.")
 
         result.validation_time_ms = (time.time() - start_time) * 1000
         return result
@@ -226,7 +228,8 @@ class SchematronSaxonBackend(ValidationBackend):
             self._parse_svrl(svrl_xml, result)
 
         except Exception as e:
-            result.add_error(f"Schematron-Saxon validation error: {e}")
+            logger.error("Schematron-Saxon validation error: %s", e)
+            result.add_error("Schematron-Saxon-Validierung fehlgeschlagen. Bitte Protokoll prüfen.")
 
         result.validation_time_ms = (time.time() - start_time) * 1000
         return result

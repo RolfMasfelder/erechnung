@@ -1240,10 +1240,11 @@ class BusinessPartnerImportView(APIView):
                 )
                 error_count += 1
             except (KeyError, ValueError) as e:
+                logger.warning("BusinessPartner import data error row %d: %s - %s", idx, type(e).__name__, e)
                 errors.append(
                     {
                         "row": idx,
-                        "message": str(e),
+                        "message": "Ungültige oder fehlende Pflichtfelder in dieser Zeile.",
                     }
                 )
                 error_count += 1
@@ -1355,10 +1356,11 @@ class ProductImportView(APIView):
                 )
                 error_count += 1
             except (KeyError, ValueError) as e:
+                logger.warning("Product import data error row %d: %s - %s", idx, type(e).__name__, e)
                 errors.append(
                     {
                         "row": idx,
-                        "message": str(e),
+                        "message": "Ungültige oder fehlende Pflichtfelder in dieser Zeile.",
                     }
                 )
                 error_count += 1

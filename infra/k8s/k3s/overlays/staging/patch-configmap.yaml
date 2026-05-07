@@ -12,3 +12,5 @@ data:
   # Kein TLS zwischen Django und PostgreSQL innerhalb desselben Namespace (vereinfachtes Staging)
   DATABASE_SSL_MODE: "disable"
   DATABASE_SSL_CA: ""
+  POSTGRES_HOST: "postgres-service.erechnung-staging.svc.cluster.local"
+  DB_HOST: "postgres-service.erechnung-staging.svc.cluster.local"

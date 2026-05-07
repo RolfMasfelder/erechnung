@@ -13,14 +13,14 @@ data:
   PYTHONUNBUFFERED: "1"
   DJANGO_SETTINGS_MODULE: "invoice_project.settings"
   # Database connection - use POSTGRES_* variables (primary in settings.py)
-  POSTGRES_HOST: "postgres-service"
+  POSTGRES_HOST: "postgres-service.erechnung.svc.cluster.local"
   POSTGRES_PORT: "5432"
   POSTGRES_DB: "erechnung"
   # PostgreSQL TLS - require encrypted connections
   DATABASE_SSL_MODE: "verify-ca"
   DATABASE_SSL_CA: "/etc/ssl/postgres/ca.crt"
   # Fallback DB_* variables for compatibility
-  DB_HOST: "postgres-service"
+  DB_HOST: "postgres-service.erechnung.svc.cluster.local"
   DB_PORT: "5432"
   DB_NAME: "erechnung"
   # Redis

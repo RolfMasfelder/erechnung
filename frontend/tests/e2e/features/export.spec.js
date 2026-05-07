@@ -72,12 +72,9 @@ test.describe('CSV Export', () => {
     const tempPath = path.join('/tmp', filename)
     await download.saveAs(tempPath)
 
-    // Verify file exists and has content (single stat call to avoid TOCTOU race)
-    const fileStat = fs.statSync(tempPath)
-    expect(fileStat.size).toBeGreaterThan(0)
-
-    // Read and validate CSV content
+    // Read file and verify content in one operation (avoids TOCTOU race)
     const content = fs.readFileSync(tempPath, 'utf-8')
+    expect(content.length).toBeGreaterThan(0)
 
     // Should have header row
     const lines = content.split('\n').filter(line => line.trim())
