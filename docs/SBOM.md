@@ -26,6 +26,7 @@
 |-----------|---------|---------|---------|
 | Django | 5.2.13 | BSD-3-Clause | Web framework |
 | Django REST Framework | 3.17.1 | BSD-2-Clause | API framework |
+| drf-spectacular | 0.29.0 | BSD-3-Clause | OpenAPI schema generation |
 | Gunicorn | 25.3.0 | MIT | WSGI server |
 | Celery | 5.6.3 | BSD-3-Clause | Task queue |
 
@@ -51,7 +52,8 @@
 | Component | Version | License | Purpose |
 |-----------|---------|---------|---------|
 | factur-x | 4.2 | BSD-2-Clause | ZUGFeRD/Factur-X generation |
-| ReportLab | 4.4.3 | BSD-3-Clause | PDF generation |
+| WeasyPrint | 68.1 | BSD-3-Clause | HTML to PDF generation |
+| pypdf | 6.10.2 | BSD-3-Clause | PDF processing |
 | pikepdf | 10.5.1 | MPL-2.0 | PDF manipulation |
 | lxml | 6.1.0 | BSD-3-Clause | XML processing |
 | xmlschema | 4.3.1 | MIT | XML schema validation |
@@ -71,7 +73,8 @@
 |---------|---------|------|------|---------|
 | Django Web App | 1.1.0 | Application | 8000 | Main application |
 | Vue.js Frontend | 0.1.0 | Application | 5173 | SPA user interface |
-| API Gateway | 1.0.0 | Infrastructure | 8080 | Nginx reverse proxy |
+| Nginx Alpine | alpine | Infrastructure | 8080 | Nginx API Gateway (image: nginx:alpine) |
+| Python Base Image | 3.13.13-slim-bookworm | Infrastructure | - | Backend runtime (image: python:3.13.13-slim-bookworm) |
 | PostgreSQL | 17 | Database | 5432 | Data persistence |
 | Redis | 7 | Cache | 6379 | Session cache & broker |
 | Celery Worker | 5.5.3 | Background | - | Task processing |

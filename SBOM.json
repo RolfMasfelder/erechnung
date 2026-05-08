@@ -495,6 +495,78 @@
           "value": "AGPL-3.0 forces this project to be licensed under AGPL-3.0 or later. Ghostscript is invoked as a subprocess for PDF/A-3 conversion (see invoice_app/utils/pdf.py)."
         }
       ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "vue-3.5.33",
+      "name": "Vue.js",
+      "version": "3.5.33",
+      "description": "Progressive JavaScript framework",
+      "supplier": {
+        "name": "Evan You"
+      },
+      "purl": "pkg:npm/vue@3.5.33",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "vue-router-5.0.6",
+      "name": "Vue Router",
+      "version": "5.0.6",
+      "description": "Official router for Vue.js",
+      "supplier": {
+        "name": "Vue.js"
+      },
+      "purl": "pkg:npm/vue-router@5.0.6",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pinia-3.0.4",
+      "name": "Pinia",
+      "version": "3.0.4",
+      "description": "State management for Vue.js",
+      "supplier": {
+        "name": "Vue.js"
+      },
+      "purl": "pkg:npm/pinia@3.0.4",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "axios-1.16.0",
+      "name": "Axios",
+      "version": "1.16.0",
+      "description": "Promise-based HTTP client for browser and Node.js",
+      "supplier": {
+        "name": "Matt Zabriskie"
+      },
+      "purl": "pkg:npm/axios@1.16.0",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ]
     }
   ],
   "dependencies": [
