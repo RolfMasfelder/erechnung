@@ -58,18 +58,27 @@ async function goToB2GInvoice(page) {
 
   // credit-note.spec.js storniert die XR-Rechnung → erzeugt eine Gutschrift (.type-credit-note)
   // und setzt die Original-Rechnung auf CANCELLED (.status-cancelled). Beides überspringen.
-  const rows = page.locator('table tbody tr')
-  const rowCount = await rows.count()
-  for (let i = 0; i < rowCount; i++) {
-    const row = rows.nth(i)
-    const hasXR = await row.locator('.type-xrechnung').count()
-    const isCreditNote = await row.locator('.type-credit-note').count()
-    const isCancelled = await row.locator('.status-cancelled').count()
-    if (hasXR > 0 && isCreditNote === 0 && isCancelled === 0) {
-      await row.locator('a.invoice-link').click()
-      await page.waitForLoadState('networkidle')
-      return
+  // Paginate through all pages to find an active B2G invoice.
+  while (true) {
+    const rows = page.locator('table tbody tr')
+    const rowCount = await rows.count()
+    for (let i = 0; i < rowCount; i++) {
+      const row = rows.nth(i)
+      const hasXR = await row.locator('.type-xrechnung').count()
+      const isCreditNote = await row.locator('.type-credit-note').count()
+      const isCancelled = await row.locator('.status-cancelled').count()
+      if (hasXR > 0 && isCreditNote === 0 && isCancelled === 0) {
+        await row.locator('a.invoice-link').click()
+        await page.waitForLoadState('networkidle')
+        return
+      }
     }
+    // Try next page
+    const nextButton = page.getByRole('button', { name: /nächste seite|next page/i })
+    const isDisabled = await nextButton.isDisabled().catch(() => true)
+    if (isDisabled) break
+    await nextButton.click()
+    await page.waitForLoadState('networkidle')
   }
   throw new Error('Keine aktive B2G-Rechnung (nicht Gutschrift, nicht Storniert) in der Liste gefunden')
 }
