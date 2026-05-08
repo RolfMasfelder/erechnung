@@ -20,9 +20,6 @@ test.describe('Basic E2E Flow', () => {
     await page.goto('/invoices')
     await page.waitForLoadState('networkidle')
 
-    // Wait a bit for data to load
-    await page.waitForTimeout(2000)
-
     console.log('=== Step 3: Check for data ===')
 
 // Check if we see the invoice list header (use specific class to avoid ambiguity)

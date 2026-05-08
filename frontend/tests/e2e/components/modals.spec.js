@@ -98,8 +98,11 @@ test.describe('Modal Interactions', () => {
     await page.click('button:has-text("Neuer Geschäftspartner")')
     await page.waitForSelector('[role="dialog"]', { timeout: 5000 })
 
-    // Wait for Vue's watch to execute (next tick)
-    await page.waitForTimeout(100)
+    // Body should have overflow: hidden when modal is open (wait for Vue watch)
+    await page.waitForFunction(
+      () => window.getComputedStyle(document.body).overflow.includes('hidden'),
+      { timeout: 3000 }
+    )
 
     // Body should have overflow: hidden when modal is open
     // Check both inline style and computed style
@@ -112,8 +115,11 @@ test.describe('Modal Interactions', () => {
     await page.keyboard.press('Escape')
     await page.waitForSelector('[role="dialog"]', { state: 'hidden', timeout: 3000 })
 
-    // Body scroll should be restored (empty string or 'visible' or 'auto')
-    await page.waitForTimeout(300) // Wait for animation
+    // Body scroll should be restored (wait for Vue cleanup)
+    await page.waitForFunction(
+      () => document.body.style.overflow !== 'hidden',
+      { timeout: 3000 }
+    )
     const bodyAfterClose = await page.locator('body').evaluate(el => el.style.overflow)
     expect(bodyAfterClose).not.toBe('hidden')
   })
@@ -160,15 +166,9 @@ test.describe('Modal Interactions', () => {
     const invoiceModal = page.locator('[role="dialog"]').first()
     await expect(invoiceModal).toBeVisible({ timeout: 5000 })
 
-    // Wait for modal to be fully rendered and ESC handler registered
-    await page.waitForTimeout(300)
-
     // ESC should close the top modal
     await page.keyboard.press('Escape')
     await expect(invoiceModal).not.toBeVisible({ timeout: 5000 })
-
-    // Wait for modal to fully close (animations, cleanup)
-    await page.waitForTimeout(500)
 
     // Verify no modals remain
     const allModals = page.locator('[role="dialog"]')
@@ -245,11 +245,17 @@ test.describe('Modal Form Submission', () => {
     // Verify the city field has the value
     await expect(page.locator('#city')).toHaveValue('Berlin', { timeout: 2000 })
 
+    // Set up response interceptor BEFORE triggering the action
+    const responsePromise = page.waitForResponse(
+      resp => resp.url().includes('/api/business-partners/') && resp.request().method() === 'POST',
+      { timeout: 5000 }
+    )
+
     // Submit
     await page.click('button[type="submit"], button:has-text("Anlegen")')
 
     // Wait for the POST request to complete
-    await page.waitForTimeout(1000)
+    await responsePromise
 
     // Test passes if API was called successfully
     expect(submissionSuccessful).toBeTruthy()

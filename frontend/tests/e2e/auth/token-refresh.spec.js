@@ -158,8 +158,8 @@ test.describe('Token Refresh Flow', () => {
     // Navigate to invoices
     await page.goto('/invoices')
 
-    // Wait for the page to settle and process the 401s
-    await page.waitForTimeout(2000)
+    // Wait for all network activity (401 → refresh → retry cycle) to settle
+    await page.waitForLoadState('networkidle')
 
     // Should only try refresh at most once per request (not infinite loop)
     // The client should detect the refresh didn't help and stop retrying

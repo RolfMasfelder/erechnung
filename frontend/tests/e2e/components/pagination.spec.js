@@ -41,7 +41,7 @@ test.describe('Pagination Component', () => {
     await nextButton.click()
 
     // Wait for new data to load
-    await page.waitForTimeout(500)
+    await page.waitForLoadState('networkidle')
 
     // First invoice should be different (data changed)
     const firstInvoiceAfter = await page.locator('table tbody tr:first-child').textContent()
@@ -59,7 +59,7 @@ test.describe('Pagination Component', () => {
     // First navigate to page 2
     const nextButton = page.getByRole('button', { name: /nächste seite|next page/i })
     await nextButton.click()
-    await page.waitForTimeout(500)
+    await page.waitForLoadState('networkidle')
 
     // Verify we're on page 2
     const pageInfoBefore = await page.locator('.pagination-info').textContent()
@@ -71,7 +71,7 @@ test.describe('Pagination Component', () => {
     // Click previous button to go back to page 1
     const prevButton = page.getByRole('button', { name: /vorherige seite|previous page/i })
     await prevButton.click()
-    await page.waitForTimeout(500)
+    await page.waitForLoadState('networkidle')
 
     // First invoice should be different
     const firstInvoiceAfter = await page.locator('table tbody tr:first-child').textContent()
@@ -116,7 +116,7 @@ test.describe('Pagination Component', () => {
       } else {
         await nextButton.click()
       }
-      await page.waitForTimeout(400)
+      await page.waitForLoadState('networkidle')
       clicks++
     }
 
@@ -133,7 +133,7 @@ test.describe('Pagination Component', () => {
 
     if (await page3Button.isVisible()) {
       await page3Button.click()
-      await page.waitForTimeout(500)
+      await page.waitForLoadState('networkidle')
 
       // Should show page 3 data (items 21-30)
       const pageInfo = await page.locator('.pagination-info').textContent()
@@ -160,7 +160,6 @@ test.describe('Pagination Component', () => {
     // Click next
     const nextButton = page.getByRole('button', { name: /nächste seite|next page/i })
     await nextButton.click()
-    await page.waitForTimeout(500)
     await page.waitForLoadState('networkidle')
 
     // Should show "Zeige 11 bis 20 von X" where X >= 11 (at least one more page)
@@ -201,7 +200,6 @@ test.describe('Pagination Component', () => {
     // Navigate to page 2 first
     const nextButton = page.getByRole('button', { name: /nächste seite|next page/i })
     await nextButton.click()
-    await page.waitForTimeout(500)
     await page.waitForLoadState('networkidle')
 
     // Verify we're on page 2
@@ -218,8 +216,8 @@ test.describe('Pagination Component', () => {
     await searchInput.waitFor({ timeout: 5000 })
     await searchInput.fill('INV-')
 
-    // Wait for search debounce + API call
-    await page.waitForTimeout(1000)
+    // Wait for search debounce to fire (URL update), then API response
+    await page.waitForURL(/search=INV-/, { timeout: 5000 })
     await page.waitForLoadState('networkidle')
 
     // Should reset to page 1 (showing items 1-10 or similar)

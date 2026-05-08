@@ -31,8 +31,8 @@ test.describe('Filter Functionality', () => {
     // Enter search term (current format: INV-{year}-{NNNN})
     await page.getByPlaceholder('Suche nach Rechnungsnummer, Kunde...').fill('INV-2026')
 
-    // Wait for debounce (300ms) + request
-    await page.waitForTimeout(400)
+    // Wait for debounce to fire and URL to update
+    await page.waitForURL(/search=INV-2026/, { timeout: 5000 })
     await page.waitForLoadState('networkidle')
   })
 
@@ -62,13 +62,11 @@ test.describe('Filter Functionality', () => {
     if (await fromDatePicker.isVisible()) {
       const fromInput = fromDatePicker.locator('input').first()
       await fromInput.fill('01.01.2024')
-      await page.waitForTimeout(200)
     }
 
     if (await toDatePicker.isVisible()) {
       const toInput = toDatePicker.locator('input').first()
       await toInput.fill('31.01.2024')
-      await page.waitForTimeout(200)
     }
 
     await page.waitForLoadState('networkidle')
@@ -89,7 +87,7 @@ test.describe('Filter Functionality', () => {
   test('should combine multiple filters', async ({ page }) => {
     // Apply search
     await page.getByPlaceholder('Suche nach Rechnungsnummer, Kunde...').fill('INV-2026')
-    await page.waitForTimeout(400)
+    await page.waitForURL(/search=INV-2026/, { timeout: 5000 })
 
     // Apply status filter
     const statusSelect = page.locator('select').first()
@@ -109,7 +107,7 @@ test.describe('Filter Functionality', () => {
   test('should reset filters', async ({ page }) => {
     // Apply some filters
     await page.getByPlaceholder('Suche nach Rechnungsnummer, Kunde...').fill('test')
-    await page.waitForTimeout(400)
+    await page.waitForURL(/search=test/, { timeout: 5000 })
 
     const statusSelect = page.locator('select').first()
     if (await statusSelect.isVisible()) {
@@ -139,7 +137,7 @@ test.describe('Filter Functionality', () => {
   test('should persist filters on page navigation', async ({ page }) => {
     // Apply filter
     await page.getByPlaceholder('Suche nach Rechnungsnummer, Kunde...').fill('INV-2026')
-    await page.waitForTimeout(400)
+    await page.waitForURL(/search=INV-2026/, { timeout: 5000 })
     await page.waitForLoadState('networkidle')
 
     // Navigate to second page if possible
@@ -162,7 +160,7 @@ test.describe('Filter Functionality', () => {
   test('should show empty state when no results', async ({ page }) => {
     // Search for something that definitely doesn't exist
     await page.getByPlaceholder('Suche nach Rechnungsnummer, Kunde...').fill('NONEXISTENT-XXXXX-9999')
-    await page.waitForTimeout(400)
+    await page.waitForURL(/search=NONEXISTENT/, { timeout: 5000 })
     await page.waitForLoadState('networkidle')
 
     // Check for empty state message
@@ -174,9 +172,6 @@ test.describe('Filter Functionality', () => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 })
 
-    // Wait for responsive layout to adjust
-    await page.waitForTimeout(500)
-
     // Close sidebar if it's open (on mobile, sidebar overlays all content at z-index:200).
     // The overlay's z-index:-1 makes it unclickable, and the sidebar covers the hamburger
     // toggle too. Use dispatchEvent directly on the overlay to trigger Vue's @click handler.
@@ -184,7 +179,6 @@ test.describe('Filter Functionality', () => {
     if (await sidebar.isVisible({ timeout: 1000 }).catch(() => false)) {
       // Dispatch click event directly on the overlay element to trigger Vue handler
       await page.locator('.sidebar-overlay').dispatchEvent('click')
-      await page.waitForTimeout(500)
     }
     // Verify sidebar is closed
     await expect(page.locator('.app-sidebar.sidebar-open')).toHaveCount(0, { timeout: 3000 })
@@ -200,21 +194,18 @@ test.describe('Filter Functionality', () => {
     if (isVisible) {
       // Click toggle to collapse
       await toggleButton.click()
-      await page.waitForTimeout(300)
 
       // Filter content should be hidden
       await expect(filterContent).toBeHidden()
     } else {
       // Already collapsed on mobile — click to expand
       await toggleButton.click()
-      await page.waitForTimeout(300)
 
       // Filter content should be visible
       await expect(filterContent).toBeVisible()
 
       // Click again to collapse
       await toggleButton.click()
-      await page.waitForTimeout(300)
       await expect(filterContent).toBeHidden()
     }
 
