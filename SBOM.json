@@ -2,9 +2,9 @@
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
   "serialNumber": "urn:uuid:8a7c8a8b-5c2d-4e3f-9a1b-2c3d4e5f6789",
-  "version": 3,
+  "version": 4,
   "metadata": {
-    "timestamp": "2026-03-25T11:22:04Z",
+    "timestamp": "2026-05-08T11:49:03Z",
     "tools": [
       {
         "vendor": "GitHub Copilot",
@@ -62,14 +62,14 @@
   "components": [
     {
       "type": "framework",
-      "bom-ref": "django-5.2.12",
+      "bom-ref": "django-5.2.13",
       "name": "Django",
-      "version": "5.2.12",
+      "version": "5.2.13",
       "description": "High-level Python web framework",
       "supplier": {
         "name": "Django Software Foundation"
       },
-      "purl": "pkg:pypi/django@5.2.12",
+      "purl": "pkg:pypi/django@5.2.13",
       "licenses": [
         {
           "license": {
@@ -80,11 +80,11 @@
     },
     {
       "type": "framework",
-      "bom-ref": "djangorestframework-3.16.1",
+      "bom-ref": "djangorestframework-3.17.1",
       "name": "Django REST Framework",
-      "version": "3.16.1",
+      "version": "3.17.1",
       "description": "Web APIs for Django",
-      "purl": "pkg:pypi/djangorestframework@3.16.1",
+      "purl": "pkg:pypi/djangorestframework@3.17.1",
       "licenses": [
         {
           "license": {
@@ -95,11 +95,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "psycopg2-binary-2.9.11",
+      "bom-ref": "psycopg2-binary-2.9.12",
       "name": "psycopg2-binary",
-      "version": "2.9.11",
+      "version": "2.9.12",
       "description": "PostgreSQL database adapter for Python",
-      "purl": "pkg:pypi/psycopg2-binary@2.9.11",
+      "purl": "pkg:pypi/psycopg2-binary@2.9.12",
       "licenses": [
         {
           "license": {
@@ -110,11 +110,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "celery-5.6.2",
+      "bom-ref": "celery-5.6.3",
       "name": "Celery",
-      "version": "5.6.2",
+      "version": "5.6.3",
       "description": "Distributed Task Queue",
-      "purl": "pkg:pypi/celery@5.6.2",
+      "purl": "pkg:pypi/celery@5.6.3",
       "licenses": [
         {
           "license": {
@@ -125,11 +125,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "redis-7.3.0",
+      "bom-ref": "redis-7.4.0",
       "name": "Redis",
-      "version": "7.3.0",
+      "version": "7.4.0",
       "description": "Python client for Redis key-value store",
-      "purl": "pkg:pypi/redis@7.3.0",
+      "purl": "pkg:pypi/redis@7.4.0",
       "licenses": [
         {
           "license": {
@@ -140,11 +140,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "factur-x-3.16",
+      "bom-ref": "factur-x-4.2",
       "name": "factur-x",
-      "version": "3.16",
+      "version": "4.2",
       "description": "ZUGFeRD/Factur-X e-invoice generation library",
-      "purl": "pkg:pypi/factur-x@3.16",
+      "purl": "pkg:pypi/factur-x@4.2",
       "licenses": [
         {
           "license": {
@@ -156,10 +156,10 @@
     {
       "type": "library",
       "name": "pypdf",
-      "version": "6.9.0",
+      "version": "6.10.2",
       "description": "Pure Python PDF library (successor to PyPDF2/PyPDF4); used for PDF/A-3 ZUGFeRD generation",
-      "bom-ref": "pypdf-6.9.0",
-      "purl": "pkg:pypi/pypdf@6.9.0",
+      "bom-ref": "pypdf-6.10.2",
+      "purl": "pkg:pypi/pypdf@6.10.2",
       "licenses": [
         {
           "license": {
@@ -200,11 +200,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "lxml-6.0.2",
+      "bom-ref": "lxml-6.1.0",
       "name": "lxml",
-      "version": "6.0.2",
+      "version": "6.1.0",
       "description": "XML and HTML processing library",
-      "purl": "pkg:pypi/lxml@6.0.2",
+      "purl": "pkg:pypi/lxml@6.1.0",
       "licenses": [
         {
           "license": {
@@ -230,11 +230,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "pikepdf-10.5.0",
+      "bom-ref": "pikepdf-10.5.1",
       "name": "pikepdf",
-      "version": "10.5.0",
+      "version": "10.5.1",
       "description": "PDF manipulation library",
-      "purl": "pkg:pypi/pikepdf@10.5.0",
+      "purl": "pkg:pypi/pikepdf@10.5.1",
       "licenses": [
         {
           "license": {
@@ -245,11 +245,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "pillow-12.1.1",
+      "bom-ref": "pillow-12.2.0",
       "name": "Pillow",
-      "version": "12.1.1",
+      "version": "12.2.0",
       "description": "Python Imaging Library",
-      "purl": "pkg:pypi/pillow@12.1.1",
+      "purl": "pkg:pypi/pillow@12.2.0",
       "licenses": [
         {
           "license": {
@@ -260,11 +260,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "gunicorn-25.1.0",
+      "bom-ref": "gunicorn-25.3.0",
       "name": "Gunicorn",
-      "version": "25.1.0",
+      "version": "25.3.0",
       "description": "WSGI HTTP Server",
-      "purl": "pkg:pypi/gunicorn@25.1.0",
+      "purl": "pkg:pypi/gunicorn@25.3.0",
       "licenses": [
         {
           "license": {
@@ -290,11 +290,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "sentry-sdk-2.54.0",
+      "bom-ref": "sentry-sdk-2.58.0",
       "name": "Sentry SDK",
-      "version": "2.54.0",
+      "version": "2.58.0",
       "description": "Error tracking and performance monitoring",
-      "purl": "pkg:pypi/sentry-sdk@2.54.0",
+      "purl": "pkg:pypi/sentry-sdk@2.58.0",
       "licenses": [
         {
           "license": {
@@ -305,11 +305,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "django-allauth-65.15.0",
+      "bom-ref": "django-allauth-65.16.1",
       "name": "django-allauth",
-      "version": "65.15.0",
+      "version": "65.16.1",
       "description": "Django authentication system",
-      "purl": "pkg:pypi/django-allauth@65.15.0",
+      "purl": "pkg:pypi/django-allauth@65.16.1",
       "licenses": [
         {
           "license": {
@@ -395,17 +395,17 @@
     },
     {
       "type": "operating-system",
-      "bom-ref": "python-3.13-slim-bookworm",
+      "bom-ref": "python-3.13.13-slim-bookworm",
       "name": "Python Base Image",
-      "version": "3.13-slim-bookworm",
-      "description": "Python 3.13 on Debian Bookworm (slim)",
+      "version": "3.13.13-slim-bookworm",
+      "description": "Python 3.13.13 on Debian Bookworm (slim)",
       "supplier": {
         "name": "Python Software Foundation"
       },
       "properties": [
         {
           "name": "docker:image",
-          "value": "python:3.13-slim-bookworm"
+          "value": "python:3.13.13-slim-bookworm"
         }
       ]
     },
@@ -501,30 +501,30 @@
     {
       "ref": "erechnung-django-app",
       "dependsOn": [
-        "django-5.2.12",
-        "djangorestframework-3.16.1",
-        "psycopg2-binary-2.9.11",
-        "celery-5.6.2",
-        "factur-x-3.16",
-        "lxml-6.0.2",
+        "django-5.2.13",
+        "djangorestframework-3.17.1",
+        "psycopg2-binary-2.9.12",
+        "celery-5.6.3",
+        "factur-x-4.2",
+        "lxml-6.1.0",
         "xmlschema-4.3.1",
-        "pikepdf-10.5.0",
-        "pillow-12.1.1",
-        "gunicorn-25.1.0",
+        "pikepdf-10.5.1",
+        "pillow-12.2.0",
+        "gunicorn-25.3.0",
         "whitenoise-6.12.0",
-        "sentry-sdk-2.54.0",
-        "django-allauth-65.15.0",
+        "sentry-sdk-2.58.0",
+        "django-allauth-65.16.1",
         "django-axes-8.3.1",
         "django-cors-headers-4.9.0",
         "django-csp-4.0",
         "django-redis-6.0.0",
         "djangorestframework-simplejwt-5.5.1",
-        "python-3.13-slim-bookworm",
+        "python-3.13.13-slim-bookworm",
         "nginx-alpine",
         "postgresql-17",
         "redis-7-alpine",
         "ghostscript",
-        "pypdf-6.9.0",
+        "pypdf-6.10.2",
         "weasyprint-68.1",
         "drf-spectacular-0.29.0"
       ]
@@ -659,11 +659,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "vue@3.5.27",
+      "bom-ref": "vue@3.5.33",
       "group": "frontend",
       "name": "vue",
-      "version": "3.5.27",
-      "purl": "pkg:npm/vue@3.5.27",
+      "version": "3.5.33",
+      "purl": "pkg:npm/vue@3.5.33",
       "description": "Progressive JavaScript Framework",
       "licenses": [
         {
@@ -675,11 +675,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "vue-router@5.0.2",
+      "bom-ref": "vue-router@5.0.6",
       "group": "frontend",
       "name": "vue-router",
-      "version": "5.0.2",
-      "purl": "pkg:npm/vue-router@5.0.2",
+      "version": "5.0.6",
+      "purl": "pkg:npm/vue-router@5.0.6",
       "description": "Official router for Vue.js",
       "licenses": [
         {
@@ -707,11 +707,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "axios@1.13.6",
+      "bom-ref": "axios@1.16.0",
       "group": "frontend",
       "name": "axios",
-      "version": "1.13.6",
-      "purl": "pkg:npm/axios@1.13.6",
+      "version": "1.16.0",
+      "purl": "pkg:npm/axios@1.16.0",
       "description": "Promise based HTTP client",
       "licenses": [
         {
@@ -723,11 +723,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "vite@7.3.1",
+      "bom-ref": "vite@8.0.10",
       "group": "frontend-dev",
       "name": "vite",
-      "version": "7.3.1",
-      "purl": "pkg:npm/vite@7.3.1",
+      "version": "8.0.10",
+      "purl": "pkg:npm/vite@8.0.10",
       "description": "Next generation frontend build tool",
       "licenses": [
         {
@@ -739,11 +739,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "tailwindcss@4.1.18",
+      "bom-ref": "tailwindcss@4.2.4",
       "group": "frontend-dev",
       "name": "tailwindcss",
-      "version": "4.1.18",
-      "purl": "pkg:npm/tailwindcss@4.1.18",
+      "version": "4.2.4",
+      "purl": "pkg:npm/tailwindcss@4.2.4",
       "description": "Utility-first CSS framework",
       "licenses": [
         {
@@ -755,11 +755,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "vitest@4.0.18",
+      "bom-ref": "vitest@4.1.5",
       "group": "frontend-dev",
       "name": "vitest",
-      "version": "4.0.18",
-      "purl": "pkg:npm/vitest@4.0.18",
+      "version": "4.1.5",
+      "purl": "pkg:npm/vitest@4.1.5",
       "description": "Unit testing framework for Vite",
       "licenses": [
         {
@@ -771,11 +771,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "@playwright/test@1.58.1",
+      "bom-ref": "@playwright/test@1.59.1",
       "group": "frontend-dev",
       "name": "@playwright/test",
-      "version": "1.58.1",
-      "purl": "pkg:npm/%40playwright/test@1.58.1",
+      "version": "1.59.1",
+      "purl": "pkg:npm/%40playwright/test@1.59.1",
       "description": "End-to-end testing framework",
       "licenses": [
         {
@@ -787,11 +787,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "vue-test-utils@2.4.6",
+      "bom-ref": "@vue/test-utils@2.4.10",
       "group": "frontend-dev",
       "name": "@vue/test-utils",
-      "version": "2.4.6",
-      "purl": "pkg:npm/%40vue/test-utils@2.4.6",
+      "version": "2.4.10",
+      "purl": "pkg:npm/%40vue/test-utils@2.4.10",
       "description": "Official unit testing utility library for Vue.js",
       "licenses": [
         {
@@ -822,7 +822,7 @@
     },
     {
       "name": "sbom:generation-date",
-      "value": "2026-03-25"
+      "value": "2026-05-08"
     },
     {
       "name": "project:repository",
