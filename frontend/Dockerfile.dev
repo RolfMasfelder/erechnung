@@ -1,6 +1,6 @@
 # Development Dockerfile für Vue.js Frontend
-# Use Node.js 20 LTS (Iron) - most stable for Vue/Vite ecosystem
-FROM node:20-alpine
+# Use Node.js 24 LTS - Active LTS, EOL April 2030
+FROM node:24-alpine
 
 WORKDIR /app
 

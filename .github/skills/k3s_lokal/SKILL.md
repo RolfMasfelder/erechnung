@@ -194,6 +194,10 @@ kubectl rollout restart deployment/django-web deployment/celery-worker -n erechn
    ```
    Falls Traefik nach einem Upgrade wieder auftaucht: `kubectl delete helmchart -n kube-system traefik` entfernt ihn sofort (kein k3s-Restart nötig). Die config.yaml verhindert Neuinstallation.
 
+6. **Agent-config.yaml darf keine Server-Flags enthalten:** `disable:` ist ein Server-only-Flag. Falls es in `/etc/rancher/k3s/config.yaml` auf dem Agent-Node steht, schlägt `systemctl restart k3s-agent` fehl mit `flag provided but not defined: -disable`. Lösung: config.yaml auf dem Agent leeren. Das `disable: traefik` im Server config.yaml hat auf den Agent-Node keinen Einfluss — er führt Traefik ohnehin nicht aus.
+
+7. **django-web + celery-worker können nicht auf cirrus7 laufen:** Beide Deployments mounten `media-pvc` (lokales PV auf cirrus7-neu). Solange kein distributed storage existiert, landen alle App-Pods auf cirrus7-neu. `topologySpreadConstraints: DoNotSchedule` würde Pods in Pending lassen. `ScheduleAnyway` ist unschädlich aber wirkungslos.
+
 ---
 
 ## Zweiter Node (cirrus7) — Agent-Join & Validierung
@@ -238,12 +242,33 @@ kubectl get nodes -o wide
 
 ### nodeAffinity schützt stateful Workloads
 
-Postgres und Redis sind durch `nodeAffinity` hart an cirrus7-neu gebunden. Das ist Pflicht, weil lokale PVCs nicht zwischen Nodes wandern können. Die Deployments `django-web` und `celery-worker` dürfen (und sollen) auf beide Nodes verteilt werden — dafür brauchen sie **keine** nodeAffinity.
+Postgres und Redis sind durch `nodeAffinity` hart an cirrus7-neu gebunden. Das ist Pflicht, weil lokale PVCs nicht zwischen Nodes wandern können.
 
-### Offene Validierungen (bei Wiederaufnahme)
+**Wichtig:** `django-web` und `celery-worker` mounten `media-pvc` — ebenfalls ein lokales PV auf `cirrus7-neu`. Daher können auch diese Workloads **nur auf `cirrus7-neu` laufen**. `topologySpreadConstraints` ist deshalb nicht anwendbar solange lokale PVCs verwendet werden. Für echtes Multi-Node-Spreading wäre distributed storage nötig (z.B. Longhorn oder NFS).
 
-- [ ] **Flannel VXLAN auf cirrus7 verifizieren:** `kubectl exec` in einem Pod auf cirrus7 → `nslookup postgres-service.erechnung.svc.cluster.local` muss auflösen
-- [ ] **Pod-Verteilung erzwingen und testen:** Manuell skalieren (`kubectl scale deployment django-web --replicas=4 -n erechnung`) und mit `kubectl get pods -o wide` prüfen, dass Pods auf beiden Nodes landen
-- [ ] **HPA über zwei Nodes:** Last erzeugen (z.B. mit k6) und beobachten ob HPA-Skalierung Pods korrekt verteilt
-- [ ] **CoreDNS-Erreichbarkeit von cirrus7:** Falls CoreDNS auf cirrus7-neu läuft und ein Pod auf cirrus7 DNS aufruft, muss VXLAN die Anfrage weiterleiten — das ist der kritische Pfad der in Fallstrick #1 beschrieben wird
+### Agent-Setup: registries.yaml und config.yaml
+
+Beim Agent-Node-Join müssen zwei Dateien manuell konfiguriert werden:
+
+**1. `/etc/rancher/k3s/registries.yaml`** — von cirrus7-neu kopieren:
+```bash
+ssh cirrus7-neu "sudo cat /etc/rancher/k3s/registries.yaml" | ssh cirrus7 "sudo tee /etc/rancher/k3s/registries.yaml > /dev/null"
+ssh cirrus7 "sudo systemctl restart k3s-agent"
+```
+
+**2. `/etc/rancher/k3s/config.yaml`** — darf auf dem Agent **keine** Server-only-Flags enthalten (`disable:`, etc.). Falls vorhanden: leeren oder entfernen.
+```bash
+# Prüfen:
+ssh cirrus7 "sudo cat /etc/rancher/k3s/config.yaml"
+# Falls server-only-Flags drin: leeren
+ssh cirrus7 "sudo bash -c 'echo \"\" > /etc/rancher/k3s/config.yaml'"
+```
+
+### Validierungen: Ergebnisse (Stand 07.05.2026)
+
+- [x] **Flannel VXLAN verifiziert:** DNS-Auflösung von Pod auf `cirrus7-neu` → CoreDNS auf `cirrus7` funktioniert. `postgres-service.erechnung.svc.cluster.local` → `10.43.125.117` ✓
+- [x] **Pods auf cirrus7 schedulierbar:** Test-Pod mit explizitem `nodeName: cirrus7` läuft und erhält IP `10.42.1.x` ✓
+- [x] **Registry auf cirrus7:** Nach Kopieren der `registries.yaml` und k3s-agent-Restart kann `cirrus7` Images von `192.168.178.80:5000` pullen ✓
+- [ ] **Pod-Verteilung (django-web/celery):** **Nicht möglich** solange `media-pvc` ein lokales PV auf `cirrus7-neu` ist. Alle App-Pods bleiben auf `cirrus7-neu`. Für Spreading: distributed storage einführen.
+- [ ] **HPA über zwei Nodes:** Nicht testbar bis Pod-Verteilung gelöst ist
 - [ ] **Staging-Overlay:** Nach dem Refactoring (TODO §3.3) muss `kubectl apply -k infra/k8s/k3s/overlays/staging/` auch im Zwei-Node-Setup funktionieren

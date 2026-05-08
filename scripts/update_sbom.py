@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Update SBOM.json with current versions from requirements.txt and package-lock.json.
+Update SBOM.json and docs/SBOM.md with current versions from requirements.txt and package-lock.json.
 
 Usage:
     python scripts/update_sbom.py          # Preview changes (dry-run)
-    python scripts/update_sbom.py --apply  # Apply changes to SBOM.json
+    python scripts/update_sbom.py --apply  # Apply changes to SBOM.json + docs/SBOM.md
 
 Reads:
   - requirements.txt        (pinned Python versions)
@@ -15,7 +15,8 @@ Updates:
   - SBOM.json components[].version, bom-ref, purl
   - SBOM.json services[] frontend library versions
   - SBOM.json dependencies[].dependsOn refs
-  - metadata timestamp + generation date
+  - SBOM.json metadata timestamp + generation date
+  - docs/SBOM.md version table entries + Generated date
 """
 
 import json
@@ -24,18 +25,52 @@ import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
+
 ROOT = Path(__file__).resolve().parent.parent
 SBOM_PATH = ROOT / "SBOM.json"
+SBOM_MD_PATH = ROOT / "docs" / "SBOM.md"
 REQUIREMENTS_PATH = ROOT / "requirements.txt"
 PACKAGE_LOCK_PATH = ROOT / "frontend" / "package-lock.json"
 DOCKERFILE_PATH = ROOT / "Dockerfile"
+NODE_DOCKERFILE_PATH = ROOT / "frontend" / "Dockerfile.prod"
+PYPROJECT_PATH = ROOT / "pyproject.toml"
+LICENSE_PATH = ROOT / "LICENSE"
+
+
+def parse_pyproject_version(path: Path) -> str | None:
+    """Extract version from pyproject.toml."""
+    if not path.exists():
+        return None
+    for line in path.read_text().splitlines():
+        m = re.match(r'^version\s*=\s*"([^"]+)"', line)
+        if m:
+            return m.group(1)
+    return None
+
+
+def parse_license_spdx(path: Path) -> str | None:
+    """Derive SPDX license identifier from the first line of LICENSE."""
+    if not path.exists():
+        return None
+    first_line = path.read_text().splitlines()[0].upper()
+    if "AFFERO" in first_line and "3" in first_line:
+        return "AGPL-3.0-only"
+    if "APACHE" in first_line and "2" in first_line:
+        return "Apache-2.0"
+    if "MIT" in first_line:
+        return "MIT"
+    if "GPL" in first_line and "3" in first_line:
+        return "GPL-3.0-only"
+    if "GPL" in first_line and "2" in first_line:
+        return "GPL-2.0-only"
+    return None
 
 
 def parse_requirements(path: Path) -> dict[str, str]:
     """Parse requirements.txt → {package_name: version}."""
     versions = {}
     for line in path.read_text().splitlines():
-        line = line.strip()
+        line = line.strip()  # noqa: PLW2901
         if "==" in line and not line.startswith("#"):
             name, version = line.split("==", 1)
             # Normalize: lowercase, underscores → hyphens
@@ -65,6 +100,17 @@ def parse_dockerfile_python_image(path: Path) -> str | None:
         return None
     for line in path.read_text().splitlines():
         m = re.match(r"^FROM\s+python:([\S]+)", line, re.IGNORECASE)
+        if m:
+            return m.group(1)
+    return None
+
+
+def parse_dockerfile_node_image(path: Path) -> str | None:
+    """Extract Node.js major version from a frontend Dockerfile (e.g. 'node:22-alpine' → '22')."""
+    if not path.exists():
+        return None
+    for line in path.read_text().splitlines():
+        m = re.match(r"^FROM\s+node:(\d+)", line, re.IGNORECASE)
         if m:
             return m.group(1)
     return None
@@ -141,8 +187,156 @@ NPM_NAME_MAP = {
     "@vue/test-utils": "@vue/test-utils",
 }
 
+# Mapping: normalized package name → display name used in docs/SBOM.md tables
+MD_DISPLAY_NAME: dict[str, str] = {
+    # PyPI
+    "django": "Django",
+    "djangorestframework": "Django REST Framework",
+    "gunicorn": "Gunicorn",
+    "celery": "Celery",
+    "psycopg2-binary": "psycopg2-binary",
+    "django-redis": "django-redis",
+    "factur-x": "factur-x",
+    "reportlab": "ReportLab",
+    "pikepdf": "pikepdf",
+    "lxml": "lxml",
+    "xmlschema": "xmlschema",
+    "pillow": "Pillow",
+    "pypdf": "pypdf",
+    "weasyprint": "WeasyPrint",
+    "django-allauth": "django-allauth",
+    "django-axes": "django-axes",
+    "djangorestframework-simplejwt": "djangorestframework-simplejwt",
+    "django-cors-headers": "django-cors-headers",
+    "django-csp": "django-csp",
+    "sentry-sdk": "Sentry SDK",
+    "whitenoise": "WhiteNoise",
+    "pytest": "pytest",
+    "pytest-django": "pytest-django",
+    "coverage": "coverage",
+    "black": "black",
+    "ruff": "ruff",
+    "pylint": "pylint",
+    "pre-commit": "pre-commit",
+    # npm
+    "vue": "Vue.js",
+    "vue-router": "Vue Router",
+    "pinia": "Pinia",
+    "axios": "Axios",
+    "vite": "Vite",
+    "tailwindcss": "Tailwind CSS",
+    "vitest": "Vitest",
+    "@playwright/test": "Playwright",
+    "@vue/test-utils": "@vue/test-utils",
+}
 
-def main():
+MONTHS_DE = [
+    "Januar",
+    "Februar",
+    "März",
+    "April",
+    "Mai",
+    "Juni",
+    "Juli",
+    "August",
+    "September",
+    "Oktober",
+    "November",
+    "Dezember",
+]
+
+
+def sync_sbom_md(  # noqa: PLR0913
+    py_versions: dict[str, str],
+    npm_versions: dict[str, str],
+    python_image_tag: str | None,
+    node_major: str | None,
+    project_version: str | None,
+    project_license: str | None,
+    apply_mode: bool,
+    now: datetime,
+) -> list[str]:
+    """Sync docs/SBOM.md tables to the current package versions.
+
+    Compares SBOM.md against py_versions + npm_versions directly,
+    so it stays correct even when SBOM.json itself needs no update.
+    """
+    if not SBOM_MD_PATH.exists():
+        return []
+
+    # Merge all current versions into one lookup
+    current: dict[str, str] = {**py_versions, **npm_versions}
+
+    content = SBOM_MD_PATH.read_text()
+    md_changes = []
+
+    # Sync project version
+    if project_version:
+        m = re.search(r"(\*\*Version:\*\* )([\d.]+)", content)
+        if m and m.group(2) != project_version:
+            content = re.sub(r"(\*\*Version:\*\* )[\d.]+", r"\g<1>" + project_version, content)
+            md_changes.append(f"  SBOM.md: Version {m.group(2)} → {project_version}")
+
+    # Sync project license
+    if project_license:
+        m = re.search(r"(\*\*License:\*\* )(\S+)", content)
+        if m and m.group(2) != project_license:
+            content = re.sub(r"(\*\*License:\*\* )\S+", r"\g<1>" + project_license, content)
+            md_changes.append(f"  SBOM.md: License {m.group(2)} → {project_license}")
+
+    for pkg_name, md_name in MD_DISPLAY_NAME.items():
+        new_ver = current.get(pkg_name)
+        if not new_ver:
+            continue
+        pattern = r"(\| " + re.escape(md_name) + r" \| )(\S+)( \| )"
+        m = re.search(pattern, content)
+        if m and m.group(2) != new_ver:
+            old_ver = m.group(2)
+            content = re.sub(pattern, r"\g<1>" + new_ver + r"\3", content)
+            md_changes.append(f"  SBOM.md: {md_name} {old_ver} → {new_ver}")
+
+    # Sync Python base image version in the Runtime Environment section
+    if python_image_tag:
+        py_ver_match = re.match(r"^([\d.]+)", python_image_tag)
+        if py_ver_match:
+            py_ver = py_ver_match.group(1)
+            m = re.search(r"(\*\*Backend:\*\* Python )([\d.]+)", content)
+            if m and m.group(2) != py_ver:
+                content = re.sub(
+                    r"(\*\*Backend:\*\* Python )[\d.]+",
+                    r"\g<1>" + py_ver,
+                    content,
+                )
+                md_changes.append(f"  SBOM.md: Python runtime {m.group(2)} → {py_ver}")
+    # Sync Node.js major version
+    if node_major:
+        m = re.search(r"(\*\*Frontend:\*\* Node\.js )(\d+)", content)
+        if m and m.group(2) != node_major:
+            content = re.sub(
+                r"(\*\*Frontend:\*\* Node\.js )\d+",
+                r"\g<1>" + node_major,
+                content,
+            )
+            md_changes.append(f"  SBOM.md: Node.js {m.group(2)} \u2192 {node_major}")
+    if not md_changes:
+        return []
+
+    date_str = f"{now.day}. {MONTHS_DE[now.month - 1]} {now.year}"
+    content = re.sub(r"\*\*Generated:\*\* .+", f"**Generated:** {date_str}", content)
+    content = re.sub(
+        r"\*\*Generation Method:\*\* .+",
+        "**Generation Method:** Automated (update_sbom.py)",
+        content,
+    )
+    md_changes.append(f"  SBOM.md: Generated → {date_str}")
+
+    if apply_mode:
+        SBOM_MD_PATH.write_text(content)
+
+    return md_changes
+
+
+def main():  # noqa: PLR0912, PLR0915
     apply_mode = "--apply" in sys.argv
 
     if not SBOM_PATH.exists():
@@ -156,9 +350,12 @@ def main():
     py_versions = parse_requirements(REQUIREMENTS_PATH)
     npm_versions = parse_package_lock(PACKAGE_LOCK_PATH)
     python_image_tag = parse_dockerfile_python_image(DOCKERFILE_PATH)
+    node_major = parse_dockerfile_node_image(NODE_DOCKERFILE_PATH)
+    project_version = parse_pyproject_version(PYPROJECT_PATH)
+    project_license = parse_license_spdx(LICENSE_PATH)
 
     changes = []
-    bom_ref_renames = {}  # old_ref → new_ref
+    bom_ref_renames: dict[str, str] = {}  # old_ref → new_ref
 
     # --- Update Python components ---
     for comp in sbom.get("components", []):
@@ -226,37 +423,45 @@ def main():
             tool["name"] = "Automated SBOM Update (update_sbom.py)"
             changes.append("  Meta: tool name → 'Automated SBOM Update (update_sbom.py)'")
 
-    # --- Only update metadata timestamps if there are real changes ---
-    if not changes:
-        print("✓ SBOM.json is up to date. No changes needed.")
+    now = datetime.now(UTC)
+
+    # Sync docs/SBOM.md independently — works even when SBOM.json is already current
+    md_changes = sync_sbom_md(
+        py_versions, npm_versions, python_image_tag, node_major, project_version, project_license, apply_mode, now
+    )
+
+    if not changes and not md_changes:
+        print("✓ SBOM.json and docs/SBOM.md are up to date. No changes needed.")
         return
 
-    # Bump metadata only when real component changes exist
-    now = datetime.now(UTC)
-    timestamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
-    date_str = now.strftime("%Y-%m-%d")
-    sbom["metadata"]["timestamp"] = timestamp
+    # Bump SBOM.json metadata only when its own components changed
+    if changes:
+        timestamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        date_str = now.strftime("%Y-%m-%d")
+        sbom["metadata"]["timestamp"] = timestamp
+        old_sbom_version = sbom.get("version", 1)
+        sbom["version"] = old_sbom_version + 1
+        changes.append(f"  Meta: version {old_sbom_version} → {sbom['version']}")
+        changes.append(f"  Meta: timestamp → {timestamp}")
+        for prop in sbom.get("properties", []):
+            if prop.get("name") == "sbom:generation-date":
+                prop["value"] = date_str
+            if prop.get("name") == "sbom:generation-method":
+                prop["value"] = "automated"
 
-    old_sbom_version = sbom.get("version", 1)
-    sbom["version"] = old_sbom_version + 1
-    changes.append(f"  Meta: version {old_sbom_version} → {sbom['version']}")
-    changes.append(f"  Meta: timestamp → {timestamp}")
-
-    for prop in sbom.get("properties", []):
-        if prop.get("name") == "sbom:generation-date":
-            prop["value"] = date_str
-        if prop.get("name") == "sbom:generation-method":
-            prop["value"] = "automated"
-
-    print(f"{'APPLYING' if apply_mode else 'PREVIEW'}: {len(changes)} change(s):")
-    for c in changes:
+    all_changes = changes + md_changes
+    print(f"{'APPLYING' if apply_mode else 'PREVIEW'}: {len(all_changes)} change(s):")
+    for c in all_changes:
         print(c)
 
     if apply_mode:
-        SBOM_PATH.write_text(json.dumps(sbom, indent=2, ensure_ascii=False) + "\n")
-        print(f"\n✓ SBOM.json updated (version {sbom['version']}).")
+        if changes:
+            SBOM_PATH.write_text(json.dumps(sbom, indent=2, ensure_ascii=False) + "\n")
+        targets = ([SBOM_PATH.name] if changes else []) + (["docs/SBOM.md"] if md_changes else [])
+        print(f"\n✓ Updated: {' + '.join(targets)}.")
     else:
-        print(f"\nRun with --apply to write changes to {SBOM_PATH.name}")
+        targets = ([SBOM_PATH.name] if changes else []) + (["docs/SBOM.md"] if md_changes else [])
+        print(f"\nRun with --apply to write changes to {' and '.join(targets)}")
 
 
 if __name__ == "__main__":

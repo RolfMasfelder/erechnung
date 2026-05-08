@@ -43,6 +43,8 @@ async function goToDraftInvoice(page) {
   await draftRow.locator('a.invoice-link').click()
   await attachmentResponsePromise
   await page.waitForLoadState('networkidle')
+  // Wait for Vue to finish rendering the attachment list (v-if="loading" element removed)
+  await expect(page.locator('.loading-indicator')).not.toBeAttached({ timeout: 10000 })
 }
 
 /**
