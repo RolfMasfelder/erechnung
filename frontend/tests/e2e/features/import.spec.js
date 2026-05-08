@@ -81,9 +81,6 @@ Weitere Firma;FR;Paris;75001;Rue Test;info@example.fr`
       buffer: Buffer.from(validCSV, 'utf-8')
     })
 
-    // Wait for file to be processed
-    await page.waitForTimeout(500)
-
     // Preview should appear (use .data-preview only to avoid strict mode)
     const preview = modal.locator('.data-preview').first()
     await expect(preview).toBeVisible({ timeout: 3000 })
@@ -100,8 +97,6 @@ Weitere Firma;FR;Paris;75001;Rue Test;info@example.fr`
       mimeType: 'text/csv',
       buffer: Buffer.from(validCSV, 'utf-8')
     })
-
-    await page.waitForTimeout(500)
 
     // Check preview shows data
     const preview = modal.locator('.preview-table')
@@ -126,8 +121,6 @@ Weitere Firma;FR;Paris;75001;Rue Test;info@example.fr`
       buffer: Buffer.from(invalidCSV, 'utf-8')
     })
 
-    await page.waitForTimeout(500)
-
     // Should show error count (Validierungsfehler gefunden)
     await expect(modal).toContainText(/Validierungsfehler gefunden/i, { timeout: 3000 })
 
@@ -150,8 +143,6 @@ Weitere Firma;FR;Paris;75001;Rue Test;info@example.fr`
       mimeType: 'text/csv',
       buffer: Buffer.from(mixedCSV, 'utf-8')
     })
-
-    await page.waitForTimeout(500)
 
     // Should show both valid and invalid counts
     await expect(modal).toContainText(/gültig|valid/i, { timeout: 3000 })
@@ -181,11 +172,9 @@ Weitere Firma;FR;Paris;75001;Rue Test;info@example.fr`
       buffer: Buffer.from(validCSV, 'utf-8')
     })
 
-    await page.waitForTimeout(500)
-
     // Click import button (text includes count: "3 Zeilen importieren")
     const importConfirmButton = modal.getByRole('button', { name: /\d+\s+Zeilen\s+importieren/i })
-    await expect(importConfirmButton).toBeEnabled({ timeout: 3000 })
+    await expect(importConfirmButton).toBeEnabled({ timeout: 5000 })
     await importConfirmButton.click()
 
     // Wait for success: modal closes (import completed and modal dismissed)
@@ -204,18 +193,17 @@ Weitere Firma;FR;Paris;75001;Rue Test;info@example.fr`
       buffer: Buffer.from(validCSV, 'utf-8')
     })
 
-    await page.waitForTimeout(500)
-
     // Click import button (dynamic count)
     const importButton = modal.getByRole('button', { name: /\d+\s+Zeilen\s+importieren/i })
+    await expect(importButton).toBeEnabled({ timeout: 5000 })
     await importButton.click()
 
     // Check for loading indicator (import-progress)
     const loadingIndicator = modal.locator('.import-progress, .progress-bar')
     // Might be brief, so don't assert visibility
 
-    // Wait for completion
-    await page.waitForTimeout(1000)
+    // Wait for modal to close (import complete)
+    await expect(modal).toBeHidden({ timeout: 10000 })
   })
 
   test('should validate file type', async ({ page }) => {
@@ -230,8 +218,6 @@ Weitere Firma;FR;Paris;75001;Rue Test;info@example.fr`
       mimeType: 'text/plain',
       buffer: Buffer.from('This is not a CSV file', 'utf-8')
     })
-
-    await page.waitForTimeout(500)
 
     // Should show error about file type (import-error class)
     const errorMessage = modal.locator('.import-error')
@@ -252,7 +238,6 @@ Weitere Firma;FR;Paris;75001;Rue Test;info@example.fr`
       mimeType: 'text/csv',
       buffer: Buffer.from(validCSV, 'utf-8')
     })
-    await page.waitForTimeout(500)
 
     // Click cancel button
     const cancelButton = modal.getByRole('button', { name: /Abbrechen|Cancel/i })
@@ -277,10 +262,10 @@ Weitere Firma;FR;Paris;75001;Rue Test;info@example.fr`
       mimeType: 'text/csv',
       buffer: Buffer.from(validCSV, 'utf-8')
     })
-    await page.waitForTimeout(500)
 
     // Import (dynamic count in button text)
     const importButton = modal.getByRole('button', { name: /\d+\s+Zeilen\s+importieren/i })
+    await expect(importButton).toBeEnabled({ timeout: 5000 })
     await importButton.click()
 
     // Wait for success: modal closes after successful import
@@ -302,8 +287,6 @@ Weitere Firma;FR;Paris;75001;Rue Test;info@example.fr`
       mimeType: 'text/csv',
       buffer: Buffer.from('Name;Land;Stadt\n', 'utf-8')
     })
-
-    await page.waitForTimeout(500)
 
     // With no data rows, the modal stays on the upload step (hasParsedData is false).
     // The drop zone should still be visible — no preview is shown.
@@ -333,8 +316,6 @@ Weitere Firma;FR;Paris;75001;Rue Test;info@example.fr`
     }, validCSV)
 
     await uploadZone.dispatchEvent('drop', { dataTransfer })
-
-    await page.waitForTimeout(500)
 
     // Preview should appear (use .first() to avoid strict mode)
     const preview = modal.locator('.data-preview').first()

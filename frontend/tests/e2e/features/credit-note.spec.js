@@ -354,7 +354,6 @@ test.describe('Gutschrift / Stornierung', () => {
       const searchInput = page.getByPlaceholder(/Suche/i)
       await searchInput.fill('GS-')
       await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(500)
 
       const existingBadge = page.locator('.type-badge.type-credit-note')
       const existingCount = await existingBadge.count()
@@ -393,7 +392,6 @@ test.describe('Gutschrift / Stornierung', () => {
         await page.waitForLoadState('networkidle')
         await page.getByPlaceholder(/Suche/i).fill('GS-')
         await page.waitForLoadState('networkidle')
-        await page.waitForTimeout(500)
       }
 
       // Should find at least one credit note with GS badge

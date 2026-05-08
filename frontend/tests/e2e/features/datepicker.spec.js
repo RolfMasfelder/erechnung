@@ -44,9 +44,6 @@ test.describe('Date Picker in Forms', () => {
     await expect(dateInput).toBeVisible({ timeout: 3000 })
     await dateInput.click()
 
-    // Wait for calendar to appear
-    await page.waitForTimeout(500)
-
     // Calendar should be visible (dp__menu is the VueDatePicker popup)
     const calendar = page.locator('.dp__menu').first()
     await expect(calendar).toBeVisible({ timeout: 3000 })
@@ -72,10 +69,8 @@ test.describe('Date Picker in Forms', () => {
     await expect(day15).toBeVisible({ timeout: 2000 })
     await day15.click({ force: true })
 
-    // Wait for selection to process
-    await page.waitForTimeout(500)
-
     // The date input should now have a value
+    await expect(dateInput).not.toHaveValue('', { timeout: 5000 })
     const inputValue = await dateInput.inputValue().catch(() => '')
     expect(inputValue.length).toBeGreaterThan(0)
   })
@@ -92,7 +87,9 @@ test.describe('Date Picker in Forms', () => {
     // Clear and fill date in DD.MM.YYYY format
     await input.click()
     await input.fill('15.12.2024')
-    await page.waitForTimeout(200)
+
+    // Wait for VueDatePicker to process the value
+    await expect(input).toHaveValue(/15/, { timeout: 3000 })
 
     // Value should be set
     const value = await input.inputValue()
@@ -109,10 +106,10 @@ test.describe('Date Picker in Forms', () => {
     // Set issue date to today
     const issueDateInput = modal.getByLabel(/Rechnungsdatum/i).or(modal.locator('#issue_date'))
     await issueDateInput.first().click()
-    await page.waitForTimeout(300)
 
     // Select today
     const calendar = page.locator('.dp__menu, .dp__calendar')
+    await expect(calendar.first()).toBeVisible({ timeout: 3000 })
     const today = calendar.locator('.dp__today, .dp__calendar_item.dp__today').first()
     if (await today.isVisible()) {
       await today.click()
@@ -121,10 +118,10 @@ test.describe('Date Picker in Forms', () => {
     // Now click due date picker
     const dueDateInput = modal.getByLabel(/Fälligkeitsdatum/i).or(modal.locator('#due_date'))
     await dueDateInput.first().click()
-    await page.waitForTimeout(300)
 
     // Calendar should show - past dates before issue date should be disabled
     const dueCalendar = page.locator('.dp__menu, .dp__calendar').last()
+    await expect(dueCalendar).toBeVisible({ timeout: 3000 })
 
     // Try to select a past date (should be disabled)
     const pastDate = dueCalendar.locator('.dp__calendar_item, .dp__cell').filter({
@@ -149,9 +146,9 @@ test.describe('Date Picker in Forms', () => {
     const input = issueDatePicker.locator('input').first()
     await input.click()
     await input.fill('15.12.2024')
-    await page.waitForTimeout(200)
 
     // Input should have value
+    await expect(input).not.toHaveValue('', { timeout: 3000 })
     let value = await input.inputValue()
     expect(value).toBeTruthy()
 
@@ -159,9 +156,9 @@ test.describe('Date Picker in Forms', () => {
     const clearButton = issueDatePicker.locator('.clear-icon, .dp__clear_icon').first()
     if (await clearButton.isVisible()) {
       await clearButton.click()
-      await page.waitForTimeout(200)
 
       // Input should be empty
+      await expect(input).toHaveValue('', { timeout: 3000 })
       value = await input.inputValue()
       expect(value).toBe('')
     }
@@ -190,18 +187,15 @@ test.describe('Date Picker in Forms', () => {
     const customerSelect = modal.locator('#customer_id, [name="customer_id"]').first()
     if (await customerSelect.isVisible()) {
       await customerSelect.click()
-      await page.waitForTimeout(200)
       // Select first option
       const firstOption = page.locator('.dropdown-item, option').first()
       await firstOption.click()
-      await page.waitForTimeout(200)
     }
 
     // Add product line
     const addButton = modal.getByRole('button', { name: /Artikel|Position|Add/i })
     if (await addButton.isVisible()) {
       await addButton.click()
-      await page.waitForTimeout(300)
     }
 
     // Clear date fields if they have defaults
@@ -217,8 +211,6 @@ test.describe('Date Picker in Forms', () => {
       await dueInput.clear()
     }
 
-    await page.waitForTimeout(300)
-
     // Try to submit form without dates
     const submitButton = modal.getByRole('button', { name: /Erstellen|Speichern|Create|Save/i })
 
@@ -229,9 +221,9 @@ test.describe('Date Picker in Forms', () => {
     // If not disabled, try to click and check for errors
     if (!isDisabled) {
       await submitButton.click()
-      await page.waitForTimeout(300)
 
       const errorMessages = modal.locator('.error-message, .error, .invalid-feedback')
+      await expect(errorMessages.first()).toBeVisible({ timeout: 3000 })
       const errorCount = await errorMessages.count()
       expect(errorCount).toBeGreaterThan(0)
     } else {
@@ -251,7 +243,8 @@ test.describe('Date Picker in Forms', () => {
     await input.fill('15.12.2024')
     await input.press('Tab')
 
-    await page.waitForTimeout(200)
+    // Wait for VueDatePicker to normalize the value
+    await expect(input).toHaveValue(/\d{1,2}\.\d{1,2}\.\d{4}/, { timeout: 3000 })
 
     // Value should be in DD.MM.YYYY format
     const value = await input.inputValue()
@@ -273,7 +266,7 @@ test.describe('Date Picker in Forms', () => {
     } else {
       // Alternative: click row to open detail, then edit
       await firstRow.click()
-      await page.waitForTimeout(300)
+      await page.waitForLoadState('networkidle')
 
       const editInModal = page.getByRole('button', { name: /Bearbeiten|Edit/i })
       if (await editInModal.count() > 0) {
@@ -281,7 +274,7 @@ test.describe('Date Picker in Forms', () => {
       }
     }
 
-    await page.waitForTimeout(500)
+    await page.waitForLoadState('networkidle')
 
     // Edit modal should be open
     const modal = page.locator('.modal, [role="dialog"]').filter({ hasText: /bearbeiten|edit/i })

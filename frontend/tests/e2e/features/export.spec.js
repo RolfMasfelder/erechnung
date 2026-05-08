@@ -18,7 +18,6 @@ test.describe('CSV Export', () => {
     // First select an item
     const checkboxes = page.locator('tbody tr input[type="checkbox"]')
     await checkboxes.first().check()
-    await page.waitForTimeout(300)
 
     // Now check for export button in bulk action bar
     const exportButton = page.getByRole('button', { name: /Export|Exportieren/i })
@@ -29,7 +28,6 @@ test.describe('CSV Export', () => {
     // Select items first to make export button appear
     const checkboxes = page.locator('tbody tr input[type="checkbox"]')
     await checkboxes.first().check()
-    await page.waitForTimeout(300)
 
     // Check that export button is visible
     const exportButton = page.getByRole('button', { name: /Export|Exportieren/i })
@@ -43,10 +41,10 @@ test.describe('CSV Export', () => {
     // Select all items using "Alle auswählen" checkbox
     const selectAllCheckbox = page.locator('thead input[type="checkbox"], th input[type="checkbox"]')
     await selectAllCheckbox.check()
-    await page.waitForTimeout(500)
 
     // Click export button to open dropdown
     const exportButton = page.getByRole('button', { name: /Export|Exportieren/i })
+    await expect(exportButton).toBeVisible({ timeout: 5000 })
     await exportButton.click()
 
     // Wait for dropdown to be visible
@@ -94,10 +92,10 @@ test.describe('CSV Export', () => {
     // Select all items using "Alle auswählen" checkbox
     const selectAllCheckbox = page.locator('thead input[type="checkbox"], th input[type="checkbox"]')
     await selectAllCheckbox.check()
-    await page.waitForTimeout(500)
 
     // Click export button in bulk action bar to open dropdown
     const exportButton = page.getByRole('button', { name: /Export/i })
+    await expect(exportButton).toBeVisible({ timeout: 5000 })
     await exportButton.click()
 
     // Wait for dropdown to be visible
@@ -148,7 +146,6 @@ test.describe('CSV Export', () => {
     const checkboxes = page.locator('tbody tr input[type="checkbox"]')
     await checkboxes.nth(0).check()
     await checkboxes.nth(1).check()
-    await page.waitForTimeout(300)
 
     // Bulk action bar should be visible
     const bulkActionBar = page.locator('.bulk-action-bar, [data-testid="bulk-action-bar"]')
@@ -188,13 +185,13 @@ test.describe('CSV Export', () => {
     // Select all items first
     const selectAllCheckbox = page.locator('thead input[type="checkbox"], th input[type="checkbox"]')
     await selectAllCheckbox.check()
-    await page.waitForTimeout(300)
 
     // Setup download handler but don't wait yet
     const downloadPromise = page.waitForEvent('download', { timeout: 10000 })
 
     // Click export button to open dropdown
     const exportButton = page.getByRole('button', { name: /Export|Exportieren/i })
+    await expect(exportButton).toBeVisible({ timeout: 5000 })
     await exportButton.click()
 
     // Click CSV Alle Daten option in dropdown
@@ -215,7 +212,7 @@ test.describe('CSV Export', () => {
     // Apply filter that returns no results
     const searchInput = page.locator('input[placeholder*="Suche"], input[type="search"]')
     await searchInput.fill('NONEXISTENT-XXXXX-9999')
-    await page.waitForTimeout(400)
+    await page.waitForURL(/search=NONEXISTENT/, { timeout: 5000 })
     await page.waitForLoadState('networkidle')
 
     // No items visible → no checkboxes to select → no export button
@@ -229,13 +226,13 @@ test.describe('CSV Export', () => {
     // Select all items first
     const selectAllCheckbox = page.locator('thead input[type="checkbox"], th input[type="checkbox"]')
     await selectAllCheckbox.check()
-    await page.waitForTimeout(300)
 
     // Setup download handler
     const downloadPromise = page.waitForEvent('download')
 
     // Click export button to open dropdown
     const exportButton = page.getByRole('button', { name: /Export|Exportieren/i })
+    await expect(exportButton).toBeVisible({ timeout: 5000 })
     await exportButton.click()
 
     // Click CSV Alle Daten option in dropdown
@@ -270,13 +267,13 @@ test.describe('CSV Export', () => {
     // Select all items first
     const selectAllCheckbox = page.locator('thead input[type="checkbox"], th input[type="checkbox"]')
     await selectAllCheckbox.check()
-    await page.waitForTimeout(300)
 
     // Setup download handler
     const downloadPromise = page.waitForEvent('download')
 
     // Click export button to open dropdown
     const exportButton = page.getByRole('button', { name: /Export|Exportieren/i })
+    await expect(exportButton).toBeVisible({ timeout: 5000 })
     await exportButton.click()
 
     // Click CSV Alle Daten option in dropdown

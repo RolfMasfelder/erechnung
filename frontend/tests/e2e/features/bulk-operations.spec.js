@@ -62,9 +62,6 @@ test.describe('Bulk Operations', () => {
     const headerCheckbox = page.locator('thead input[type="checkbox"]')
     await headerCheckbox.check()
 
-    // Wait a moment for all checkboxes to update
-    await page.waitForTimeout(200)
-
     // All row checkboxes should be checked
     const rowCheckboxes = page.locator('tbody tr input[type="checkbox"]')
     const checkedCount = await rowCheckboxes.filter({ checked: true }).count()
@@ -86,10 +83,11 @@ test.describe('Bulk Operations', () => {
     // First select all
     const headerCheckbox = page.locator('thead input[type="checkbox"]')
     await headerCheckbox.check()
-    await page.waitForTimeout(300)
 
     // Verify selection happened
     const rowCheckboxes = page.locator('tbody tr input[type="checkbox"]')
+    const bulkActionBar = page.locator('.bulk-action-bar')
+    await expect(bulkActionBar).toBeVisible({ timeout: 5000 })
     const selectedBefore = await rowCheckboxes.filter({ checked: true }).count()
     expect(selectedBefore).toBeGreaterThan(0)
 
@@ -97,7 +95,6 @@ test.describe('Bulk Operations', () => {
     await headerCheckbox.uncheck()
 
     // Wait for Vue reactivity to propagate: the bulk action bar hides when all deselected
-    const bulkActionBar = page.locator('.bulk-action-bar')
     await expect(bulkActionBar).toBeHidden({ timeout: 5000 })
 
     // Verify first row checkbox is unchecked (polling assertion)
@@ -123,13 +120,9 @@ test.describe('Bulk Operations', () => {
 
     // Click first checkbox normally to establish range start
     await checkboxes.nth(0).click()
-    await page.waitForTimeout(100)
 
     // Shift+click fifth checkbox
     await checkboxes.nth(4).click({ modifiers: ['Shift'] })
-
-    // Wait for selection to process
-    await page.waitForTimeout(300)
 
     // Items 0-4 should be selected (5 items)
     const checkedCount = await checkboxes.filter({ checked: true }).count()
@@ -194,7 +187,6 @@ test.describe('Bulk Operations', () => {
     const checkboxes = page.locator('tbody tr input[type="checkbox"]')
     await checkboxes.nth(0).check()
     await checkboxes.nth(1).check()
-    await page.waitForTimeout(300)
 
     // Bulk action bar should be visible
     const bulkActionBar = page.locator('.bulk-action-bar')
@@ -220,7 +212,6 @@ test.describe('Bulk Operations', () => {
     // Select first item
     const firstCheckbox = page.locator('tbody tr input[type="checkbox"]').first()
     await firstCheckbox.check()
-    await page.waitForTimeout(300)
 
     // Check bulk action bar shows 1 selected
     const bulkActionBar = page.locator('.bulk-action-bar')
