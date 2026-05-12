@@ -22,7 +22,7 @@ GitHub enforces branch protection rules on `main`:
 - **No direct pushes** — `git push github main` is rejected with `GH013: Repository rule violations`
 - **Changes must go through a Pull Request** (from `dev` or a feature branch)
 - **4 required status checks** must pass before merge
-- **No merge commits** in the branch (squash or rebase merge only via PR UI)
+- **Only merge commits** allowed (no squash, no rebase)
 
 **Consequence:** Never run `git push github main` directly. Always create a PR.
 
@@ -47,10 +47,11 @@ git push github dev
 git pull github main
 git push origin main    # keep local mirror in sync
 
-# 5. Merge main back into dev (required for squash merges!)
-# GitHub uses squash merge → main gets a new SHA, dev diverges from main.
-# Without this step, the next PR from dev → main will re-show the old commits.
+# 5. Merge main back into dev to stay in sync
+# main may have Dependabot auto-merge commits that dev doesn't have yet.
+# Without this step, the next PR from dev → main will include unrelated Dependabot commits.
 git checkout dev
+git pull github main    # picks up Dependabot auto-merges into main
 git merge main
 git push origin dev
 git push github dev
@@ -69,21 +70,24 @@ git push github dev
 
 ## Why Both Pulls Are Necessary
 
-Dependabot auto-merges PRs on GitHub's `dev` (since 2026-05-02). These commits don't exist on `origin` or locally. Without `git pull github dev`, the local `dev` diverges from GitHub's `dev`, causing conflicts on the next PR.
+Dependabot auto-merges PRs into GitHub's `main` (since 2026-05-12). These commits don't exist on `origin` or locally. Without `git pull github main`, the local `main` diverges from GitHub's `main`, and merging `dev` into `main` will be rejected or cause conflicts.
 
 ## Daily Workflow (Dependabot sync)
 
-Dependabot merges minor/patch updates automatically into `dev` every Monday (or whenever a PR passes CI). To stay in sync:
+Dependabot merges minor/patch updates automatically into `main` every Monday (or whenever a PR passes CI). To stay in sync:
 
 ```bash
 # At the start of each working session:
 git checkout dev
-git pull github dev      # picks up Dependabot auto-merges into dev
-git push origin dev      # keep local mirror in sync
+git pull github dev      # picks up any direct changes to dev on GitHub
+git pull github main     # picks up Dependabot auto-merges into main
+git merge main           # integrate Dependabot updates into dev
+git push origin dev
+git push github dev
 
 # After your own work:
 git push origin dev
 git push github dev
 ```
 
-This ensures `dev` never falls behind GitHub and PRs into `main` are always conflict-free.
+This ensures `dev` never falls behind `main` and PRs into `main` are always conflict-free.
