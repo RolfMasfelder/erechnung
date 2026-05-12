@@ -115,7 +115,7 @@ test-artifacts/
 !test-artifacts/update-tests/fixtures/
 
 # Mustang-CLI JAR (downloaded by validate_invoice_mustang.sh)
-scripts/Mustang-CLI-*.jar
+tools/Mustang-CLI-*.jar
 
 # Backup files (created by scripts/backup.sh)
 infra/backups/*/
