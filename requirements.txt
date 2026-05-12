@@ -100,12 +100,12 @@ django-filter==25.2
 django-prometheus==2.4.1
     # via -r requirements.in
 django-redis==6.0.0
-    # via -r requirements.in
-django-stubs[compatible-mypy]==6.0.4
     # via
     #   -r requirements.in
     #   djangorestframework-stubs
 django-stubs-ext==6.0.4
+    # via -r requirements.in
+django-stubs[compatible-mypy]==6.0.4
     # via django-stubs
 djangorestframework==3.17.1
     # via
@@ -321,7 +321,7 @@ tzlocal==5.3.1
     # via celery
 uritemplate==4.2.0
     # via drf-spectacular
-urllib3==2.6.3
+urllib3==2.7.0
     # via
     #   requests
     #   sentry-sdk
