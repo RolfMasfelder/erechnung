@@ -100,12 +100,12 @@ django-filter==25.2
 django-prometheus==2.4.1
     # via -r requirements.in
 django-redis==6.0.0
+    # via -r requirements.in
+django-stubs[compatible-mypy]==6.0.4
     # via
     #   -r requirements.in
     #   djangorestframework-stubs
 django-stubs-ext==6.0.4
-    # via -r requirements.in
-django-stubs[compatible-mypy]==6.0.4
     # via django-stubs
 djangorestframework==3.17.1
     # via
@@ -135,7 +135,7 @@ filelock==3.29.0
     #   virtualenv
 fonttools[woff]==4.62.1
     # via weasyprint
-gunicorn==25.3.0
+gunicorn==26.0.0
     # via -r requirements.in
 identify==2.6.19
     # via pre-commit
