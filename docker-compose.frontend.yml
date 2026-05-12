@@ -4,6 +4,7 @@ services:
     build:
       context: ./infra/api-gateway
       dockerfile: Dockerfile
+    image: erechnung-api-gateway:${APP_VERSION:-1.0.0}
     container_name: erechnung_api_gateway
     ports:
       - "80:80"    # HTTP (redirects to HTTPS)
@@ -29,6 +30,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
+    image: erechnung-frontend:${APP_VERSION:-1.0.0}
     container_name: erechnung_frontend
     ports:
       - "5173:5173"

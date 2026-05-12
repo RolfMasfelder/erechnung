@@ -8,6 +8,7 @@ services:
         APP_VERSION: ${APP_VERSION:-1.0.0}
         BUILD_DATE: ${BUILD_DATE:-unknown}
         GIT_SHA: ${GIT_SHA:-unknown}
+    image: erechnung-web:${APP_VERSION:-1.0.0}
     depends_on:
       db:
         condition: service_healthy
@@ -28,6 +29,7 @@ services:
         APP_VERSION: ${APP_VERSION:-1.0.0}
         BUILD_DATE: ${BUILD_DATE:-unknown}
         GIT_SHA: ${GIT_SHA:-unknown}
+    image: erechnung-web:${APP_VERSION:-1.0.0}
     ports:
       - "8000:8000"
     depends_on:
@@ -56,6 +58,7 @@ services:
 
   db:
     build: ./infra/postgres  # Custom image with pgTAP + extensions (based on postgres:17)
+    image: erechnung-db:17
     command: >
       postgres
       -c shared_preload_libraries=pg_stat_statements
@@ -101,6 +104,7 @@ services:
         APP_VERSION: ${APP_VERSION:-1.0.0}
         BUILD_DATE: ${BUILD_DATE:-unknown}
         GIT_SHA: ${GIT_SHA:-unknown}
+    image: erechnung-celery:${APP_VERSION:-1.0.0}
     command: celery -A project_root.invoice_project worker -l info
     env_file:
       - .env
@@ -126,6 +130,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
+    image: erechnung-frontend:${APP_VERSION:-1.0.0}
     container_name: erechnung_frontend
     ports:
       - "5173:5173"
