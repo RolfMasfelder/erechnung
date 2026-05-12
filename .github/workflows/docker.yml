@@ -36,7 +36,7 @@ jobs:
         cache-to: type=gha,mode=max
 
     - name: Scan image with Trivy
-      uses: aquasecurity/trivy-action@v0.35.0
+      uses: aquasecurity/trivy-action@v0.36.0
       with:
         image-ref: erechnung:pr-scan
         format: table
@@ -114,7 +114,7 @@ jobs:
           ghcr.io/rolfmasfelder/erechnung:${{ steps.version.outputs.VERSION }}
 
     - name: Scan published image with Trivy
-      uses: aquasecurity/trivy-action@v0.35.0
+      uses: aquasecurity/trivy-action@v0.36.0
       with:
         image-ref: ghcr.io/rolfmasfelder/erechnung:${{ steps.version.outputs.VERSION }}
         format: sarif
