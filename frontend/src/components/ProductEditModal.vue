@@ -24,8 +24,7 @@
         <BaseInput
           id="description"
           v-model="formData.description"
-          type="textarea"
-          rows="3"
+          type="text"
           :error="errors.description"
         />
       </div>

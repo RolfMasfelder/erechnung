@@ -24,10 +24,10 @@ vi.mock('vue-router', () => ({
   useRouter: () => ({ push: vi.fn() })
 }))
 
-vi.mock('@/components/BaseCard.vue', { default: { template: '<div><slot /></div>' } })
-vi.mock('@/components/BaseButton.vue', { default: { template: '<button @click="$emit(\'click\')"><slot /></button>', emits: ['click'] } })
-vi.mock('@/components/BaseAlert.vue', { default: { template: '<div />' } })
-vi.mock('@/components/ProductEditModal.vue', { default: { template: '<div />' } })
+vi.mock('@/components/BaseCard.vue', () => ({ default: { template: '<div><slot /></div>' } }))
+vi.mock('@/components/BaseButton.vue', () => ({ default: { template: '<button @click="$emit(\'click\')"><slot /></button>', emits: ['click'] } }))
+vi.mock('@/components/BaseAlert.vue', () => ({ default: { template: '<div />' } }))
+vi.mock('@/components/ProductEditModal.vue', () => ({ default: { template: '<div />' } }))
 
 import { productService } from '@/api/services/productService'
 import ProductDetailView from '../ProductDetailView.vue'

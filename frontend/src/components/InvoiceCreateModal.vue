@@ -132,7 +132,7 @@
           <BaseButton
             type="button"
             variant="secondary"
-            size="small"
+            size="sm"
             @click="addLine"
           >
             + Position hinzufügen
@@ -150,7 +150,7 @@
               v-if="formData.lines.length > 1"
               type="button"
               variant="danger"
-              size="small"
+              size="sm"
               @click="removeLine(index)"
             >
               Entfernen
