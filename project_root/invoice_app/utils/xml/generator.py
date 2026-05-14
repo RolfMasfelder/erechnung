@@ -448,6 +448,23 @@ class ZugferdXmlGenerator:
         # ApplicableTradeTax (tax summary – kommt vor SpecifiedTradeAllowanceCharge in CII D16B)
         self._add_applicable_trade_tax(settlement, invoice_data, split_acs)
 
+        # BillingSpecifiedPeriod (BG-14: BT-73 start, BT-74 end) – nach ApplicableTradeTax
+        # Per CII D16B XSD: after ApplicableTradeTax, before SpecifiedTradeAllowanceCharge
+        billing_start = invoice_data.get("billing_period_start")
+        billing_end = invoice_data.get("billing_period_end")
+        if billing_start or billing_end:
+            billing_period = etree.SubElement(settlement, f"{{{RAM_NS}}}BillingSpecifiedPeriod")
+            if billing_start:
+                start_dt = etree.SubElement(billing_period, f"{{{RAM_NS}}}StartDateTime")
+                start_str = etree.SubElement(start_dt, f"{{{UDT_NS}}}DateTimeString")
+                start_str.set("format", "102")
+                start_str.text = "".join(c for c in str(billing_start) if c.isdigit())[:8]
+            if billing_end:
+                end_dt = etree.SubElement(billing_period, f"{{{RAM_NS}}}EndDateTime")
+                end_str = etree.SubElement(end_dt, f"{{{UDT_NS}}}DateTimeString")
+                end_str.set("format", "102")
+                end_str.text = "".join(c for c in str(billing_end) if c.isdigit())[:8]
+
         # SpecifiedTradeAllowanceCharge (header level – kommt nach ApplicableTradeTax in CII D16B)
         # Write split entries (one per rate) when applicable, otherwise original entries.
         for ac in split_acs if split_acs else invoice_data.get("allowances_charges", []):

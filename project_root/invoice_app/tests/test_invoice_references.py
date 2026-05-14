@@ -963,3 +963,202 @@ class SellerContactTests(TestCase):
         self.assertEqual(data["company"]["contact_name"], "Max Mustermann")
         self.assertIn("phone", data["company"])
         self.assertEqual(data["company"]["phone"], "+49 30 9999999")
+
+
+class BillingPeriodTests(TestCase):
+    """Test suite for BG-14 Rechnungszeitraum (BT-73 billing_period_start / BT-74 billing_period_end)."""
+
+    RAM_NS = "urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
+    UDT_NS = "urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100"
+
+    def setUp(self):
+        country, _ = Country.objects.get_or_create(
+            code="DE",
+            defaults={
+                "name": "Germany",
+                "eu_member": True,
+                "standard_vat_rate": Decimal("19.00"),
+            },
+        )
+        self.company = Company.objects.create(
+            name="Billing Seller GmbH",
+            tax_id="BP123456789",
+            vat_id="DE333333333",
+            address_line1="Billingstr. 1",
+            postal_code="10115",
+            city="Berlin",
+            country=country,
+            email="billing@seller.de",
+        )
+        self.partner = BusinessPartner.objects.create(
+            partner_type=BusinessPartner.PartnerType.BUSINESS,
+            company_name="Billing Käufer AG",
+            tax_id="BP987654321",
+            vat_id="DE444444444",
+            address_line1="Käuferstr. 2",
+            postal_code="80331",
+            city="München",
+            country=country,
+            email="info@billingbuyer.de",
+        )
+        self.user = User.objects.create_user(username="billingperioduser", password="testpass123")
+        self.product = Product.objects.create(
+            name="Billingprodukt",
+            product_code="BP-PROD-001",
+            base_price=Decimal("100.00"),
+            default_tax_rate=Decimal("19.00"),
+        )
+        self.xml_generator = ZugferdXmlGenerator(profile="COMFORT")
+        self.invoice_service = InvoiceService()
+
+    def _make_invoice(self, **kwargs):
+        defaults = {
+            "invoice_number": "BP-INV-001",
+            "company": self.company,
+            "business_partner": self.partner,
+            "created_by": self.user,
+            "currency": "EUR",
+            "subtotal": Decimal("100.00"),
+            "tax_amount": Decimal("19.00"),
+            "total_amount": Decimal("119.00"),
+        }
+        defaults.update(kwargs)
+        return Invoice.objects.create(**defaults)
+
+    def _generate_xml(self, invoice):
+        InvoiceLine.objects.get_or_create(
+            invoice=invoice,
+            defaults={
+                "product": self.product,
+                "description": "Billingprodukt",
+                "quantity": Decimal("1"),
+                "unit_price": Decimal("100.00"),
+                "tax_rate": Decimal("19.00"),
+            },
+        )
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        xml_string = self.xml_generator.generate_xml(data)
+        return etree.fromstring(xml_string if isinstance(xml_string, bytes) else xml_string.encode())
+
+    def test_xml_billing_period_present_when_set(self):
+        """BillingSpecifiedPeriod must appear when start and end are set."""
+        from datetime import date
+
+        invoice = self._make_invoice(
+            billing_period_start=date(2026, 4, 1),
+            billing_period_end=date(2026, 4, 30),
+        )
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        period = root.find(".//ram:BillingSpecifiedPeriod", ns)
+        self.assertIsNotNone(period, "BillingSpecifiedPeriod must be present when dates are set")
+
+    def test_xml_billing_period_absent_when_empty(self):
+        """BillingSpecifiedPeriod must not appear when both dates are None."""
+        invoice = self._make_invoice()
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        period = root.find(".//ram:BillingSpecifiedPeriod", ns)
+        self.assertIsNone(period, "BillingSpecifiedPeriod must not appear when dates are empty")
+
+    def test_xml_start_datetime_value_bt73(self):
+        """BT-73: StartDateTime DateTimeString must be YYYYMMDD with format 102."""
+        from datetime import date
+
+        invoice = self._make_invoice(billing_period_start=date(2026, 4, 1))
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS, "udt": self.UDT_NS}
+        start_str = root.find(".//ram:BillingSpecifiedPeriod/ram:StartDateTime/udt:DateTimeString", ns)
+        self.assertIsNotNone(start_str, "StartDateTime DateTimeString (BT-73) must be present")
+        self.assertEqual(start_str.text, "20260401")
+        self.assertEqual(start_str.get("format"), "102")
+
+    def test_xml_end_datetime_value_bt74(self):
+        """BT-74: EndDateTime DateTimeString must be YYYYMMDD with format 102."""
+        from datetime import date
+
+        invoice = self._make_invoice(billing_period_end=date(2026, 4, 30))
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS, "udt": self.UDT_NS}
+        end_str = root.find(".//ram:BillingSpecifiedPeriod/ram:EndDateTime/udt:DateTimeString", ns)
+        self.assertIsNotNone(end_str, "EndDateTime DateTimeString (BT-74) must be present")
+        self.assertEqual(end_str.text, "20260430")
+        self.assertEqual(end_str.get("format"), "102")
+
+    def test_xml_only_start_without_end(self):
+        """BillingSpecifiedPeriod with only StartDateTime when only start is set."""
+        from datetime import date
+
+        invoice = self._make_invoice(billing_period_start=date(2026, 4, 1))
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS, "udt": self.UDT_NS}
+        period = root.find(".//ram:BillingSpecifiedPeriod", ns)
+        self.assertIsNotNone(period)
+        start_str = period.find("ram:StartDateTime/udt:DateTimeString", ns)
+        self.assertIsNotNone(start_str)
+        end_str = period.find("ram:EndDateTime/udt:DateTimeString", ns)
+        self.assertIsNone(end_str, "EndDateTime must not appear when billing_period_end is empty")
+
+    def test_xml_billing_period_after_applicable_trade_tax(self):
+        """BillingSpecifiedPeriod must appear after ApplicableTradeTax in the XSD sequence."""
+        from datetime import date
+
+        invoice = self._make_invoice(
+            billing_period_start=date(2026, 4, 1),
+            billing_period_end=date(2026, 4, 30),
+        )
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS, "rsm": "urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100"}
+        settlement = root.find(".//ram:ApplicableHeaderTradeSettlement", ns)
+        self.assertIsNotNone(settlement)
+        tags = [child.tag.split("}")[-1] for child in settlement]
+        tax_idx = next((i for i, t in enumerate(tags) if t == "ApplicableTradeTax"), None)
+        period_idx = next((i for i, t in enumerate(tags) if t == "BillingSpecifiedPeriod"), None)
+        self.assertIsNotNone(period_idx, "BillingSpecifiedPeriod must be in ApplicableHeaderTradeSettlement")
+        self.assertIsNotNone(tax_idx, "ApplicableTradeTax must be in ApplicableHeaderTradeSettlement")
+        self.assertGreater(period_idx, tax_idx, "BillingSpecifiedPeriod must come after ApplicableTradeTax")
+
+    def test_serializer_rejects_start_after_end(self):
+        """Serializer must raise ValidationError when billing_period_start > billing_period_end."""
+        from rest_framework.test import APIClient
+
+        client = APIClient()
+        client.force_authenticate(user=self.user)
+        # Build a minimal valid invoice payload and include invalid period
+        url = "/api/invoices/"
+        payload = {
+            "company": self.company.pk,
+            "business_partner": self.partner.pk,
+            "issue_date": "2026-04-01",
+            "due_date": "2026-04-30",
+            "currency": "EUR",
+            "billing_period_start": "2026-04-30",
+            "billing_period_end": "2026-04-01",
+        }
+        response = client.post(url, payload, format="json")
+        self.assertEqual(response.status_code, 400)
+        # Error is wrapped under response.data['error']['details']
+        error_details = response.data.get("error", {}).get("details", response.data)
+        self.assertIn("billing_period_start", error_details)
+
+    def test_service_passes_billing_period_to_dict(self):
+        """convert_model_to_dict must include billing_period_start/end formatted as YYYYMMDD."""
+        from datetime import date
+
+        invoice = self._make_invoice(
+            billing_period_start=date(2026, 4, 1),
+            billing_period_end=date(2026, 4, 30),
+        )
+        InvoiceLine.objects.get_or_create(
+            invoice=invoice,
+            defaults={
+                "product": self.product,
+                "description": "Billingprodukt",
+                "quantity": Decimal("1"),
+                "unit_price": Decimal("100.00"),
+                "tax_rate": Decimal("19.00"),
+            },
+        )
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        self.assertEqual(data.get("billing_period_start"), "20260401")
+        self.assertEqual(data.get("billing_period_end"), "20260430")

@@ -108,6 +108,32 @@
         </div>
       </div>
 
+      <!-- Leistungszeitraum (BG-14) -->
+      <div class="form-row">
+        <div class="form-group">
+          <BaseDatePicker
+            id="billing_period_start"
+            v-model="formData.billing_period_start"
+            label="Leistungsbeginn (optional)"
+            placeholder="Datum auswählen"
+            :error="errors.billing_period_start"
+          />
+          <small class="form-hint">Beginn des Leistungszeitraums, z.B. 01.04.2026 (BT-73)</small>
+        </div>
+
+        <div class="form-group">
+          <BaseDatePicker
+            id="billing_period_end"
+            v-model="formData.billing_period_end"
+            label="Leistungsende (optional)"
+            placeholder="Datum auswählen"
+            :min-date="formData.billing_period_start"
+            :error="errors.billing_period_end"
+          />
+          <small class="form-hint">Ende des Leistungszeitraums, z.B. 30.04.2026 (BT-74)</small>
+        </div>
+      </div>
+
       <!-- Datumfelder -->
       <div class="form-row">
         <div class="form-group">
@@ -458,6 +484,8 @@ const formData = reactive({
   buyer_reference: '',
   seller_reference: '',
   contract_reference: '',
+  billing_period_start: null,
+  billing_period_end: null,
   status: 'draft',
   notes: '',
   lines: [],
@@ -663,6 +691,8 @@ async function loadData() {
       buyer_reference: invoice.buyer_reference || '',
       seller_reference: invoice.seller_reference || '',
       contract_reference: invoice.contract_reference || '',
+      billing_period_start: invoice.billing_period_start || null,
+      billing_period_end: invoice.billing_period_end || null,
       status: invoice.status,
       notes: invoice.notes || '',
       lines: (invoice.lines || invoice.invoice_lines || []).map(line => ({
@@ -755,6 +785,8 @@ async function handleSubmit() {
       buyer_reference: formData.buyer_reference,
       seller_reference: formData.seller_reference,
       contract_reference: formData.contract_reference,
+      billing_period_start: formData.billing_period_start || null,
+      billing_period_end: formData.billing_period_end || null,
       notes: formData.notes,
       // lines ist im InvoiceSerializer read_only – werden separat via /invoice-lines/ verwaltet
     }

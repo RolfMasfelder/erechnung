@@ -106,6 +106,18 @@ class Invoice(models.Model):
     issue_date = models.DateField(_("Issue Date"), default=timezone.now)
     due_date = models.DateField(_("Due Date"), default=timezone.now)
     delivery_date = models.DateField(_("Delivery Date"), null=True, blank=True)
+    billing_period_start = models.DateField(
+        _("Billing Period Start"),
+        null=True,
+        blank=True,
+        help_text=_("Start of billing/service period (EN16931 BT-73)"),
+    )
+    billing_period_end = models.DateField(
+        _("Billing Period End"),
+        null=True,
+        blank=True,
+        help_text=_("End of billing/service period (EN16931 BT-74)"),
+    )
 
     # Financial information
     currency = models.CharField(_("Currency"), max_length=3, default="EUR")

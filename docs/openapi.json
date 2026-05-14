@@ -7824,6 +7824,20 @@
                         "description": "Contract number or identifier (EN16931 BT-12)",
                         "maxLength": 200
                     },
+                    "billing_period_start": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "title": "Leistungsbeginn (BT-73)",
+                        "description": "EN16931 BT-73: Start of billing/service period"
+                    },
+                    "billing_period_end": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "title": "Leistungsende (BT-74)",
+                        "description": "EN16931 BT-74: End of billing/service period"
+                    },
                     "status": {
                         "$ref": "#/components/schemas/InvoiceStatusEnum"
                     },
@@ -8486,6 +8500,20 @@
                         "type": "string",
                         "description": "Contract number or identifier (EN16931 BT-12)",
                         "maxLength": 200
+                    },
+                    "billing_period_start": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "title": "Leistungsbeginn (BT-73)",
+                        "description": "EN16931 BT-73: Start of billing/service period"
+                    },
+                    "billing_period_end": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "title": "Leistungsende (BT-74)",
+                        "description": "EN16931 BT-74: End of billing/service period"
                     },
                     "status": {
                         "$ref": "#/components/schemas/InvoiceStatusEnum"
@@ -9560,6 +9588,20 @@
                         "type": "string",
                         "description": "Contract number or identifier (EN16931 BT-12)",
                         "maxLength": 200
+                    },
+                    "billing_period_start": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "title": "Leistungsbeginn (BT-73)",
+                        "description": "EN16931 BT-73: Start of billing/service period"
+                    },
+                    "billing_period_end": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "title": "Leistungsende (BT-74)",
+                        "description": "EN16931 BT-74: End of billing/service period"
                     },
                     "status": {
                         "$ref": "#/components/schemas/InvoiceStatusEnum"

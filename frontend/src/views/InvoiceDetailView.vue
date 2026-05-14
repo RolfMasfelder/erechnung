@@ -134,6 +134,15 @@
             <span class="detail-value">{{ invoice.contract_reference }}</span>
           </div>
 
+          <div v-if="invoice.billing_period_start || invoice.billing_period_end" class="detail-item">
+            <span class="detail-label">Leistungszeitraum:</span>
+            <span class="detail-value">
+              {{ formatDate(invoice.billing_period_start) || '?' }}
+              &ndash;
+              {{ formatDate(invoice.billing_period_end) || '?' }}
+            </span>
+          </div>
+
           <div class="detail-item">
             <span class="detail-label">Gesamtbetrag:</span>
             <span class="detail-value strong">{{ formatCurrency(invoice.total_amount) }}</span>

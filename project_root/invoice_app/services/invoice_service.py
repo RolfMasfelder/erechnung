@@ -94,6 +94,12 @@ class InvoiceService:
             "date": invoice.issue_date.strftime("%Y%m%d"),
             "due_date": invoice.due_date.strftime("%Y%m%d"),
             "delivery_date": invoice.delivery_date.strftime("%Y%m%d") if invoice.delivery_date else None,
+            "billing_period_start": invoice.billing_period_start.strftime("%Y%m%d")
+            if invoice.billing_period_start
+            else None,
+            "billing_period_end": invoice.billing_period_end.strftime("%Y%m%d")
+            if invoice.billing_period_end
+            else None,
             # Business references (B2B)
             "buyer_reference": invoice.buyer_reference or "",
             "seller_reference": invoice.seller_reference or "",

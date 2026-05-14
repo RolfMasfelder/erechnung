@@ -527,6 +527,8 @@ class InvoiceSerializer(serializers.ModelSerializer):
             "buyer_reference",
             "seller_reference",
             "contract_reference",
+            "billing_period_start",
+            "billing_period_end",
             "status",
             "status_display",
             "pdf_file",
@@ -594,6 +596,17 @@ class InvoiceSerializer(serializers.ModelSerializer):
         if partner and partner.partner_type == BusinessPartner.PartnerType.GOVERNMENT:
             if not attrs.get("buyer_reference") and partner.leitweg_id:
                 attrs["buyer_reference"] = partner.leitweg_id
+        # BG-14 validation: if both billing period dates are set, start must not be after end
+        start = attrs.get(
+            "billing_period_start", getattr(self.instance, "billing_period_start", None) if self.instance else None
+        )
+        end = attrs.get(
+            "billing_period_end", getattr(self.instance, "billing_period_end", None) if self.instance else None
+        )
+        if start and end and start > end:
+            raise serializers.ValidationError(
+                {"billing_period_start": "Leistungsbeginn darf nicht nach Leistungsende liegen (BT-73/BT-74)."}
+            )
         return attrs
 
 
