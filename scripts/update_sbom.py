@@ -121,6 +121,33 @@ def normalize_pypi_name(name: str) -> str:
     return name.lower().replace("_", "-").replace(" ", "-")
 
 
+def _get_system_deps(components: list[dict]) -> list[dict]:
+    """Extract system package components (those with system:package property)."""
+    return [c for c in components if any(p.get("name") == "system:package" for p in c.get("properties", []))]
+
+
+def _format_system_deps_table(system_deps: list[dict]) -> str:
+    """Generate the System Dependencies markdown table from SBOM system components."""
+    lines = [
+        "| Component | Package Type | License | Purpose |",
+        "|-----------|--------------|---------|----------|",
+    ]
+    for dep in system_deps:
+        name = dep.get("name", "")
+        lic_list = dep.get("licenses", [])
+        if lic_list:
+            lic_entry = lic_list[0].get("license", {})
+            license_str = lic_entry.get("id") or lic_entry.get("name") or "-"
+        else:
+            license_str = "-"
+        purpose = next(
+            (p["value"] for p in dep.get("properties", []) if p.get("name") == "system:purpose"),
+            dep.get("description", ""),
+        )
+        lines.append(f"| {name} | System | {license_str} | {purpose} |")
+    return "\n".join(lines)
+
+
 def update_component_version(component: dict, new_version: str, old_bom_ref: str) -> str:
     """Update a component's version, bom-ref, and purl. Returns new bom-ref."""
     old_version = component["version"]
@@ -246,7 +273,7 @@ MONTHS_DE = [
 ]
 
 
-def sync_sbom_md(  # noqa: PLR0913
+def sync_sbom_md(  # noqa: PLR0912, PLR0913
     py_versions: dict[str, str],
     npm_versions: dict[str, str],
     python_image_tag: str | None,
@@ -255,6 +282,7 @@ def sync_sbom_md(  # noqa: PLR0913
     project_license: str | None,
     apply_mode: bool,
     now: datetime,
+    system_deps: list[dict] | None = None,
 ) -> list[str]:
     """Sync docs/SBOM.md tables to the current package versions.
 
@@ -318,6 +346,16 @@ def sync_sbom_md(  # noqa: PLR0913
                 content,
             )
             md_changes.append(f"  SBOM.md: Node.js {m.group(2)} \u2192 {node_major}")
+    # Sync System Dependencies table from SBOM.json system components
+    if system_deps:
+        new_table = _format_system_deps_table(system_deps)
+        sys_dep_pattern = r"### System Dependencies\n(?:\|[^\n]+\n)+"
+        new_section = f"### System Dependencies\n{new_table}\n"
+        new_content = re.sub(sys_dep_pattern, new_section, content)
+        if new_content != content:
+            content = new_content
+            md_changes.append("  SBOM.md: System Dependencies table updated")
+
     if not md_changes:
         return []
 
@@ -426,8 +464,17 @@ def main():  # noqa: PLR0912, PLR0915
     now = datetime.now(UTC)
 
     # Sync docs/SBOM.md independently — works even when SBOM.json is already current
+    system_deps = _get_system_deps(sbom.get("components", []))
     md_changes = sync_sbom_md(
-        py_versions, npm_versions, python_image_tag, node_major, project_version, project_license, apply_mode, now
+        py_versions,
+        npm_versions,
+        python_image_tag,
+        node_major,
+        project_version,
+        project_license,
+        apply_mode,
+        now,
+        system_deps=system_deps,
     )
 
     if not changes and not md_changes:
