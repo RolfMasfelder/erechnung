@@ -418,7 +418,7 @@ const formData = reactive({
   contract_reference: '',
   billing_period_start: null,
   billing_period_end: null,
-  notes: ''
+  notes: '',
   lines: [
     createEmptyLine()
   ],
