@@ -338,8 +338,9 @@ describe('InvoiceDetailView', () => {
   it('smartDownload downloads PDF for non-government', async () => {
     const blob = new Blob(['pdf'], { type: 'application/pdf' })
     invoiceService.downloadPDF.mockResolvedValue(blob)
-    globalThis.URL = { createObjectURL: vi.fn(() => 'blob:test'), revokeObjectURL: vi.fn() }
-    vi.spyOn(document.body, 'appendChild').mockImplementation(() => {})
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test')
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
     wrapper = mount(InvoiceDetailView, { global: { plugins: [router] } })
     await flushPromises()
 

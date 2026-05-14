@@ -189,6 +189,7 @@ describe('SendInvoiceModal', () => {
       const blob = new Blob(['pdf'], { type: 'application/pdf' })
       invoiceService.downloadPDF.mockResolvedValue(blob)
       const appendSpy = vi.spyOn(document.body, 'appendChild').mockImplementation(() => {})
+      const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
 
       const wrapper = mountModal(mockB2BInvoice)
       await wrapper.findAll('.mode-btn')[1].trigger('click')
@@ -201,6 +202,7 @@ describe('SendInvoiceModal', () => {
       expect(invoiceService.downloadPDF).toHaveBeenCalledWith(1)
       expect(wrapper.emitted('close')).toBeTruthy()
       appendSpy.mockRestore()
+      clickSpy.mockRestore()
     })
   })
 
@@ -222,6 +224,7 @@ describe('SendInvoiceModal', () => {
       invoiceService.generateXml.mockResolvedValue({})
       invoiceService.downloadXML.mockResolvedValue(blob)
       const appendSpy = vi.spyOn(document.body, 'appendChild').mockImplementation(() => {})
+      const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
 
       const wrapper = mountModal(mockB2GInvoice)
       await wrapper.findAll('.mode-btn')[1].trigger('click')
@@ -235,6 +238,7 @@ describe('SendInvoiceModal', () => {
       expect(invoiceService.downloadXML).toHaveBeenCalledWith(2)
       expect(wrapper.emitted('close')).toBeTruthy()
       appendSpy.mockRestore()
+      clickSpy.mockRestore()
     })
 
     it('shows download error when download fails', async () => {
