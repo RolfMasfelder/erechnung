@@ -115,6 +115,8 @@ class InvoiceService:
                 "postcode_code": invoice.company.postcode_code,  # Uses property
                 "country_id": invoice.company.country_id,  # Uses property (ISO code)
                 "email": invoice.company.email,
+                "contact_name": invoice.company.contact_name,
+                "phone": invoice.company.phone,
                 # Bank details for SpecifiedTradeSettlementPaymentMeans
                 "iban": invoice.company.iban,
                 "bic": invoice.company.bic,
@@ -131,6 +133,8 @@ class InvoiceService:
                 "postcode_code": invoice.company.postcode_code,
                 "country_id": invoice.company.country_id,
                 "email": invoice.company.email,
+                "contact_name": invoice.company.contact_name,
+                "phone": invoice.company.phone,
                 "iban": invoice.company.iban,
                 "bic": invoice.company.bic,
                 "bank_name": invoice.company.bank_name,

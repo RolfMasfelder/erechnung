@@ -796,3 +796,170 @@ class ContractReferenceTests(TestCase):
         )
         data = self.invoice_service.convert_model_to_dict(invoice)
         self.assertEqual(data["contract_reference"], "")
+
+
+class SellerContactTests(TestCase):
+    """Test suite for BG-6 Seller Contact (BT-39/BT-40/BT-41)."""
+
+    RAM_NS = "urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
+
+    def setUp(self):
+        country = Country.objects.get_or_create(
+            code="DE",
+            defaults={
+                "code_alpha3": "DEU",
+                "numeric_code": "276",
+                "name": "Germany",
+                "name_local": "Deutschland",
+                "currency_code": "EUR",
+                "currency_name": "Euro",
+                "currency_symbol": "€",
+                "default_language": "de",
+                "is_eu_member": True,
+                "is_eurozone": True,
+                "standard_vat_rate": Decimal("19.00"),
+            },
+        )[0]
+        self.company = Company.objects.create(
+            name="Seller GmbH",
+            tax_id="SC123456789",
+            vat_id="DE111111111",
+            address_line1="Verkäuferstr. 1",
+            postal_code="10115",
+            city="Berlin",
+            country=country,
+            email="kontakt@seller.de",
+            phone="+49 30 9999999",
+            contact_name="Max Mustermann",
+        )
+        self.partner = BusinessPartner.objects.create(
+            partner_type=BusinessPartner.PartnerType.BUSINESS,
+            company_name="Käufer AG",
+            tax_id="SC987654321",
+            vat_id="DE222222222",
+            address_line1="Käuferstr. 1",
+            postal_code="80331",
+            city="München",
+            country=country,
+            email="info@buyer.de",
+        )
+        self.user = User.objects.create_user(username="sellercontactuser", password="testpass123")
+        self.product = Product.objects.create(
+            name="Kontaktprodukt",
+            product_code="SC-PROD-001",
+            base_price=Decimal("50.00"),
+            default_tax_rate=Decimal("19.00"),
+        )
+        self.xml_generator = ZugferdXmlGenerator(profile="COMFORT")
+        self.invoice_service = InvoiceService()
+
+    def _make_invoice(self):
+        return Invoice.objects.create(
+            invoice_number="SC-INV-001",
+            company=self.company,
+            business_partner=self.partner,
+            created_by=self.user,
+            currency="EUR",
+            subtotal=Decimal("50.00"),
+            tax_amount=Decimal("9.50"),
+            total_amount=Decimal("59.50"),
+        )
+
+    def _generate_xml(self, invoice):
+        InvoiceLine.objects.create(
+            invoice=invoice,
+            product=self.product,
+            description="Kontaktprodukt",
+            quantity=Decimal("1"),
+            unit_price=Decimal("50.00"),
+            tax_rate=Decimal("19.00"),
+        )
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        xml_string = self.xml_generator.generate_xml(data)
+        root = etree.fromstring(xml_string if isinstance(xml_string, bytes) else xml_string.encode())
+        return root
+
+    def test_xml_defined_trade_contact_present(self):
+        """DefinedTradeContact must be present when contact data is set."""
+        invoice = self._make_invoice()
+        root = self._generate_xml(invoice)
+        ns = {
+            "ram": self.RAM_NS,
+            "rsm": "urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100",
+        }
+        contact = root.find(".//ram:SellerTradeParty/ram:DefinedTradeContact", ns)
+        self.assertIsNotNone(contact, "DefinedTradeContact must be present for seller")
+
+    def test_xml_contact_person_name_bt39(self):
+        """BT-39: PersonName must contain the contact_name value."""
+        invoice = self._make_invoice()
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        person_name = root.find(".//ram:SellerTradeParty/ram:DefinedTradeContact/ram:PersonName", ns)
+        self.assertIsNotNone(person_name, "PersonName (BT-39) must be present")
+        self.assertEqual(person_name.text, "Max Mustermann")
+
+    def test_xml_contact_phone_bt40(self):
+        """BT-40: TelephoneUniversalCommunication/CompleteNumber must contain phone."""
+        invoice = self._make_invoice()
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        phone = root.find(
+            ".//ram:SellerTradeParty/ram:DefinedTradeContact/ram:TelephoneUniversalCommunication/ram:CompleteNumber",
+            ns,
+        )
+        self.assertIsNotNone(phone, "CompleteNumber (BT-40) must be present")
+        self.assertEqual(phone.text, "+49 30 9999999")
+
+    def test_xml_contact_email_bt41(self):
+        """BT-41: EmailURIUniversalCommunication/URIID must contain email."""
+        invoice = self._make_invoice()
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        email = root.find(
+            ".//ram:SellerTradeParty/ram:DefinedTradeContact/ram:EmailURIUniversalCommunication/ram:URIID",
+            ns,
+        )
+        self.assertIsNotNone(email, "URIID (BT-41) must be present")
+        self.assertEqual(email.text, "kontakt@seller.de")
+
+    def test_xml_no_contact_block_when_empty(self):
+        """DefinedTradeContact must not appear when all contact fields are empty."""
+        Company.objects.filter(pk=self.company.pk).update(contact_name="", phone="", email="")
+        self.company.refresh_from_db()
+        invoice = self._make_invoice()
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        contact = root.find(".//ram:SellerTradeParty/ram:DefinedTradeContact", ns)
+        self.assertIsNone(contact, "DefinedTradeContact must not appear when contact fields are empty")
+
+    def test_xml_contact_position_before_postal_address(self):
+        """DefinedTradeContact must appear before PostalTradeAddress per CII XSD sequence."""
+        invoice = self._make_invoice()
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        seller = root.find(".//ram:SellerTradeParty", ns)
+        self.assertIsNotNone(seller)
+        tags = [child.tag.split("}")[-1] for child in seller]
+        contact_idx = next((i for i, t in enumerate(tags) if t == "DefinedTradeContact"), None)
+        postal_idx = next((i for i, t in enumerate(tags) if t == "PostalTradeAddress"), None)
+        self.assertIsNotNone(contact_idx, "DefinedTradeContact must be in SellerTradeParty")
+        self.assertIsNotNone(postal_idx, "PostalTradeAddress must be in SellerTradeParty")
+        self.assertLess(contact_idx, postal_idx, "DefinedTradeContact must come before PostalTradeAddress")
+
+    def test_service_passes_contact_name_to_dict(self):
+        """convert_model_to_dict must include contact_name in company dict."""
+        invoice = self._make_invoice()
+        InvoiceLine.objects.create(
+            invoice=invoice,
+            product=self.product,
+            description="Kontaktprodukt",
+            quantity=Decimal("1"),
+            unit_price=Decimal("50.00"),
+            tax_rate=Decimal("19.00"),
+        )
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        self.assertIn("contact_name", data["company"])
+        self.assertEqual(data["company"]["contact_name"], "Max Mustermann")
+        self.assertIn("phone", data["company"])
+        self.assertEqual(data["company"]["phone"], "+49 30 9999999")

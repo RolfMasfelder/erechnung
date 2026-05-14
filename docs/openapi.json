@@ -7021,6 +7021,12 @@
                         "format": "uri",
                         "maxLength": 200
                     },
+                    "contact_name": {
+                        "type": "string",
+                        "title": "Kontaktperson (BT-39)",
+                        "description": "EN16931 BT-39: Seller contact person name",
+                        "maxLength": 100
+                    },
                     "logo": {
                         "type": "string",
                         "format": "uri",
@@ -7156,6 +7162,12 @@
                         "type": "string",
                         "format": "uri",
                         "maxLength": 200
+                    },
+                    "contact_name": {
+                        "type": "string",
+                        "title": "Kontaktperson (BT-39)",
+                        "description": "EN16931 BT-39: Seller contact person name",
+                        "maxLength": 100
                     },
                     "logo": {
                         "type": "string",
@@ -9200,6 +9212,12 @@
                         "type": "string",
                         "format": "uri",
                         "maxLength": 200
+                    },
+                    "contact_name": {
+                        "type": "string",
+                        "title": "Kontaktperson (BT-39)",
+                        "description": "EN16931 BT-39: Seller contact person name",
+                        "maxLength": 100
                     },
                     "logo": {
                         "type": "string",

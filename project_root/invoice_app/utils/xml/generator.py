@@ -294,6 +294,25 @@ class ZugferdXmlGenerator:
             legal_org_id.set("schemeID", "0002")
             legal_org_id.text = commercial_register
 
+        # DefinedTradeContact (BG-6: BT-39 name, BT-40 phone, BT-41 email)
+        # Per CII XSD: after SpecifiedLegalOrganization, before PostalTradeAddress
+        contact_name = get_val("contact_name")
+        contact_phone = get_val("phone")
+        contact_email = get_val("email")
+        if contact_name or contact_phone or contact_email:
+            contact = etree.SubElement(party_element, f"{{{RAM_NS}}}DefinedTradeContact")
+            if contact_name:
+                person_name = etree.SubElement(contact, f"{{{RAM_NS}}}PersonName")
+                person_name.text = contact_name
+            if contact_phone:
+                phone_comm = etree.SubElement(contact, f"{{{RAM_NS}}}TelephoneUniversalCommunication")
+                phone_num = etree.SubElement(phone_comm, f"{{{RAM_NS}}}CompleteNumber")
+                phone_num.text = contact_phone
+            if contact_email:
+                email_comm = etree.SubElement(contact, f"{{{RAM_NS}}}EmailURIUniversalCommunication")
+                email_id = etree.SubElement(email_comm, f"{{{RAM_NS}}}URIID")
+                email_id.text = contact_email
+
         # PostalTradeAddress
         address = etree.SubElement(party_element, f"{{{RAM_NS}}}PostalTradeAddress")
 

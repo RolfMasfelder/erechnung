@@ -191,6 +191,7 @@ export const companyFields = createFieldMapper({
     fax:                   'fax',
     email:                 'email',
     website:               'website',
+    contact_name:          'contact_name',
     logo:                  'logo',
     bank_name:             'bank_name',
     bank_account:          'bank_account',

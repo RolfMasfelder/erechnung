@@ -36,6 +36,12 @@ class Company(models.Model):
     fax = models.CharField(_("Fax"), max_length=50, blank=True)
     email = models.EmailField(_("Email"), blank=True)
     website = models.URLField(_("Website"), blank=True)
+    contact_name = models.CharField(
+        _("Contact Name"),
+        max_length=100,
+        blank=True,
+        help_text=_("Invoice contact person name (EN16931 BT-39)"),
+    )
 
     # Branding
     logo = models.ImageField(
