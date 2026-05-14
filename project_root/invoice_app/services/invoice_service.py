@@ -97,6 +97,7 @@ class InvoiceService:
             # Business references (B2B)
             "buyer_reference": invoice.buyer_reference or "",
             "seller_reference": invoice.seller_reference or "",
+            "contract_reference": invoice.contract_reference or "",
             "currency": invoice.currency,
             "subtotal": float(invoice.subtotal),
             "tax_amount": float(invoice.tax_amount),

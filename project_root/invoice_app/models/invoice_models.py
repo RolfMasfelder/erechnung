@@ -143,6 +143,12 @@ class Invoice(models.Model):
         blank=True,
         help_text=_("Our internal reference or project number (Unser Zeichen)"),
     )
+    contract_reference = models.CharField(
+        _("Contract Reference"),
+        max_length=200,
+        blank=True,
+        help_text=_("Contract number or identifier (EN16931 BT-12)"),
+    )
 
     # Status and file references
     status = models.CharField(_("Status"), max_length=20, choices=InvoiceStatus.choices, default=InvoiceStatus.DRAFT)

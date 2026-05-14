@@ -212,6 +212,13 @@ class ZugferdXmlGenerator:
             buyer_order_id = etree.SubElement(buyer_order_doc, f"{{{RAM_NS}}}IssuerAssignedID")
             buyer_order_id.text = buyer_reference
 
+        # ContractReferencedDocument (optional - BT-12 Vertragsreferenz)
+        contract_reference = invoice_data.get("contract_reference", "")
+        if contract_reference:
+            contract_doc = etree.SubElement(agreement, f"{{{RAM_NS}}}ContractReferencedDocument")
+            contract_id = etree.SubElement(contract_doc, f"{{{RAM_NS}}}IssuerAssignedID")
+            contract_id.text = contract_reference
+
         # AdditionalReferencedDocument (Phase C – rechnungsbegründende Dokumente)
         # Per XSD sequence: comes after BuyerOrderReferencedDocument
         self._add_additional_referenced_documents(agreement, invoice_data)

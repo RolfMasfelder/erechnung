@@ -78,6 +78,7 @@ export const invoiceFields = createFieldMapper({
     payment_reference:'payment_reference',
     buyer_reference:  'buyer_reference',
     seller_reference: 'seller_reference',
+    contract_reference: 'contract_reference',
     status:           'status',
     notes:            'notes',
     subtotal:         'subtotal',

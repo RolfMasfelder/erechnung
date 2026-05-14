@@ -129,6 +129,11 @@
             <span class="detail-value">{{ invoice.seller_reference }}</span>
           </div>
 
+          <div v-if="invoice.contract_reference" class="detail-item">
+            <span class="detail-label">Vertragsreferenz:</span>
+            <span class="detail-value">{{ invoice.contract_reference }}</span>
+          </div>
+
           <div class="detail-item">
             <span class="detail-label">Gesamtbetrag:</span>
             <span class="detail-value strong">{{ formatCurrency(invoice.total_amount) }}</span>

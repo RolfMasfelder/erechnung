@@ -639,3 +639,160 @@ class InvoiceReferenceServiceTests(TestCase):
         self.assertEqual(invoice_dict["seller_reference"], "")
         self.assertEqual(invoice_dict["seller_reference"], "")
         self.assertEqual(invoice_dict["seller_reference"], "")
+
+
+class ContractReferenceTests(TestCase):
+    """Test suite for contract_reference field (EN16931 BT-12)."""
+
+    RAM_NS = "urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
+
+    def setUp(self):
+        country = Country.objects.get_or_create(
+            code="DE",
+            defaults={
+                "code_alpha3": "DEU",
+                "numeric_code": "276",
+                "name": "Germany",
+                "name_local": "Deutschland",
+                "currency_code": "EUR",
+                "currency_name": "Euro",
+                "currency_symbol": "€",
+                "default_language": "de",
+                "is_eu_member": True,
+                "is_eurozone": True,
+                "standard_vat_rate": Decimal("19.00"),
+            },
+        )[0]
+        self.company = Company.objects.create(
+            name="Test GmbH",
+            tax_id="DE123456789",
+            vat_id="DE123456789",
+            address_line1="Musterstraße 1",
+            postal_code="12345",
+            city="Berlin",
+            country=country,
+            email="test@company.de",
+        )
+        self.partner = BusinessPartner.objects.create(
+            partner_type=BusinessPartner.PartnerType.BUSINESS,
+            company_name="Kunde AG",
+            tax_id="DE987654321",
+            vat_id="DE987654321",
+            address_line1="Kundenstraße 1",
+            postal_code="54321",
+            city="München",
+            country=country,
+            email="kunde@example.com",
+        )
+        self.user = User.objects.create_user(username="contractuser", password="testpass123")
+        self.product = Product.objects.create(
+            name="Testprodukt",
+            product_code="CTR-PROD-001",
+            base_price=Decimal("100.00"),
+            default_tax_rate=Decimal("19.00"),
+        )
+        self.xml_generator = ZugferdXmlGenerator(profile="COMFORT")
+        self.invoice_service = InvoiceService()
+
+    def _make_invoice(self, contract_reference=""):
+        return Invoice.objects.create(
+            invoice_number=f"CTR-{contract_reference or 'EMPTY'}",
+            company=self.company,
+            business_partner=self.partner,
+            contract_reference=contract_reference,
+            currency="EUR",
+            subtotal=Decimal("100.00"),
+            tax_amount=Decimal("19.00"),
+            total_amount=Decimal("119.00"),
+            created_by=self.user,
+        )
+
+    def _base_xml_data(self, contract_reference=""):
+        return {
+            "number": "CTR-XML-001",
+            "date": "20260514",
+            "due_date": "20260614",
+            "buyer_reference": "",
+            "seller_reference": "",
+            "contract_reference": contract_reference,
+            "currency": "EUR",
+            "company": {"name": "Test GmbH", "tax_id": "DE123456789"},
+            "customer": {"name": "Kunde AG", "tax_id": "DE987654321"},
+            "items": [{"product_name": "Testprodukt", "quantity": 1, "price": 100.0, "tax_rate": 19.0}],
+        }
+
+    # -- Model tests --
+
+    def test_model_contract_reference_stored(self):
+        invoice = self._make_invoice("VTR-2026-001")
+        self.assertEqual(invoice.contract_reference, "VTR-2026-001")
+
+    def test_model_contract_reference_blank_by_default(self):
+        invoice = self._make_invoice()
+        self.assertEqual(invoice.contract_reference, "")
+
+    # -- XML tests --
+
+    def test_xml_contains_contract_referenced_document(self):
+        xml_string = self.xml_generator.generate_xml(self._base_xml_data("VTR-2026-001"))
+        root = etree.fromstring(xml_string.encode("utf-8"))
+        ns = {"ram": self.RAM_NS}
+        elem = root.find(".//ram:ContractReferencedDocument/ram:IssuerAssignedID", ns)
+        self.assertIsNotNone(elem, "ContractReferencedDocument should be present in XML")
+        self.assertEqual(elem.text, "VTR-2026-001")
+
+    def test_xml_omits_contract_referenced_document_when_empty(self):
+        xml_string = self.xml_generator.generate_xml(self._base_xml_data(""))
+        root = etree.fromstring(xml_string.encode("utf-8"))
+        ns = {"ram": self.RAM_NS}
+        elem = root.find(".//ram:ContractReferencedDocument", ns)
+        self.assertIsNone(elem, "ContractReferencedDocument should not appear when empty")
+
+    def test_xml_contract_after_buyer_order_before_additional(self):
+        """ContractReferencedDocument must follow BuyerOrderReferencedDocument per XSD sequence."""
+        data = self._base_xml_data("VTR-SEQ-001")
+        data["buyer_reference"] = "PO-001"
+        xml_string = self.xml_generator.generate_xml(data)
+        root = etree.fromstring(xml_string.encode("utf-8"))
+        agreement = root.find(
+            ".//{urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100}"
+            "ApplicableHeaderTradeAgreement"
+        )
+        self.assertIsNotNone(agreement)
+        tags = [child.tag.split("}")[-1] for child in agreement]
+        buyer_idx = next((i for i, t in enumerate(tags) if t == "BuyerOrderReferencedDocument"), None)
+        contract_idx = next((i for i, t in enumerate(tags) if t == "ContractReferencedDocument"), None)
+        self.assertIsNotNone(buyer_idx)
+        self.assertIsNotNone(contract_idx)
+        self.assertGreater(
+            contract_idx, buyer_idx, "ContractReferencedDocument must come after BuyerOrderReferencedDocument"
+        )
+
+    # -- Service test --
+
+    def test_service_convert_includes_contract_reference(self):
+        invoice = self._make_invoice("VTR-SVC-001")
+        InvoiceLine.objects.create(
+            invoice=invoice,
+            product=self.product,
+            description="Testprodukt",
+            quantity=Decimal("1"),
+            unit_price=Decimal("100.00"),
+            tax_rate=Decimal("19.00"),
+        )
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        self.assertIn("contract_reference", data)
+        self.assertEqual(data["contract_reference"], "VTR-SVC-001")
+
+    def test_service_convert_contract_reference_empty_fallback(self):
+        invoice = self._make_invoice("")
+        InvoiceLine.objects.create(
+            invoice=invoice,
+            product=self.product,
+            description="Testprodukt",
+            quantity=Decimal("1"),
+            unit_price=Decimal("100.00"),
+            tax_rate=Decimal("19.00"),
+        )
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        self.assertEqual(data["contract_reference"], "")

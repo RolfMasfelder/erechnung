@@ -524,6 +524,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
             "payment_reference",
             "buyer_reference",
             "seller_reference",
+            "contract_reference",
             "status",
             "status_display",
             "pdf_file",

@@ -86,6 +86,17 @@
           />
           <small class="form-hint">Interne Referenz / Projektnummer</small>
         </div>
+
+        <div class="form-group">
+          <label for="contract_reference">Vertragsreferenz (optional)</label>
+          <BaseInput
+            id="contract_reference"
+            v-model="formData.contract_reference"
+            placeholder="z.B. VTR-2026-001"
+            :error="errors.contract_reference"
+          />
+          <small class="form-hint">Vertragsnummer / Rahmenvertrag (BT-12)</small>
+        </div>
       </div>
 
       <!-- Rechnungspositionen -->
@@ -378,6 +389,7 @@ const formData = reactive({
   due_date: calculateDefaultDueDate(),
   buyer_reference: '',
   seller_reference: '',
+  contract_reference: '',
   notes: '',
   lines: [
     createEmptyLine()
@@ -591,6 +603,7 @@ async function handleSubmit() {
       due_date: formData.due_date,
       buyer_reference: formData.buyer_reference || '',
       seller_reference: formData.seller_reference || '',
+      contract_reference: formData.contract_reference || '',
       notes: formData.notes,
     }
 
