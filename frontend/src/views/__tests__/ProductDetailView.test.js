@@ -32,6 +32,8 @@ vi.mock('@/components/ProductEditModal.vue', { default: { template: '<div />' } 
 import { productService } from '@/api/services/productService'
 import ProductDetailView from '../ProductDetailView.vue'
 
+const mountView = () => mount(ProductDetailView, { global: { stubs: { RouterLink: true } } })
+
 describe('ProductDetailView', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -39,13 +41,13 @@ describe('ProductDetailView', () => {
   })
 
   it('loads product on mount', async () => {
-    mount(ProductDetailView)
+    mountView()
     await flushPromises()
     expect(productService.getById).toHaveBeenCalledWith('1')
   })
 
   it('handleProductUpdated reloads product', async () => {
-    const wrapper = mount(ProductDetailView)
+    const wrapper = mountView()
     await flushPromises()
     productService.getById.mockClear()
     await wrapper.vm.handleProductUpdated()
@@ -55,7 +57,7 @@ describe('ProductDetailView', () => {
 
   it('handleDelete skips when confirm returns false', async () => {
     globalThis.confirm = vi.fn().mockReturnValue(false)
-    const wrapper = mount(ProductDetailView)
+    const wrapper = mountView()
     await flushPromises()
     await wrapper.vm.handleDelete()
     expect(productService.delete).not.toHaveBeenCalled()
@@ -64,7 +66,7 @@ describe('ProductDetailView', () => {
   it('handleDelete deletes and redirects when confirmed', async () => {
     globalThis.confirm = vi.fn().mockReturnValue(true)
     productService.delete.mockResolvedValue({})
-    const wrapper = mount(ProductDetailView)
+    const wrapper = mountView()
     await flushPromises()
     await wrapper.vm.handleDelete()
     await flushPromises()
@@ -75,7 +77,7 @@ describe('ProductDetailView', () => {
     globalThis.confirm = vi.fn().mockReturnValue(true)
     globalThis.alert = vi.fn()
     productService.delete.mockRejectedValue(new Error('In use'))
-    const wrapper = mount(ProductDetailView)
+    const wrapper = mountView()
     await flushPromises()
     await wrapper.vm.handleDelete()
     await flushPromises()
@@ -83,35 +85,35 @@ describe('ProductDetailView', () => {
   })
 
   it('formatCurrency handles numeric value', async () => {
-    const wrapper = mount(ProductDetailView)
+    const wrapper = mountView()
     await flushPromises()
     const result = wrapper.vm.formatCurrency(100)
     expect(result).toContain('100')
   })
 
   it('formatCurrency handles string value with comma', async () => {
-    const wrapper = mount(ProductDetailView)
+    const wrapper = mountView()
     await flushPromises()
     const result = wrapper.vm.formatCurrency('1.234,56')
     expect(typeof result).toBe('string')
   })
 
   it('calculateGrossPrice computes net + VAT', async () => {
-    const wrapper = mount(ProductDetailView)
+    const wrapper = mountView()
     await flushPromises()
     const result = wrapper.vm.calculateGrossPrice({ base_price: '100', default_tax_rate: '19' })
     expect(result).toBeCloseTo(119, 1)
   })
 
   it('toNumericValue handles NaN string', async () => {
-    const wrapper = mount(ProductDetailView)
+    const wrapper = mountView()
     await flushPromises()
     const result = wrapper.vm.toNumericValue('not-a-number')
     expect(result).toBe(0)
   })
 
   it('toNumericValue handles non-finite number', async () => {
-    const wrapper = mount(ProductDetailView)
+    const wrapper = mountView()
     await flushPromises()
     const result = wrapper.vm.toNumericValue(Infinity)
     expect(result).toBe(0)
