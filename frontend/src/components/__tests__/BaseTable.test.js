@@ -171,14 +171,14 @@ describe('BaseTable', () => {
     })
 
     it('should mark row as selected when id is in selectedIds', () => {
-      const selectedIds = new Set([1, 2])
+      const selectedIds = [1, 2]
       const wrapper = createWrapper({ selectable: true, selectedIds })
       const selectedRows = wrapper.findAll('.row-selected')
       expect(selectedRows.length).toBe(2)
     })
 
     it('should check row checkbox when id is in selectedIds', () => {
-      const selectedIds = new Set([1])
+      const selectedIds = [1]
       const wrapper = createWrapper({ selectable: true, selectedIds })
       const checkboxes = wrapper.findAll('.td-checkbox input[type="checkbox"]')
       expect(checkboxes[0].element.checked).toBe(true)
@@ -205,14 +205,14 @@ describe('BaseTable', () => {
     })
 
     it('should show header checkbox as checked when all selected', () => {
-      const selectedIds = new Set([1, 2, 3])
+      const selectedIds = [1, 2, 3]
       const wrapper = createWrapper({ selectable: true, selectedIds })
       const headerCheckbox = wrapper.find('.th-checkbox input[type="checkbox"]')
       expect(headerCheckbox.element.checked).toBe(true)
     })
 
     it('should show header checkbox as indeterminate when some selected', async () => {
-      const selectedIds = new Set([1, 2])
+      const selectedIds = [1, 2]
       const wrapper = createWrapper({ selectable: true, selectedIds })
       const headerCheckbox = wrapper.find('.th-checkbox input[type="checkbox"]')
       // Note: indeterminate is not a reactive prop, it's set programmatically
@@ -236,7 +236,7 @@ describe('BaseTable', () => {
   describe('row key', () => {
     it('should use id as default row key', () => {
       const wrapper = createWrapper({ selectable: true })
-      const selectedIds = new Set([1])
+      const selectedIds = [1]
       wrapper.setProps({ selectedIds })
       // Default rowKey is 'id'
       expect(wrapper.props('rowKey')).toBe('id')
@@ -247,7 +247,7 @@ describe('BaseTable', () => {
         { uuid: 'a', name: 'Item A' },
         { uuid: 'b', name: 'Item B' }
       ]
-      const selectedIds = new Set(['a'])
+      const selectedIds = ['a']
       const wrapper = createWrapper({
         data,
         rowKey: 'uuid',
@@ -276,7 +276,7 @@ describe('BaseTable', () => {
 
   describe('styling', () => {
     it('should apply row-selected class to selected rows', () => {
-      const selectedIds = new Set([2])
+      const selectedIds = [2]
       const wrapper = createWrapper({ selectable: true, selectedIds })
       const rows = wrapper.findAll('tbody tr')
       expect(rows[0].classes()).not.toContain('row-selected')
