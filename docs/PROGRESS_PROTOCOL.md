@@ -5,6 +5,79 @@ For template format, see: `docs/PROGRESS_PROTOCOL_TEMPLATE.md`
 
 ---
 
+## 2026-05-15 — §3.17 EN16931-Vollständigkeit: BT/BG-Implementierung (A–I) 🔄
+
+### Summary
+
+Systematische Umsetzung der EN16931-Lückenanalyse (begonnen 14.05.2026).
+9 von 12 Teilaufgaben (3.17-A bis 3.17-I) sind vollständig implementiert.
+3.17-J (Payee), 3.17-K (Steuervertreter) und 3.17-L (Produktattribute) sind zurückgestellt.
+Branch: `feature/en16931-completeness` (noch nicht in main gemergt).
+
+### Implementierte Teilaufgaben
+
+- **3.17-A — BT-12/BT-19 Vertrags- und Bestellreferenz** (`cebc1fc`):
+  `Invoice.contract_reference` + `Invoice.order_reference` (CharField 200),
+  XML: `ContractReferencedDocument` + `BuyerOrderReferencedDocument`, Frontend-Sektion „Referenzen"
+
+- **3.17-B — BG-6 Seller Contact BT-39/BT-40/BT-41** (`7a1ac86`):
+  `Company.contact_name` + `Company.contact_phone` ergänzt,
+  XML: `DefinedTradeContact` mit `PersonName`, `TelephoneUniversalCommunication`, `EmailURIUniversalCommunication`
+
+- **3.17-C — BG-14 Rechnungszeitraum BT-73/BT-74** (`98505e0`):
+  `Invoice.billing_period_start` + `Invoice.billing_period_end` (DateField),
+  Validierung `start <= end`, XML: `BillingSpecifiedPeriod` im Header
+
+- **3.17-D — BG-26 Zeilenspezifischer Zeitraum BT-134/BT-135** (`3181300`):
+  `InvoiceLine.billing_period_start` + `InvoiceLine.billing_period_end`,
+  XML: `SpecifiedLineTradeDelivery/BillingSpecifiedPeriod` pro Zeile
+
+- **3.17-E/F — BG-15 Lieferadresse + BT-113/114 Anzahlung/Rundung** (`46e9731`):
+  5 Lieferadress-Felder an `Invoice` (`delivery_address_line1/2`, `_city`, `_postal_code`, `_country`),
+  `Invoice.prepaid_amount` + `Invoice.rounding_amount`, XML: `ShipToTradeParty` + `PrepaidAmount`/`RoundingAmount`
+
+- **3.17-G — Reason Codes BT-98/105/121/140/145** (`d1d3b56`):
+  `AllowanceCharge.reason_code` (UNTDID 5189/7161),
+  `InvoiceLine.vat_exemption_reason_code` (VATEX-Code),
+  XML: `ReasonCode` in `SpecifiedTradeAllowanceCharge` + `ExemptionReasonCode`
+
+- **3.17-H — BG-29 Bruttopreis BT-148/BT-150** (`c9925c1`):
+  `InvoiceLine.gross_price` (DecimalField, nullable),
+  XML: `GrossPriceProductTradePrice/ChargeAmount` + `AppliedTradeAllowanceCharge` mit abgeleitetem Rabatt
+
+- **3.17-I — BT-155/156/157 EAN/GTIN + Seller-ID** (`c9925c1`):
+  `Product.seller_item_id` (CharField 50) + `Product.gtin` (CharField 14, Format-Validierung 13–14 Stellen),
+  XML: `SpecifiedTradeProduct/SellerAssignedID` + `GlobalID` (schemeID=0160),
+  Frontend: Felder in Produkt-Stammdaten
+
+### Noch offen (zurückgestellt)
+
+- **3.17-J** — BG-10 Payee (Zahlungsempfänger, BT-59/BT-60) — Impact ★
+- **3.17-K** — BG-7 Steuervertreter (BT-61–69) — Impact ★, Aufwand L
+- **3.17-L** — BG-32 Produktattribute (BT-160/161) — Impact ★, Aufwand L
+
+### Test Results
+
+```txt
+GrossPriceTests (3.17-H):         8 Tests ✅
+ProductIdentifierTests (3.17-I):  10 Tests ✅
+Gesamter Backend-Testlauf:        alle Tests grün ✅
+```
+
+### Commits
+
+| Commit | Inhalt |
+|--------|--------|
+| `cebc1fc` | feat: add contract_reference field (EN16931 BT-12) |
+| `7a1ac86` | feat: add company contact_name for EN16931 BG-6 seller contact (BT-39/BT-40/BT-41) |
+| `98505e0` | feat: add billing_period_start/end for EN16931 BG-14 Rechnungszeitraum (BT-73/BT-74) |
+| `3181300` | feat: BG-26 line billing period BT-134/BT-135 + coverage tests |
+| `46e9731` | feat: BG-15 Lieferadresse + BT-113/114 Anzahlung/Rundung (3.17-E/F) |
+| `d1d3b56` | feat: BT-121 VATEX-Code + BT-140/145 Positionsrabatt-Codes (3.17-G) |
+| `c9925c1` | feat: BG-29 Bruttopreis BT-148 + BT-155/156/157 EAN/GTIN/SellerID (3.17-H/I) |
+
+---
+
 ## 2026-05-15 — Backup-Tests aus normalem Test-Lauf isoliert ✅
 
 ### Summary
