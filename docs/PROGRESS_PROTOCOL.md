@@ -5,7 +5,40 @@ For template format, see: `docs/PROGRESS_PROTOCOL_TEMPLATE.md`
 
 ---
 
-## 2026-05-15 — §3.17 EN16931-Vollständigkeit: BT/BG-Implementierung (A–I) 🔄
+## 2026-05-15 — Version 0.2.2: Vollständiger Testlauf nach §3.17 ✅
+
+### Summary
+
+Nach Version-Bump auf 0.2.2 und Docker-Rebuild vollständiger Testlauf aller Test-Ebenen.
+Ein fehlgeschlagener Backend-Test behoben (`MagicMock`-Attribut-Problem in `test_generate_xml_with_mock_model_instance_line_items`).
+Alle Tests grün. Coverage: **86 %**
+
+### Testergebnisse
+
+| Test-Ebene | Ergebnis | Details |
+|---|---|---|
+| Backend (Django) | ✅ 842 tests, OK | 5 skipped, 0 failed |
+| Frontend (Vitest) | ✅ 1132 tests, 69 files | 0 failed |
+| E2E (Playwright) | ✅ 147 passed | 2 skipped |
+| Coverage | **86 %** | HTML: `htmlcov/index.html` |
+
+### Behobene Probleme
+
+- **`test_generate_xml_with_mock_model_instance_line_items`** schlug fehl mit
+  `TypeError: Argument must be bytes or unicode, got 'MagicMock'` in `generator.py:951`.
+  Ursache: `getattr(MagicMock(), "gtin", "")` liefert MagicMock (nicht `""`), da MagicMock
+  alle Attribute automatisch erstellt. Fix: `gtin = ""`, `seller_item_id = ""`, `gross_price = None`
+  im Test-Mock ergänzt. Commit `c3e9f47`.
+
+### Commits
+
+| Commit | Inhalt |
+|--------|--------|
+| `c3e9f47` | fix: add missing mock attributes in test_generate_xml_with_mock_model_instance_line_items |
+
+---
+
+## 2026-05-15 — §3.17 EN16931-Vollständigkeit: BT/BG-Implementierung (A–I) ✅
 
 ### Summary
 
