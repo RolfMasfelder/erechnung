@@ -1,6 +1,6 @@
 # Development Dockerfile für Vue.js Frontend
 # Use Node.js 24 LTS - Active LTS, EOL April 2030
-FROM node:24-alpine
+FROM node:26-alpine
 
 WORKDIR /app
 

@@ -1,6 +1,6 @@
 # Production Dockerfile für Vue.js Frontend
 # Use Node.js 24 LTS for build stage
-FROM node:24-alpine AS builder
+FROM node:26-alpine AS builder
 
 WORKDIR /app
 
