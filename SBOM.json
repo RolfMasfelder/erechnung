@@ -2,9 +2,9 @@
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
   "serialNumber": "urn:uuid:8a7c8a8b-5c2d-4e3f-9a1b-2c3d4e5f6789",
-  "version": 4,
+  "version": 5,
   "metadata": {
-    "timestamp": "2026-05-08T11:49:03Z",
+    "timestamp": "2026-05-14T08:03:18Z",
     "tools": [
       {
         "vendor": "GitHub Copilot",
@@ -62,14 +62,14 @@
   "components": [
     {
       "type": "framework",
-      "bom-ref": "django-5.2.13",
+      "bom-ref": "django-5.2.14",
       "name": "Django",
-      "version": "5.2.13",
+      "version": "5.2.14",
       "description": "High-level Python web framework",
       "supplier": {
         "name": "Django Software Foundation"
       },
-      "purl": "pkg:pypi/django@5.2.13",
+      "purl": "pkg:pypi/django@5.2.14",
       "licenses": [
         {
           "license": {
@@ -260,11 +260,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "gunicorn-25.3.0",
+      "bom-ref": "gunicorn-26.0.0",
       "name": "Gunicorn",
-      "version": "25.3.0",
+      "version": "26.0.0",
       "description": "WSGI HTTP Server",
-      "purl": "pkg:pypi/gunicorn@25.3.0",
+      "purl": "pkg:pypi/gunicorn@26.0.0",
       "licenses": [
         {
           "license": {
@@ -290,11 +290,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "sentry-sdk-2.58.0",
+      "bom-ref": "sentry-sdk-2.59.0",
       "name": "Sentry SDK",
-      "version": "2.58.0",
+      "version": "2.59.0",
       "description": "Error tracking and performance monitoring",
-      "purl": "pkg:pypi/sentry-sdk@2.58.0",
+      "purl": "pkg:pypi/sentry-sdk@2.59.0",
       "licenses": [
         {
           "license": {
@@ -493,6 +493,10 @@
         {
           "name": "license:note",
           "value": "AGPL-3.0 forces this project to be licensed under AGPL-3.0 or later. Ghostscript is invoked as a subprocess for PDF/A-3 conversion (see invoice_app/utils/pdf.py)."
+        },
+        {
+          "name": "system:purpose",
+          "value": "PDF/A-3 conversion"
         }
       ]
     },
@@ -567,13 +571,97 @@
           }
         }
       ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "libpq-dev",
+      "name": "libpq-dev",
+      "version": "latest",
+      "description": "PostgreSQL client library headers (required for psycopg2 compilation)",
+      "supplier": {
+        "name": "PostgreSQL Global Development Group"
+      },
+      "licenses": [
+        {
+          "license": {
+            "name": "PostgreSQL License",
+            "url": "https://www.postgresql.org/about/licence/"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "system:package",
+          "value": "libpq-dev"
+        },
+        {
+          "name": "system:purpose",
+          "value": "PostgreSQL client library"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "build-essential",
+      "name": "build-essential",
+      "version": "latest",
+      "description": "Debian meta-package providing GCC, G++, make and compilation tools",
+      "supplier": {
+        "name": "Debian"
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "GPL-3.0-or-later",
+            "url": "https://www.gnu.org/licenses/gpl-3.0.html"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "system:package",
+          "value": "build-essential"
+        },
+        {
+          "name": "system:purpose",
+          "value": "Compilation tools"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "bom-ref": "gettext",
+      "name": "gettext",
+      "version": "latest",
+      "description": "GNU internationalization utilities",
+      "supplier": {
+        "name": "Free Software Foundation"
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "GPL-3.0-or-later",
+            "url": "https://www.gnu.org/licenses/gpl-3.0.html"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "system:package",
+          "value": "gettext"
+        },
+        {
+          "name": "system:purpose",
+          "value": "Internationalization"
+        }
+      ]
     }
   ],
   "dependencies": [
     {
       "ref": "erechnung-django-app",
       "dependsOn": [
-        "django-5.2.13",
+        "django-5.2.14",
         "djangorestframework-3.17.1",
         "psycopg2-binary-2.9.12",
         "celery-5.6.3",
@@ -582,9 +670,9 @@
         "xmlschema-4.3.1",
         "pikepdf-10.5.1",
         "pillow-12.2.0",
-        "gunicorn-25.3.0",
+        "gunicorn-26.0.0",
         "whitenoise-6.12.0",
-        "sentry-sdk-2.58.0",
+        "sentry-sdk-2.59.0",
         "django-allauth-65.16.1",
         "django-axes-8.3.1",
         "django-cors-headers-4.9.0",
@@ -731,11 +819,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "vue@3.5.33",
+      "bom-ref": "vue@3.5.34",
       "group": "frontend",
       "name": "vue",
-      "version": "3.5.33",
-      "purl": "pkg:npm/vue@3.5.33",
+      "version": "3.5.34",
+      "purl": "pkg:npm/vue@3.5.34",
       "description": "Progressive JavaScript Framework",
       "licenses": [
         {
@@ -795,11 +883,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "vite@8.0.10",
+      "bom-ref": "vite@8.0.12",
       "group": "frontend-dev",
       "name": "vite",
-      "version": "8.0.10",
-      "purl": "pkg:npm/vite@8.0.10",
+      "version": "8.0.12",
+      "purl": "pkg:npm/vite@8.0.12",
       "description": "Next generation frontend build tool",
       "licenses": [
         {
@@ -811,11 +899,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "tailwindcss@4.2.4",
+      "bom-ref": "tailwindcss@4.3.0",
       "group": "frontend-dev",
       "name": "tailwindcss",
-      "version": "4.2.4",
-      "purl": "pkg:npm/tailwindcss@4.2.4",
+      "version": "4.3.0",
+      "purl": "pkg:npm/tailwindcss@4.3.0",
       "description": "Utility-first CSS framework",
       "licenses": [
         {
@@ -827,11 +915,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "vitest@4.1.5",
+      "bom-ref": "vitest@4.1.6",
       "group": "frontend-dev",
       "name": "vitest",
-      "version": "4.1.5",
-      "purl": "pkg:npm/vitest@4.1.5",
+      "version": "4.1.6",
+      "purl": "pkg:npm/vitest@4.1.6",
       "description": "Unit testing framework for Vite",
       "licenses": [
         {
@@ -843,11 +931,11 @@
     },
     {
       "type": "library",
-      "bom-ref": "@playwright/test@1.59.1",
+      "bom-ref": "@playwright/test@1.60.0",
       "group": "frontend-dev",
       "name": "@playwright/test",
-      "version": "1.59.1",
-      "purl": "pkg:npm/%40playwright/test@1.59.1",
+      "version": "1.60.0",
+      "purl": "pkg:npm/%40playwright/test@1.60.0",
       "description": "End-to-end testing framework",
       "licenses": [
         {
@@ -894,7 +982,7 @@
     },
     {
       "name": "sbom:generation-date",
-      "value": "2026-05-08"
+      "value": "2026-05-14"
     },
     {
       "name": "project:repository",

@@ -430,9 +430,9 @@ describe('InvoiceListView', () => {
   it('generateAndDownloadPDF calls service and downloads', async () => {
     invoiceService.generatePDF.mockResolvedValue({})
     invoiceService.downloadPDF.mockResolvedValue(new Blob(['pdf'], { type: 'application/pdf' }))
-    globalThis.URL = { createObjectURL: vi.fn(() => 'blob:test'), revokeObjectURL: vi.fn() }
-    vi.spyOn(document.body, 'appendChild').mockImplementation(() => {})
-    vi.spyOn(document.body, 'removeChild').mockImplementation(() => {})
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test')
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
 
     wrapper = mount(InvoiceListView, { global: { plugins: [router] } })
     await flushPromises()
@@ -446,9 +446,9 @@ describe('InvoiceListView', () => {
   })
 
   it('handleBulkExport exports selected invoices to CSV', async () => {
-    globalThis.URL = { createObjectURL: vi.fn(() => 'blob:test'), revokeObjectURL: vi.fn() }
-    vi.spyOn(document.body, 'appendChild').mockImplementation(() => {})
-    vi.spyOn(document.body, 'removeChild').mockImplementation(() => {})
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test')
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
 
     wrapper = mount(InvoiceListView, { global: { plugins: [router] } })
     await flushPromises()

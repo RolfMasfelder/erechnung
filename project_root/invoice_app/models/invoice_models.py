@@ -106,6 +106,50 @@ class Invoice(models.Model):
     issue_date = models.DateField(_("Issue Date"), default=timezone.now)
     due_date = models.DateField(_("Due Date"), default=timezone.now)
     delivery_date = models.DateField(_("Delivery Date"), null=True, blank=True)
+    billing_period_start = models.DateField(
+        _("Billing Period Start"),
+        null=True,
+        blank=True,
+        help_text=_("Start of billing/service period (EN16931 BT-73)"),
+    )
+    billing_period_end = models.DateField(
+        _("Billing Period End"),
+        null=True,
+        blank=True,
+        help_text=_("End of billing/service period (EN16931 BT-74)"),
+    )
+
+    # ── Delivery Address BG-15 (BT-77–BT-80) ───────────────────────────────
+    delivery_address_line1 = models.CharField(
+        _("Delivery Address Line 1"),
+        max_length=200,
+        blank=True,
+        help_text=_("Street and house number of delivery address (EN16931 BT-75)"),
+    )
+    delivery_address_line2 = models.CharField(
+        _("Delivery Address Line 2"),
+        max_length=200,
+        blank=True,
+        help_text=_("Additional delivery address information (EN16931 BT-76)"),
+    )
+    delivery_city = models.CharField(
+        _("Delivery City"),
+        max_length=100,
+        blank=True,
+        help_text=_("City of delivery address (EN16931 BT-77)"),
+    )
+    delivery_postal_code = models.CharField(
+        _("Delivery Postal Code"),
+        max_length=20,
+        blank=True,
+        help_text=_("Postal code of delivery address (EN16931 BT-78)"),
+    )
+    delivery_country = models.CharField(
+        _("Delivery Country"),
+        max_length=2,
+        blank=True,
+        help_text=_("ISO 3166-1 alpha-2 country code of delivery address (EN16931 BT-80)"),
+    )
 
     # Financial information
     currency = models.CharField(_("Currency"), max_length=3, default="EUR")
@@ -117,6 +161,20 @@ class Invoice(models.Model):
     )
     total_amount = models.DecimalField(
         _("Total Amount"), max_digits=15, decimal_places=2, validators=[MinValueValidator(Decimal("0"))], default=0
+    )
+    prepaid_amount = models.DecimalField(
+        _("Prepaid Amount"),
+        max_digits=15,
+        decimal_places=2,
+        default=0,
+        help_text=_("Amount already paid / advance payment (EN16931 BT-113)"),
+    )
+    rounding_amount = models.DecimalField(
+        _("Rounding Amount"),
+        max_digits=15,
+        decimal_places=2,
+        default=0,
+        help_text=_("Rounding adjustment for the due amount (EN16931 BT-114)"),
     )
 
     # Payment information
@@ -142,6 +200,12 @@ class Invoice(models.Model):
         max_length=100,
         blank=True,
         help_text=_("Our internal reference or project number (Unser Zeichen)"),
+    )
+    contract_reference = models.CharField(
+        _("Contract Reference"),
+        max_length=200,
+        blank=True,
+        help_text=_("Contract number or identifier (EN16931 BT-12)"),
     )
 
     # Status and file references
@@ -638,6 +702,9 @@ class Invoice(models.Model):
                 tax_exemption_reason=line.tax_exemption_reason,
                 discount_percentage=line.discount_percentage,
                 discount_reason=line.discount_reason,
+                discount_reason_code=line.discount_reason_code,
+                vat_exemption_reason_code=line.vat_exemption_reason_code,
+                gross_price=line.gross_price,
             )
 
         # Mark original as cancelled
@@ -773,6 +840,48 @@ class InvoiceLine(models.Model):
     )
     # EN16931 BR-41: reason or reason code required when AllowanceCharge is present
     discount_reason = models.CharField(_("Discount Reason"), max_length=255, blank=True, default="")
+    # EN16931 BT-140 / BT-145: UNTDID 5189 (allowance) or 7161 (charge) reason code for line-level discount
+    discount_reason_code = models.CharField(
+        _("Discount Reason Code"),
+        max_length=10,
+        blank=True,
+        default="",
+        help_text=_("UNTDID 5189 or 7161 reason code for line-level allowance/charge (EN16931 BT-140/BT-145)"),
+    )
+    # EN16931 BT-121: VATEX exemption reason code (e.g. 'VATEX-EU-AE', 'VATEX-EU-G')
+    vat_exemption_reason_code = models.CharField(
+        _("VAT Exemption Reason Code"),
+        max_length=20,
+        blank=True,
+        default="",
+        help_text=_("VATEX code for VAT exemption reason (EN16931 BT-121, e.g. 'VATEX-EU-AE')"),
+    )
+
+    # EN16931 BG-29: Gross price (BT-148) — optional, triggers GrossPriceProductTradePrice in XML
+    # When set: price_discount (BT-147) = gross_price - unit_price
+    gross_price = models.DecimalField(
+        _("Gross Price"),
+        max_digits=15,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0"))],
+        help_text=_("Price before price-level discount (EN16931 BT-148). Net price = gross_price - price_discount."),
+    )
+
+    # EN16931 BG-26: Line-level billing period (BT-134 start, BT-135 end)
+    billing_period_start = models.DateField(
+        _("Line Billing Period Start"),
+        null=True,
+        blank=True,
+        help_text=_("Start of line-specific billing/service period (EN16931 BT-134)"),
+    )
+    billing_period_end = models.DateField(
+        _("Line Billing Period End"),
+        null=True,
+        blank=True,
+        help_text=_("End of line-specific billing/service period (EN16931 BT-135)"),
+    )
 
     class Meta:
         verbose_name = _("Invoice Line")

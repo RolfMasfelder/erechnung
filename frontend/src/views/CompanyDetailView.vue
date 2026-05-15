@@ -88,6 +88,11 @@
               <span v-else class="empty">-</span>
             </span>
           </div>
+
+          <div v-if="company.contact_name" class="detail-item">
+            <span class="detail-label">Kontaktperson:</span>
+            <span class="detail-value">{{ company.contact_name }}</span>
+          </div>
         </div>
       </BaseCard>
 

@@ -19,6 +19,8 @@ from lxml import etree
 
 User = get_user_model()
 
+_TEST_PW = "testpass123"
+
 
 class InvoiceReferenceModelTests(TestCase):
     """Test suite for Invoice model reference fields."""
@@ -66,7 +68,7 @@ class InvoiceReferenceModelTests(TestCase):
             default_reference_prefix="PO-",
         )
 
-        self.user = User.objects.create_user(username="testuser", password="testpass123")
+        self.user = User.objects.create_user(username="testuser", password=_TEST_PW)
 
     def test_invoice_with_both_references(self):
         """Test creating an invoice with both buyer and seller references."""
@@ -440,7 +442,7 @@ class InvoiceReferenceAPITests(TestCase):
             country=self.country,
         )
 
-        self.user = User.objects.create_user(username="apiuser", password="apipass123")
+        self.user = User.objects.create_user(username="apiuser", password=_TEST_PW)
 
     def test_invoice_serializer_includes_reference_fields(self):
         """Test that InvoiceSerializer includes buyer_reference and seller_reference."""
@@ -573,7 +575,7 @@ class InvoiceReferenceServiceTests(TestCase):
             default_tax_rate=Decimal("19.00"),
         )
 
-        self.user = User.objects.create_user(username="serviceuser", password="servicepass123")
+        self.user = User.objects.create_user(username="serviceuser", password=_TEST_PW)
 
         self.invoice_service = InvoiceService()
 
@@ -639,3 +641,1602 @@ class InvoiceReferenceServiceTests(TestCase):
         self.assertEqual(invoice_dict["seller_reference"], "")
         self.assertEqual(invoice_dict["seller_reference"], "")
         self.assertEqual(invoice_dict["seller_reference"], "")
+
+
+class ContractReferenceTests(TestCase):
+    """Test suite for contract_reference field (EN16931 BT-12)."""
+
+    RAM_NS = "urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
+
+    def setUp(self):
+        country = Country.objects.get_or_create(
+            code="DE",
+            defaults={
+                "code_alpha3": "DEU",
+                "numeric_code": "276",
+                "name": "Germany",
+                "name_local": "Deutschland",
+                "currency_code": "EUR",
+                "currency_name": "Euro",
+                "currency_symbol": "€",
+                "default_language": "de",
+                "is_eu_member": True,
+                "is_eurozone": True,
+                "standard_vat_rate": Decimal("19.00"),
+            },
+        )[0]
+        self.company = Company.objects.create(
+            name="Test GmbH",
+            tax_id="DE123456789",
+            vat_id="DE123456789",
+            address_line1="Musterstraße 1",
+            postal_code="12345",
+            city="Berlin",
+            country=country,
+            email="test@company.de",
+        )
+        self.partner = BusinessPartner.objects.create(
+            partner_type=BusinessPartner.PartnerType.BUSINESS,
+            company_name="Kunde AG",
+            tax_id="DE987654321",
+            vat_id="DE987654321",
+            address_line1="Kundenstraße 1",
+            postal_code="54321",
+            city="München",
+            country=country,
+            email="kunde@example.com",
+        )
+        self.user = User.objects.create_user(username="contractuser", password=_TEST_PW)
+        self.product = Product.objects.create(
+            name="Testprodukt",
+            product_code="CTR-PROD-001",
+            base_price=Decimal("100.00"),
+            default_tax_rate=Decimal("19.00"),
+        )
+        self.xml_generator = ZugferdXmlGenerator(profile="COMFORT")
+        self.invoice_service = InvoiceService()
+
+    def _make_invoice(self, contract_reference=""):
+        return Invoice.objects.create(
+            invoice_number=f"CTR-{contract_reference or 'EMPTY'}",
+            company=self.company,
+            business_partner=self.partner,
+            contract_reference=contract_reference,
+            currency="EUR",
+            subtotal=Decimal("100.00"),
+            tax_amount=Decimal("19.00"),
+            total_amount=Decimal("119.00"),
+            created_by=self.user,
+        )
+
+    def _base_xml_data(self, contract_reference=""):
+        return {
+            "number": "CTR-XML-001",
+            "date": "20260514",
+            "due_date": "20260614",
+            "buyer_reference": "",
+            "seller_reference": "",
+            "contract_reference": contract_reference,
+            "currency": "EUR",
+            "company": {"name": "Test GmbH", "tax_id": "DE123456789"},
+            "customer": {"name": "Kunde AG", "tax_id": "DE987654321"},
+            "items": [{"product_name": "Testprodukt", "quantity": 1, "price": 100.0, "tax_rate": 19.0}],
+        }
+
+    # -- Model tests --
+
+    def test_model_contract_reference_stored(self):
+        invoice = self._make_invoice("VTR-2026-001")
+        self.assertEqual(invoice.contract_reference, "VTR-2026-001")
+
+    def test_model_contract_reference_blank_by_default(self):
+        invoice = self._make_invoice()
+        self.assertEqual(invoice.contract_reference, "")
+
+    # -- XML tests --
+
+    def test_xml_contains_contract_referenced_document(self):
+        xml_string = self.xml_generator.generate_xml(self._base_xml_data("VTR-2026-001"))
+        root = etree.fromstring(xml_string.encode("utf-8"))
+        ns = {"ram": self.RAM_NS}
+        elem = root.find(".//ram:ContractReferencedDocument/ram:IssuerAssignedID", ns)
+        self.assertIsNotNone(elem, "ContractReferencedDocument should be present in XML")
+        self.assertEqual(elem.text, "VTR-2026-001")
+
+    def test_xml_omits_contract_referenced_document_when_empty(self):
+        xml_string = self.xml_generator.generate_xml(self._base_xml_data(""))
+        root = etree.fromstring(xml_string.encode("utf-8"))
+        ns = {"ram": self.RAM_NS}
+        elem = root.find(".//ram:ContractReferencedDocument", ns)
+        self.assertIsNone(elem, "ContractReferencedDocument should not appear when empty")
+
+    def test_xml_contract_after_buyer_order_before_additional(self):
+        """ContractReferencedDocument must follow BuyerOrderReferencedDocument per XSD sequence."""
+        data = self._base_xml_data("VTR-SEQ-001")
+        data["buyer_reference"] = "PO-001"
+        xml_string = self.xml_generator.generate_xml(data)
+        root = etree.fromstring(xml_string.encode("utf-8"))
+        agreement = root.find(
+            ".//{urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100}"
+            "ApplicableHeaderTradeAgreement"
+        )
+        self.assertIsNotNone(agreement)
+        tags = [child.tag.split("}")[-1] for child in agreement]
+        buyer_idx = next((i for i, t in enumerate(tags) if t == "BuyerOrderReferencedDocument"), None)
+        contract_idx = next((i for i, t in enumerate(tags) if t == "ContractReferencedDocument"), None)
+        self.assertIsNotNone(buyer_idx)
+        self.assertIsNotNone(contract_idx)
+        self.assertGreater(
+            contract_idx, buyer_idx, "ContractReferencedDocument must come after BuyerOrderReferencedDocument"
+        )
+
+    # -- Service test --
+
+    def test_service_convert_includes_contract_reference(self):
+        invoice = self._make_invoice("VTR-SVC-001")
+        InvoiceLine.objects.create(
+            invoice=invoice,
+            product=self.product,
+            description="Testprodukt",
+            quantity=Decimal("1"),
+            unit_price=Decimal("100.00"),
+            tax_rate=Decimal("19.00"),
+        )
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        self.assertIn("contract_reference", data)
+        self.assertEqual(data["contract_reference"], "VTR-SVC-001")
+
+    def test_service_convert_contract_reference_empty_fallback(self):
+        invoice = self._make_invoice("")
+        InvoiceLine.objects.create(
+            invoice=invoice,
+            product=self.product,
+            description="Testprodukt",
+            quantity=Decimal("1"),
+            unit_price=Decimal("100.00"),
+            tax_rate=Decimal("19.00"),
+        )
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        self.assertEqual(data["contract_reference"], "")
+
+
+class SellerContactTests(TestCase):
+    """Test suite for BG-6 Seller Contact (BT-39/BT-40/BT-41)."""
+
+    RAM_NS = "urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
+
+    def setUp(self):
+        country = Country.objects.get_or_create(
+            code="DE",
+            defaults={
+                "code_alpha3": "DEU",
+                "numeric_code": "276",
+                "name": "Germany",
+                "name_local": "Deutschland",
+                "currency_code": "EUR",
+                "currency_name": "Euro",
+                "currency_symbol": "€",
+                "default_language": "de",
+                "is_eu_member": True,
+                "is_eurozone": True,
+                "standard_vat_rate": Decimal("19.00"),
+            },
+        )[0]
+        self.company = Company.objects.create(
+            name="Seller GmbH",
+            tax_id="SC123456789",
+            vat_id="DE111111111",
+            address_line1="Verkäuferstr. 1",
+            postal_code="10115",
+            city="Berlin",
+            country=country,
+            email="kontakt@seller.de",
+            phone="+49 30 9999999",
+            contact_name="Max Mustermann",
+        )
+        self.partner = BusinessPartner.objects.create(
+            partner_type=BusinessPartner.PartnerType.BUSINESS,
+            company_name="Käufer AG",
+            tax_id="SC987654321",
+            vat_id="DE222222222",
+            address_line1="Käuferstr. 1",
+            postal_code="80331",
+            city="München",
+            country=country,
+            email="info@buyer.de",
+        )
+        self.user = User.objects.create_user(username="sellercontactuser", password=_TEST_PW)
+        self.product = Product.objects.create(
+            name="Kontaktprodukt",
+            product_code="SC-PROD-001",
+            base_price=Decimal("50.00"),
+            default_tax_rate=Decimal("19.00"),
+        )
+        self.xml_generator = ZugferdXmlGenerator(profile="COMFORT")
+        self.invoice_service = InvoiceService()
+
+    def _make_invoice(self):
+        return Invoice.objects.create(
+            invoice_number="SC-INV-001",
+            company=self.company,
+            business_partner=self.partner,
+            created_by=self.user,
+            currency="EUR",
+            subtotal=Decimal("50.00"),
+            tax_amount=Decimal("9.50"),
+            total_amount=Decimal("59.50"),
+        )
+
+    def _generate_xml(self, invoice):
+        InvoiceLine.objects.create(
+            invoice=invoice,
+            product=self.product,
+            description="Kontaktprodukt",
+            quantity=Decimal("1"),
+            unit_price=Decimal("50.00"),
+            tax_rate=Decimal("19.00"),
+        )
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        xml_string = self.xml_generator.generate_xml(data)
+        root = etree.fromstring(xml_string if isinstance(xml_string, bytes) else xml_string.encode())
+        return root
+
+    def test_xml_defined_trade_contact_present(self):
+        """DefinedTradeContact must be present when contact data is set."""
+        invoice = self._make_invoice()
+        root = self._generate_xml(invoice)
+        ns = {
+            "ram": self.RAM_NS,
+            "rsm": "urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100",
+        }
+        contact = root.find(".//ram:SellerTradeParty/ram:DefinedTradeContact", ns)
+        self.assertIsNotNone(contact, "DefinedTradeContact must be present for seller")
+
+    def test_xml_contact_person_name_bt39(self):
+        """BT-39: PersonName must contain the contact_name value."""
+        invoice = self._make_invoice()
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        person_name = root.find(".//ram:SellerTradeParty/ram:DefinedTradeContact/ram:PersonName", ns)
+        self.assertIsNotNone(person_name, "PersonName (BT-39) must be present")
+        self.assertEqual(person_name.text, "Max Mustermann")
+
+    def test_xml_contact_phone_bt40(self):
+        """BT-40: TelephoneUniversalCommunication/CompleteNumber must contain phone."""
+        invoice = self._make_invoice()
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        phone = root.find(
+            ".//ram:SellerTradeParty/ram:DefinedTradeContact/ram:TelephoneUniversalCommunication/ram:CompleteNumber",
+            ns,
+        )
+        self.assertIsNotNone(phone, "CompleteNumber (BT-40) must be present")
+        self.assertEqual(phone.text, "+49 30 9999999")
+
+    def test_xml_contact_email_bt41(self):
+        """BT-41: EmailURIUniversalCommunication/URIID must contain email."""
+        invoice = self._make_invoice()
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        email = root.find(
+            ".//ram:SellerTradeParty/ram:DefinedTradeContact/ram:EmailURIUniversalCommunication/ram:URIID",
+            ns,
+        )
+        self.assertIsNotNone(email, "URIID (BT-41) must be present")
+        self.assertEqual(email.text, "kontakt@seller.de")
+
+    def test_xml_no_contact_block_when_empty(self):
+        """DefinedTradeContact must not appear when all contact fields are empty."""
+        Company.objects.filter(pk=self.company.pk).update(contact_name="", phone="", email="")
+        self.company.refresh_from_db()
+        invoice = self._make_invoice()
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        contact = root.find(".//ram:SellerTradeParty/ram:DefinedTradeContact", ns)
+        self.assertIsNone(contact, "DefinedTradeContact must not appear when contact fields are empty")
+
+    def test_xml_contact_position_before_postal_address(self):
+        """DefinedTradeContact must appear before PostalTradeAddress per CII XSD sequence."""
+        invoice = self._make_invoice()
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        seller = root.find(".//ram:SellerTradeParty", ns)
+        self.assertIsNotNone(seller)
+        tags = [child.tag.split("}")[-1] for child in seller]
+        contact_idx = next((i for i, t in enumerate(tags) if t == "DefinedTradeContact"), None)
+        postal_idx = next((i for i, t in enumerate(tags) if t == "PostalTradeAddress"), None)
+        self.assertIsNotNone(contact_idx, "DefinedTradeContact must be in SellerTradeParty")
+        self.assertIsNotNone(postal_idx, "PostalTradeAddress must be in SellerTradeParty")
+        self.assertLess(contact_idx, postal_idx, "DefinedTradeContact must come before PostalTradeAddress")
+
+    def test_service_passes_contact_name_to_dict(self):
+        """convert_model_to_dict must include contact_name in company dict."""
+        invoice = self._make_invoice()
+        InvoiceLine.objects.create(
+            invoice=invoice,
+            product=self.product,
+            description="Kontaktprodukt",
+            quantity=Decimal("1"),
+            unit_price=Decimal("50.00"),
+            tax_rate=Decimal("19.00"),
+        )
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        self.assertIn("contact_name", data["company"])
+        self.assertEqual(data["company"]["contact_name"], "Max Mustermann")
+        self.assertIn("phone", data["company"])
+        self.assertEqual(data["company"]["phone"], "+49 30 9999999")
+
+
+class BillingPeriodTests(TestCase):
+    """Test suite for BG-14 Rechnungszeitraum (BT-73 billing_period_start / BT-74 billing_period_end)."""
+
+    RAM_NS = "urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
+    UDT_NS = "urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100"
+
+    def setUp(self):
+        country, _ = Country.objects.get_or_create(
+            code="DE",
+            defaults={
+                "name": "Germany",
+                "eu_member": True,
+                "standard_vat_rate": Decimal("19.00"),
+            },
+        )
+        self.company = Company.objects.create(
+            name="Billing Seller GmbH",
+            tax_id="BP123456789",
+            vat_id="DE333333333",
+            address_line1="Billingstr. 1",
+            postal_code="10115",
+            city="Berlin",
+            country=country,
+            email="billing@seller.de",
+        )
+        self.partner = BusinessPartner.objects.create(
+            partner_type=BusinessPartner.PartnerType.BUSINESS,
+            company_name="Billing Käufer AG",
+            tax_id="BP987654321",
+            vat_id="DE444444444",
+            address_line1="Käuferstr. 2",
+            postal_code="80331",
+            city="München",
+            country=country,
+            email="info@billingbuyer.de",
+        )
+        self.user = User.objects.create_user(username="billingperioduser", password=_TEST_PW)
+        self.product = Product.objects.create(
+            name="Billingprodukt",
+            product_code="BP-PROD-001",
+            base_price=Decimal("100.00"),
+            default_tax_rate=Decimal("19.00"),
+        )
+        self.xml_generator = ZugferdXmlGenerator(profile="COMFORT")
+        self.invoice_service = InvoiceService()
+
+    def _make_invoice(self, **kwargs):
+        defaults = {
+            "invoice_number": "BP-INV-001",
+            "company": self.company,
+            "business_partner": self.partner,
+            "created_by": self.user,
+            "currency": "EUR",
+            "subtotal": Decimal("100.00"),
+            "tax_amount": Decimal("19.00"),
+            "total_amount": Decimal("119.00"),
+        }
+        defaults.update(kwargs)
+        return Invoice.objects.create(**defaults)
+
+    def _generate_xml(self, invoice):
+        InvoiceLine.objects.get_or_create(
+            invoice=invoice,
+            defaults={
+                "product": self.product,
+                "description": "Billingprodukt",
+                "quantity": Decimal("1"),
+                "unit_price": Decimal("100.00"),
+                "tax_rate": Decimal("19.00"),
+            },
+        )
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        xml_string = self.xml_generator.generate_xml(data)
+        return etree.fromstring(xml_string if isinstance(xml_string, bytes) else xml_string.encode())
+
+    def test_xml_billing_period_present_when_set(self):
+        """BillingSpecifiedPeriod must appear when start and end are set."""
+        from datetime import date
+
+        invoice = self._make_invoice(
+            billing_period_start=date(2026, 4, 1),
+            billing_period_end=date(2026, 4, 30),
+        )
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        period = root.find(".//ram:BillingSpecifiedPeriod", ns)
+        self.assertIsNotNone(period, "BillingSpecifiedPeriod must be present when dates are set")
+
+    def test_xml_billing_period_absent_when_empty(self):
+        """BillingSpecifiedPeriod must not appear when both dates are None."""
+        invoice = self._make_invoice()
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        period = root.find(".//ram:BillingSpecifiedPeriod", ns)
+        self.assertIsNone(period, "BillingSpecifiedPeriod must not appear when dates are empty")
+
+    def test_xml_start_datetime_value_bt73(self):
+        """BT-73: StartDateTime DateTimeString must be YYYYMMDD with format 102."""
+        from datetime import date
+
+        invoice = self._make_invoice(billing_period_start=date(2026, 4, 1))
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS, "udt": self.UDT_NS}
+        start_str = root.find(".//ram:BillingSpecifiedPeriod/ram:StartDateTime/udt:DateTimeString", ns)
+        self.assertIsNotNone(start_str, "StartDateTime DateTimeString (BT-73) must be present")
+        self.assertEqual(start_str.text, "20260401")
+        self.assertEqual(start_str.get("format"), "102")
+
+    def test_xml_end_datetime_value_bt74(self):
+        """BT-74: EndDateTime DateTimeString must be YYYYMMDD with format 102."""
+        from datetime import date
+
+        invoice = self._make_invoice(billing_period_end=date(2026, 4, 30))
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS, "udt": self.UDT_NS}
+        end_str = root.find(".//ram:BillingSpecifiedPeriod/ram:EndDateTime/udt:DateTimeString", ns)
+        self.assertIsNotNone(end_str, "EndDateTime DateTimeString (BT-74) must be present")
+        self.assertEqual(end_str.text, "20260430")
+        self.assertEqual(end_str.get("format"), "102")
+
+    def test_xml_only_start_without_end(self):
+        """BillingSpecifiedPeriod with only StartDateTime when only start is set."""
+        from datetime import date
+
+        invoice = self._make_invoice(billing_period_start=date(2026, 4, 1))
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS, "udt": self.UDT_NS}
+        period = root.find(".//ram:BillingSpecifiedPeriod", ns)
+        self.assertIsNotNone(period)
+        start_str = period.find("ram:StartDateTime/udt:DateTimeString", ns)
+        self.assertIsNotNone(start_str)
+        end_str = period.find("ram:EndDateTime/udt:DateTimeString", ns)
+        self.assertIsNone(end_str, "EndDateTime must not appear when billing_period_end is empty")
+
+    def test_xml_billing_period_after_applicable_trade_tax(self):
+        """BillingSpecifiedPeriod must appear after ApplicableTradeTax in the XSD sequence."""
+        from datetime import date
+
+        invoice = self._make_invoice(
+            billing_period_start=date(2026, 4, 1),
+            billing_period_end=date(2026, 4, 30),
+        )
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS, "rsm": "urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100"}
+        settlement = root.find(".//ram:ApplicableHeaderTradeSettlement", ns)
+        self.assertIsNotNone(settlement)
+        tags = [child.tag.split("}")[-1] for child in settlement]
+        tax_idx = next((i for i, t in enumerate(tags) if t == "ApplicableTradeTax"), None)
+        period_idx = next((i for i, t in enumerate(tags) if t == "BillingSpecifiedPeriod"), None)
+        self.assertIsNotNone(period_idx, "BillingSpecifiedPeriod must be in ApplicableHeaderTradeSettlement")
+        self.assertIsNotNone(tax_idx, "ApplicableTradeTax must be in ApplicableHeaderTradeSettlement")
+        self.assertGreater(period_idx, tax_idx, "BillingSpecifiedPeriod must come after ApplicableTradeTax")
+
+    def test_serializer_rejects_start_after_end(self):
+        """Serializer must raise ValidationError when billing_period_start > billing_period_end."""
+        from rest_framework.test import APIClient
+
+        client = APIClient()
+        client.force_authenticate(user=self.user)
+        # Build a minimal valid invoice payload and include invalid period
+        url = "/api/invoices/"
+        payload = {
+            "company": self.company.pk,
+            "business_partner": self.partner.pk,
+            "issue_date": "2026-04-01",
+            "due_date": "2026-04-30",
+            "currency": "EUR",
+            "billing_period_start": "2026-04-30",
+            "billing_period_end": "2026-04-01",
+        }
+        response = client.post(url, payload, format="json")
+        self.assertEqual(response.status_code, 400)
+        # Error is wrapped under response.data['error']['details']
+        error_details = response.data.get("error", {}).get("details", response.data)
+        self.assertIn("billing_period_start", error_details)
+
+    def test_service_passes_billing_period_to_dict(self):
+        """convert_model_to_dict must include billing_period_start/end formatted as YYYYMMDD."""
+        from datetime import date
+
+        invoice = self._make_invoice(
+            billing_period_start=date(2026, 4, 1),
+            billing_period_end=date(2026, 4, 30),
+        )
+        InvoiceLine.objects.get_or_create(
+            invoice=invoice,
+            defaults={
+                "product": self.product,
+                "description": "Billingprodukt",
+                "quantity": Decimal("1"),
+                "unit_price": Decimal("100.00"),
+                "tax_rate": Decimal("19.00"),
+            },
+        )
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        self.assertEqual(data.get("billing_period_start"), "20260401")
+        self.assertEqual(data.get("billing_period_end"), "20260430")
+
+
+class LineBillingPeriodTests(TestCase):
+    """Test suite for BG-26 Zeilenspezifischer Leistungszeitraum (BT-134 / BT-135)."""
+
+    RAM_NS = "urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
+    UDT_NS = "urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100"
+
+    def setUp(self):
+        country, _ = Country.objects.get_or_create(
+            code="DE",
+            defaults={
+                "name": "Germany",
+                "eu_member": True,
+                "standard_vat_rate": Decimal("19.00"),
+            },
+        )
+        self.company = Company.objects.create(
+            name="Line Billing Seller GmbH",
+            tax_id="LB123456789",
+            vat_id="DE555555555",
+            address_line1="Linestr. 1",
+            postal_code="10115",
+            city="Berlin",
+            country=country,
+            email="line@seller.de",
+        )
+        self.partner = BusinessPartner.objects.create(
+            partner_type=BusinessPartner.PartnerType.BUSINESS,
+            company_name="Line Billing Käufer AG",
+            tax_id="LB987654321",
+            vat_id="DE666666666",
+            address_line1="Linestr. 2",
+            postal_code="80331",
+            city="München",
+            country=country,
+            email="info@linebillingbuyer.de",
+        )
+        self.user = User.objects.create_user(username="linebillingperioduser", password=_TEST_PW)
+        self.product = Product.objects.create(
+            name="Linebillingprodukt",
+            product_code="LB-PROD-001",
+            base_price=Decimal("100.00"),
+            default_tax_rate=Decimal("19.00"),
+        )
+        self.xml_generator = ZugferdXmlGenerator(profile="COMFORT")
+        self.invoice_service = InvoiceService()
+
+    def _make_invoice(self):
+        return Invoice.objects.create(
+            invoice_number="LB-INV-001",
+            company=self.company,
+            business_partner=self.partner,
+            created_by=self.user,
+            currency="EUR",
+            subtotal=Decimal("100.00"),
+            tax_amount=Decimal("19.00"),
+            total_amount=Decimal("119.00"),
+        )
+
+    def _generate_xml(self, line_kwargs):
+        invoice = self._make_invoice()
+        defaults = {
+            "product": self.product,
+            "description": "Linebillingprodukt",
+            "quantity": Decimal("1"),
+            "unit_price": Decimal("100.00"),
+            "tax_rate": Decimal("19.00"),
+        }
+        defaults.update(line_kwargs)
+        InvoiceLine.objects.create(invoice=invoice, **defaults)
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        xml_string = self.xml_generator.generate_xml(data)
+        return etree.fromstring(xml_string if isinstance(xml_string, bytes) else xml_string.encode())
+
+    def test_xml_line_billing_period_present_when_set(self):
+        """BillingSpecifiedPeriod in SpecifiedLineTradeDelivery when BT-134/BT-135 are set."""
+        from datetime import date
+
+        root = self._generate_xml(
+            {
+                "billing_period_start": date(2026, 5, 1),
+                "billing_period_end": date(2026, 5, 31),
+            }
+        )
+        ns = {"ram": self.RAM_NS}
+        period = root.find(".//ram:SpecifiedLineTradeDelivery/ram:BillingSpecifiedPeriod", ns)
+        self.assertIsNotNone(period, "BillingSpecifiedPeriod must be in SpecifiedLineTradeDelivery")
+
+    def test_xml_line_billing_period_absent_when_empty(self):
+        """BillingSpecifiedPeriod must not appear in line delivery when dates are None."""
+        root = self._generate_xml({})
+        ns = {"ram": self.RAM_NS}
+        period = root.find(".//ram:SpecifiedLineTradeDelivery/ram:BillingSpecifiedPeriod", ns)
+        self.assertIsNone(period, "BillingSpecifiedPeriod must not appear when line dates are empty")
+
+    def test_xml_line_start_datetime_value_bt134(self):
+        """BT-134: StartDateTime DateTimeString must be YYYYMMDD with format 102."""
+        from datetime import date
+
+        root = self._generate_xml({"billing_period_start": date(2026, 5, 1)})
+        ns = {"ram": self.RAM_NS, "udt": self.UDT_NS}
+        start_str = root.find(
+            ".//ram:SpecifiedLineTradeDelivery/ram:BillingSpecifiedPeriod/ram:StartDateTime/udt:DateTimeString", ns
+        )
+        self.assertIsNotNone(start_str, "StartDateTime DateTimeString (BT-134) must be present")
+        self.assertEqual(start_str.text, "20260501")
+        self.assertEqual(start_str.get("format"), "102")
+
+    def test_xml_line_end_datetime_value_bt135(self):
+        """BT-135: EndDateTime DateTimeString must be YYYYMMDD with format 102."""
+        from datetime import date
+
+        root = self._generate_xml({"billing_period_end": date(2026, 5, 31)})
+        ns = {"ram": self.RAM_NS, "udt": self.UDT_NS}
+        end_str = root.find(
+            ".//ram:SpecifiedLineTradeDelivery/ram:BillingSpecifiedPeriod/ram:EndDateTime/udt:DateTimeString", ns
+        )
+        self.assertIsNotNone(end_str, "EndDateTime DateTimeString (BT-135) must be present")
+        self.assertEqual(end_str.text, "20260531")
+        self.assertEqual(end_str.get("format"), "102")
+
+    def test_xml_line_only_start_without_end(self):
+        """BillingSpecifiedPeriod with only StartDateTime when only BT-134 is set."""
+        from datetime import date
+
+        root = self._generate_xml({"billing_period_start": date(2026, 5, 1)})
+        ns = {"ram": self.RAM_NS, "udt": self.UDT_NS}
+        period = root.find(".//ram:SpecifiedLineTradeDelivery/ram:BillingSpecifiedPeriod", ns)
+        self.assertIsNotNone(period)
+        start_str = period.find("ram:StartDateTime/udt:DateTimeString", ns)
+        self.assertIsNotNone(start_str)
+        end_str = period.find("ram:EndDateTime/udt:DateTimeString", ns)
+        self.assertIsNone(end_str, "EndDateTime must not appear when billing_period_end is empty")
+
+    def test_serializer_rejects_line_start_after_end(self):
+        """InvoiceLineSerializer must reject billing_period_start > billing_period_end."""
+        from rest_framework.test import APIClient
+
+        invoice = self._make_invoice()
+        client = APIClient()
+        client.force_authenticate(user=self.user)
+        url = "/api/invoice-lines/"
+        payload = {
+            "invoice": invoice.pk,
+            "product": self.product.pk,
+            "quantity": "1.00",
+            "unit_price": "100.00",
+            "tax_rate": "19.00",
+            "billing_period_start": "2026-05-31",
+            "billing_period_end": "2026-05-01",
+        }
+        response = client.post(url, payload, format="json")
+        self.assertEqual(response.status_code, 400)
+        error_details = response.data.get("error", {}).get("details", response.data)
+        self.assertIn("billing_period_start", error_details)
+
+    def test_service_passes_line_billing_period_to_dict(self):
+        """convert_model_to_dict must include per-line billing_period_start/end as YYYYMMDD."""
+        from datetime import date
+
+        invoice = self._make_invoice()
+        InvoiceLine.objects.create(
+            invoice=invoice,
+            product=self.product,
+            description="Linebillingprodukt",
+            quantity=Decimal("1"),
+            unit_price=Decimal("100.00"),
+            tax_rate=Decimal("19.00"),
+            billing_period_start=date(2026, 5, 1),
+            billing_period_end=date(2026, 5, 31),
+        )
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        item = data["items"][0]
+        self.assertEqual(item.get("billing_period_start"), "20260501")
+        self.assertEqual(item.get("billing_period_end"), "20260531")
+
+
+class DeliveryAddressTests(TestCase):
+    """Test suite for BG-15 Lieferadresse (BT-75/BT-76/BT-77/BT-78/BT-80)."""
+
+    RAM_NS = "urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
+
+    def setUp(self):
+        country, _ = Country.objects.get_or_create(
+            code="DE",
+            defaults={
+                "name": "Germany",
+                "eu_member": True,
+                "standard_vat_rate": Decimal("19.00"),
+            },
+        )
+        self.company = Company.objects.create(
+            name="Delivery Seller GmbH",
+            tax_id="DS123456789",
+            vat_id="DE123123123",
+            address_line1="Verkäuferstr. 1",
+            postal_code="10115",
+            city="Berlin",
+            country=country,
+            email="delivery@seller.de",
+        )
+        self.partner = BusinessPartner.objects.create(
+            partner_type=BusinessPartner.PartnerType.BUSINESS,
+            company_name="Delivery Käufer AG",
+            tax_id="DS987654321",
+            vat_id="DE456456456",
+            address_line1="Käuferstr. 2",
+            postal_code="80331",
+            city="München",
+            country=country,
+            email="info@deliverybuyer.de",
+        )
+        self.user = User.objects.create_user(username="deliveryuser", password=_TEST_PW)
+        self.product = Product.objects.create(
+            name="Delivery Product",
+            product_code="DELIV-001",
+            base_price=Decimal("100.00"),
+            default_tax_rate=Decimal("19.00"),
+        )
+        self.xml_generator = ZugferdXmlGenerator(profile="COMFORT")
+        self.invoice_service = InvoiceService()
+
+    def _make_invoice(self, **kwargs):
+        defaults = {
+            "invoice_number": "DELIV-INV-001",
+            "company": self.company,
+            "business_partner": self.partner,
+            "created_by": self.user,
+            "currency": "EUR",
+            "subtotal": Decimal("100.00"),
+            "tax_amount": Decimal("19.00"),
+            "total_amount": Decimal("119.00"),
+        }
+        defaults.update(kwargs)
+        return Invoice.objects.create(**defaults)
+
+    def _generate_xml(self, invoice):
+        InvoiceLine.objects.get_or_create(
+            invoice=invoice,
+            defaults={
+                "product": self.product,
+                "description": "Delivery Product",
+                "quantity": Decimal("1"),
+                "unit_price": Decimal("100.00"),
+                "tax_rate": Decimal("19.00"),
+            },
+        )
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        xml_string = self.xml_generator.generate_xml(data)
+        return etree.fromstring(xml_string if isinstance(xml_string, bytes) else xml_string.encode())
+
+    def test_xml_ship_to_absent_when_empty(self):
+        """ShipToTradeParty must not appear when all delivery address fields are empty."""
+        invoice = self._make_invoice()
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        ship_to = root.find(".//ram:ShipToTradeParty", ns)
+        self.assertIsNone(ship_to, "ShipToTradeParty must not appear when delivery address is empty")
+
+    def test_xml_ship_to_present_when_city_set(self):
+        """ShipToTradeParty/PostalTradeAddress must appear when delivery_city is set."""
+        invoice = self._make_invoice(
+            delivery_city="Hamburg",
+            delivery_postal_code="20095",
+            delivery_country="DE",
+        )
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        ship_to = root.find(".//ram:ShipToTradeParty", ns)
+        self.assertIsNotNone(ship_to, "ShipToTradeParty must be present when delivery city is set")
+        postal = ship_to.find("ram:PostalTradeAddress", ns)
+        self.assertIsNotNone(postal, "PostalTradeAddress must be inside ShipToTradeParty")
+
+    def test_xml_ship_to_address_values(self):
+        """PostalTradeAddress must contain correct BT-75/BT-77/BT-78/BT-80 values."""
+        invoice = self._make_invoice(
+            delivery_address_line1="Hauptstr. 5",
+            delivery_address_line2="EG links",
+            delivery_city="Frankfurt",
+            delivery_postal_code="60313",
+            delivery_country="DE",
+        )
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        postal = root.find(".//ram:ShipToTradeParty/ram:PostalTradeAddress", ns)
+        self.assertIsNotNone(postal)
+        self.assertEqual(postal.findtext("ram:LineOne", namespaces=ns), "Hauptstr. 5")
+        self.assertEqual(postal.findtext("ram:LineTwo", namespaces=ns), "EG links")
+        self.assertEqual(postal.findtext("ram:CityName", namespaces=ns), "Frankfurt")
+        self.assertEqual(postal.findtext("ram:PostcodeCode", namespaces=ns), "60313")
+        self.assertEqual(postal.findtext("ram:CountryID", namespaces=ns), "DE")
+
+    def test_xml_ship_to_before_actual_delivery_event(self):
+        """ShipToTradeParty must appear before ActualDeliverySupplyChainEvent in the delivery element."""
+        invoice = self._make_invoice(
+            delivery_city="Hamburg",
+            delivery_postal_code="20095",
+            delivery_country="DE",
+        )
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        delivery = root.find(".//ram:ApplicableHeaderTradeDelivery", ns)
+        self.assertIsNotNone(delivery)
+        tags = [child.tag.split("}")[-1] for child in delivery]
+        self.assertIn("ShipToTradeParty", tags)
+        self.assertIn("ActualDeliverySupplyChainEvent", tags)
+        self.assertLess(
+            tags.index("ShipToTradeParty"),
+            tags.index("ActualDeliverySupplyChainEvent"),
+            "ShipToTradeParty must precede ActualDeliverySupplyChainEvent",
+        )
+
+    def test_service_passes_delivery_address_to_dict(self):
+        """convert_model_to_dict must include delivery_address sub-dict."""
+        invoice = self._make_invoice(
+            delivery_address_line1="Bahnhofstr. 10",
+            delivery_city="Köln",
+            delivery_postal_code="50667",
+            delivery_country="DE",
+        )
+        InvoiceLine.objects.get_or_create(
+            invoice=invoice,
+            defaults={
+                "product": self.product,
+                "description": "D",
+                "quantity": Decimal("1"),
+                "unit_price": Decimal("100.00"),
+                "tax_rate": Decimal("19.00"),
+            },
+        )
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        addr = data.get("delivery_address", {})
+        self.assertEqual(addr.get("line1"), "Bahnhofstr. 10")
+        self.assertEqual(addr.get("city"), "Köln")
+        self.assertEqual(addr.get("postal_code"), "50667")
+        self.assertEqual(addr.get("country_id"), "DE")
+
+    def test_model_delivery_address_fields_default_empty(self):
+        """All delivery address fields must default to empty string."""
+        invoice = self._make_invoice()
+        self.assertEqual(invoice.delivery_address_line1, "")
+        self.assertEqual(invoice.delivery_address_line2, "")
+        self.assertEqual(invoice.delivery_city, "")
+        self.assertEqual(invoice.delivery_postal_code, "")
+        self.assertEqual(invoice.delivery_country, "")
+
+
+class PrepaidRoundingTests(TestCase):
+    """Test suite for BT-113 PrepaidAmount and BT-114 RoundingAmount (BG-22)."""
+
+    RAM_NS = "urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
+
+    def setUp(self):
+        country, _ = Country.objects.get_or_create(
+            code="DE",
+            defaults={
+                "name": "Germany",
+                "eu_member": True,
+                "standard_vat_rate": Decimal("19.00"),
+            },
+        )
+        self.company = Company.objects.create(
+            name="Prepaid Seller GmbH",
+            tax_id="PR123456789",
+            vat_id="DE789789789",
+            address_line1="Verkäuferstr. 5",
+            postal_code="10115",
+            city="Berlin",
+            country=country,
+            email="prepaid@seller.de",
+        )
+        self.partner = BusinessPartner.objects.create(
+            partner_type=BusinessPartner.PartnerType.BUSINESS,
+            company_name="Prepaid Käufer AG",
+            tax_id="PR987654321",
+            vat_id="DE321321321",
+            address_line1="Käuferstr. 99",
+            postal_code="80331",
+            city="München",
+            country=country,
+            email="info@prepaidbuyer.de",
+        )
+        self.user = User.objects.create_user(username="prepaiduser", password=_TEST_PW)
+        self.product = Product.objects.create(
+            name="Prepaid Product",
+            product_code="PREPAID-001",
+            base_price=Decimal("100.00"),
+            default_tax_rate=Decimal("19.00"),
+        )
+        self.xml_generator = ZugferdXmlGenerator(profile="COMFORT")
+        self.invoice_service = InvoiceService()
+
+    def _make_invoice(self, **kwargs):
+        defaults = {
+            "invoice_number": "PREPAID-INV-001",
+            "company": self.company,
+            "business_partner": self.partner,
+            "created_by": self.user,
+            "currency": "EUR",
+            "subtotal": Decimal("100.00"),
+            "tax_amount": Decimal("19.00"),
+            "total_amount": Decimal("119.00"),
+            "prepaid_amount": Decimal("0.00"),
+            "rounding_amount": Decimal("0.00"),
+        }
+        defaults.update(kwargs)
+        return Invoice.objects.create(**defaults)
+
+    def _generate_xml(self, invoice):
+        InvoiceLine.objects.get_or_create(
+            invoice=invoice,
+            defaults={
+                "product": self.product,
+                "description": "Prepaid Product",
+                "quantity": Decimal("1"),
+                "unit_price": Decimal("100.00"),
+                "tax_rate": Decimal("19.00"),
+            },
+        )
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        xml_string = self.xml_generator.generate_xml(data)
+        return etree.fromstring(xml_string if isinstance(xml_string, bytes) else xml_string.encode())
+
+    def test_xml_no_prepaid_element_when_zero(self):
+        """TotalPrepaidAmount must not appear in XML when prepaid_amount is 0."""
+        invoice = self._make_invoice()
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        prepaid_elem = root.find(".//ram:TotalPrepaidAmount", ns)
+        self.assertIsNone(prepaid_elem, "TotalPrepaidAmount must not appear when value is 0")
+
+    def test_xml_no_rounding_element_when_zero(self):
+        """RoundingAmount must not appear in XML when rounding_amount is 0."""
+        invoice = self._make_invoice()
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        rounding_elem = root.find(".//ram:RoundingAmount", ns)
+        self.assertIsNone(rounding_elem, "RoundingAmount must not appear when value is 0")
+
+    def test_xml_prepaid_amount_present_when_set(self):
+        """TotalPrepaidAmount must appear with correct value when prepaid_amount > 0."""
+        invoice = self._make_invoice(prepaid_amount=Decimal("50.00"))
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        prepaid_elem = root.find(".//ram:TotalPrepaidAmount", ns)
+        self.assertIsNotNone(prepaid_elem, "TotalPrepaidAmount must appear when prepaid_amount > 0")
+        self.assertEqual(prepaid_elem.text, "50.00")
+
+    def test_xml_rounding_amount_present_when_set(self):
+        """RoundingAmount must appear with correct value when rounding_amount != 0."""
+        invoice = self._make_invoice(rounding_amount=Decimal("0.01"))
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        rounding_elem = root.find(".//ram:RoundingAmount", ns)
+        self.assertIsNotNone(rounding_elem, "RoundingAmount must appear when rounding_amount != 0")
+        self.assertEqual(rounding_elem.text, "0.01")
+
+    def test_xml_due_payable_reduced_by_prepaid(self):
+        """DuePayableAmount must equal GrandTotal - PrepaidAmount."""
+        invoice = self._make_invoice(prepaid_amount=Decimal("50.00"))
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        summation = root.find(".//ram:SpecifiedTradeSettlementHeaderMonetarySummation", ns)
+        self.assertIsNotNone(summation)
+        grand_total = float(summation.findtext("ram:GrandTotalAmount", namespaces=ns))
+        due_payable = float(summation.findtext("ram:DuePayableAmount", namespaces=ns))
+        self.assertAlmostEqual(due_payable, grand_total - 50.00, places=2)
+
+    def test_xml_due_payable_adjusted_by_rounding(self):
+        """DuePayableAmount must equal GrandTotal + RoundingAmount."""
+        invoice = self._make_invoice(rounding_amount=Decimal("0.02"))
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        summation = root.find(".//ram:SpecifiedTradeSettlementHeaderMonetarySummation", ns)
+        grand_total = float(summation.findtext("ram:GrandTotalAmount", namespaces=ns))
+        due_payable = float(summation.findtext("ram:DuePayableAmount", namespaces=ns))
+        self.assertAlmostEqual(due_payable, grand_total + 0.02, places=2)
+
+    def test_xml_due_payable_both_prepaid_and_rounding(self):
+        """DuePayableAmount = GrandTotal - PrepaidAmount + RoundingAmount."""
+        invoice = self._make_invoice(
+            prepaid_amount=Decimal("30.00"),
+            rounding_amount=Decimal("0.05"),
+        )
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        summation = root.find(".//ram:SpecifiedTradeSettlementHeaderMonetarySummation", ns)
+        grand_total = float(summation.findtext("ram:GrandTotalAmount", namespaces=ns))
+        due_payable = float(summation.findtext("ram:DuePayableAmount", namespaces=ns))
+        self.assertAlmostEqual(due_payable, grand_total - 30.00 + 0.05, places=2)
+
+    def test_service_passes_prepaid_rounding_to_dict(self):
+        """convert_model_to_dict must include prepaid_amount and rounding_amount."""
+        invoice = self._make_invoice(
+            prepaid_amount=Decimal("20.00"),
+            rounding_amount=Decimal("0.01"),
+        )
+        InvoiceLine.objects.get_or_create(
+            invoice=invoice,
+            defaults={
+                "product": self.product,
+                "description": "P",
+                "quantity": Decimal("1"),
+                "unit_price": Decimal("100.00"),
+                "tax_rate": Decimal("19.00"),
+            },
+        )
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        self.assertEqual(data.get("prepaid_amount"), 20.00)
+        self.assertEqual(data.get("rounding_amount"), 0.01)
+
+    def test_model_defaults_zero(self):
+        """prepaid_amount and rounding_amount must default to 0."""
+        invoice = Invoice.objects.create(
+            invoice_number="PREPAID-INV-DEFAULT",
+            company=self.company,
+            business_partner=self.partner,
+            created_by=self.user,
+            currency="EUR",
+            subtotal=Decimal("100.00"),
+            tax_amount=Decimal("19.00"),
+            total_amount=Decimal("119.00"),
+        )
+        self.assertEqual(invoice.prepaid_amount, Decimal("0"))
+        self.assertEqual(invoice.rounding_amount, Decimal("0"))
+
+
+class ReasonCodesTests(TestCase):
+    """Test suite for BT-121 (VATEX), BT-140/BT-145 (line-level reason codes)."""
+
+    RAM_NS = "urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
+
+    def setUp(self):
+        country, _ = Country.objects.get_or_create(
+            code="DE",
+            defaults={
+                "name": "Germany",
+                "eu_member": True,
+                "standard_vat_rate": Decimal("19.00"),
+            },
+        )
+        self.company = Company.objects.create(
+            name="RC Seller GmbH",
+            tax_id="RC123456789",
+            vat_id="DE111222333",
+            address_line1="Verkäuferstr. 1",
+            postal_code="10115",
+            city="Berlin",
+            country=country,
+            email="rc@seller.de",
+        )
+        self.partner = BusinessPartner.objects.create(
+            partner_type=BusinessPartner.PartnerType.BUSINESS,
+            company_name="RC Käufer AG",
+            tax_id="RC987654321",
+            vat_id="DE444555666",
+            address_line1="Käuferstr. 9",
+            postal_code="80331",
+            city="München",
+            country=country,
+            email="info@rcbuyer.de",
+        )
+        self.user = User.objects.create_user(username="rcuser", password=_TEST_PW)
+        self.product = Product.objects.create(
+            name="RC Product",
+            product_code="RC-001",
+            base_price=Decimal("100.00"),
+            default_tax_rate=Decimal("19.00"),
+        )
+        self.xml_generator = ZugferdXmlGenerator(profile="COMFORT")
+        self.invoice_service = InvoiceService()
+
+    def _make_invoice(self, **kwargs):
+        defaults = {
+            "invoice_number": "RC-INV-001",
+            "company": self.company,
+            "business_partner": self.partner,
+            "created_by": self.user,
+            "currency": "EUR",
+            "subtotal": Decimal("100.00"),
+            "tax_amount": Decimal("0.00"),
+            "total_amount": Decimal("100.00"),
+        }
+        defaults.update(kwargs)
+        return Invoice.objects.create(**defaults)
+
+    def _generate_xml(self, invoice):
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        xml_string = self.xml_generator.generate_xml(data)
+        return etree.fromstring(xml_string if isinstance(xml_string, bytes) else xml_string.encode())
+
+    def _make_line(self, invoice, **kwargs):
+        defaults = {
+            "invoice": invoice,
+            "product": None,
+            "description": "RC Product",
+            "product_code": "RC-001",
+            "quantity": Decimal("1"),
+            "unit_price": Decimal("100.00"),
+            "tax_rate": Decimal("0.00"),
+            "tax_category": "AE",
+        }
+        defaults.update(kwargs)
+        return InvoiceLine.objects.create(**defaults)
+
+    # ── BT-121: ExemptionReasonCode in line-level ApplicableTradeTax ─────────
+
+    def test_xml_exemption_reason_code_absent_when_empty(self):
+        """ExemptionReasonCode must not appear when vat_exemption_reason_code is empty."""
+        invoice = self._make_invoice()
+        self._make_line(invoice)
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        code_el = root.find(".//ram:ExemptionReasonCode", ns)
+        self.assertIsNone(code_el, "ExemptionReasonCode must not appear when field is empty")
+
+    def test_xml_exemption_reason_code_present_when_set(self):
+        """ExemptionReasonCode (BT-121) must appear in line-level ApplicableTradeTax."""
+        invoice = self._make_invoice()
+        self._make_line(invoice, vat_exemption_reason_code="VATEX-EU-AE")
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        code_el = root.find(".//ram:ExemptionReasonCode", ns)
+        self.assertIsNotNone(code_el, "ExemptionReasonCode must appear when set")
+        self.assertEqual(code_el.text, "VATEX-EU-AE")
+
+    def test_xml_exemption_reason_code_in_header_tax(self):
+        """ExemptionReasonCode must also appear in header-level ApplicableTradeTax aggregation."""
+        invoice = self._make_invoice()
+        self._make_line(invoice, vat_exemption_reason_code="VATEX-EU-G", tax_category="G")
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        settlement = root.find(".//ram:ApplicableHeaderTradeSettlement", ns)
+        self.assertIsNotNone(settlement)
+        header_tax = settlement.find("ram:ApplicableTradeTax", ns)
+        self.assertIsNotNone(header_tax)
+        code_el = header_tax.find("ram:ExemptionReasonCode", ns)
+        self.assertIsNotNone(code_el, "ExemptionReasonCode must be in header ApplicableTradeTax")
+        self.assertEqual(code_el.text, "VATEX-EU-G")
+
+    def test_xml_exemption_reason_code_only_for_exempt_categories(self):
+        """ExemptionReasonCode must NOT appear for standard tax category S."""
+        invoice = self._make_invoice(
+            subtotal=Decimal("100.00"),
+            tax_amount=Decimal("19.00"),
+            total_amount=Decimal("119.00"),
+        )
+        self._make_line(
+            invoice,
+            tax_rate=Decimal("19.00"),
+            tax_category="S",
+            vat_exemption_reason_code="VATEX-EU-AE",
+        )
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        code_el = root.find(".//ram:ExemptionReasonCode", ns)
+        self.assertIsNone(code_el, "ExemptionReasonCode must not appear for S category")
+
+    # ── BT-140: ReasonCode in line-level SpecifiedTradeAllowanceCharge ────────
+
+    def test_xml_line_discount_no_reason_code_when_empty(self):
+        """ReasonCode must not appear in line AllowanceCharge when discount_reason_code is empty."""
+        invoice = self._make_invoice()
+        self._make_line(invoice, discount_percentage=Decimal("10.00"), discount_amount=Decimal("10.00"))
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        line_ac = root.find(".//ram:SpecifiedLineTradeSettlement/ram:SpecifiedTradeAllowanceCharge", ns)
+        if line_ac is not None:
+            code_el = line_ac.find("ram:ReasonCode", ns)
+            self.assertIsNone(code_el, "ReasonCode must not appear when discount_reason_code is empty")
+
+    def test_xml_line_discount_reason_code_present(self):
+        """ReasonCode (BT-140) must appear in line-level SpecifiedTradeAllowanceCharge when set."""
+        invoice = self._make_invoice()
+        self._make_line(
+            invoice,
+            discount_percentage=Decimal("10.00"),
+            discount_amount=Decimal("10.00"),
+            discount_reason_code="95",
+        )
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        line_ac = root.find(".//ram:SpecifiedLineTradeSettlement/ram:SpecifiedTradeAllowanceCharge", ns)
+        self.assertIsNotNone(line_ac, "SpecifiedTradeAllowanceCharge must be present")
+        code_el = line_ac.find("ram:ReasonCode", ns)
+        self.assertIsNotNone(code_el, "ReasonCode must appear when discount_reason_code is set")
+        self.assertEqual(code_el.text, "95")
+
+    def test_xml_line_discount_reason_code_before_reason(self):
+        """ReasonCode must appear before Reason in line-level AllowanceCharge."""
+        invoice = self._make_invoice()
+        self._make_line(
+            invoice,
+            discount_percentage=Decimal("10.00"),
+            discount_amount=Decimal("10.00"),
+            discount_reason="Mengenrabatt",
+            discount_reason_code="95",
+        )
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        line_ac = root.find(".//ram:SpecifiedLineTradeSettlement/ram:SpecifiedTradeAllowanceCharge", ns)
+        self.assertIsNotNone(line_ac)
+        tags = [child.tag.split("}")[-1] for child in line_ac]
+        self.assertIn("ReasonCode", tags)
+        self.assertIn("Reason", tags)
+        self.assertLess(tags.index("ReasonCode"), tags.index("Reason"))
+
+    # ── Service dict ─────────────────────────────────────────────────────────
+
+    def test_service_passes_new_reason_code_fields(self):
+        """convert_model_to_dict must include discount_reason_code and vat_exemption_reason_code."""
+        invoice = self._make_invoice()
+        self._make_line(
+            invoice,
+            discount_reason_code="95",
+            vat_exemption_reason_code="VATEX-EU-AE",
+        )
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        item = data["items"][0]
+        self.assertEqual(item.get("discount_reason_code"), "95")
+        self.assertEqual(item.get("vat_exemption_reason_code"), "VATEX-EU-AE")
+
+    # ── Model defaults ───────────────────────────────────────────────────────
+
+    def test_model_reason_code_fields_default_empty(self):
+        """discount_reason_code and vat_exemption_reason_code must default to empty string."""
+        invoice = self._make_invoice()
+        line = self._make_line(invoice)
+        self.assertEqual(line.discount_reason_code, "")
+        self.assertEqual(line.vat_exemption_reason_code, "")
+
+
+class GrossPriceTests(TestCase):
+    """Test suite for EN16931 BG-29: BT-148 (gross price) + BT-147 (price discount)."""
+
+    RAM_NS = "urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
+    UDT_NS = "urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100"
+
+    def setUp(self):
+        country, _ = Country.objects.get_or_create(
+            code="DE",
+            defaults={
+                "name": "Germany",
+                "eu_member": True,
+                "standard_vat_rate": Decimal("19.00"),
+            },
+        )
+        self.company = Company.objects.create(
+            name="GP Seller GmbH",
+            tax_id="GP123456789",
+            vat_id="DE991122334",
+            address_line1="Verkäuferstr. 1",
+            postal_code="10115",
+            city="Berlin",
+            country=country,
+            email="gp@seller.de",
+        )
+        self.partner = BusinessPartner.objects.create(
+            partner_type=BusinessPartner.PartnerType.BUSINESS,
+            company_name="GP Käufer AG",
+            tax_id="GP987654321",
+            vat_id="DE554433221",
+            address_line1="Käuferstr. 9",
+            postal_code="80331",
+            city="München",
+            country=country,
+            email="info@gpbuyer.de",
+        )
+        self.user = User.objects.create_user(username="gpuser", password=_TEST_PW)
+        self.xml_generator = ZugferdXmlGenerator(profile="COMFORT")
+        self.invoice_service = InvoiceService()
+
+    def _make_invoice(self, **kwargs):
+        defaults = {
+            "invoice_number": "GP-INV-001",
+            "company": self.company,
+            "business_partner": self.partner,
+            "created_by": self.user,
+            "currency": "EUR",
+            "subtotal": Decimal("100.00"),
+            "tax_amount": Decimal("19.00"),
+            "total_amount": Decimal("119.00"),
+        }
+        defaults.update(kwargs)
+        return Invoice.objects.create(**defaults)
+
+    def _make_line(self, invoice, **kwargs):
+        defaults = {
+            "invoice": invoice,
+            "product": None,
+            "description": "GP Product",
+            "product_code": "GP-001",
+            "quantity": Decimal("1"),
+            "unit_price": Decimal("100.00"),
+            "tax_rate": Decimal("19.00"),
+            "tax_category": "S",
+        }
+        defaults.update(kwargs)
+        return InvoiceLine.objects.create(**defaults)
+
+    def _generate_xml(self, invoice):
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        xml_string = self.xml_generator.generate_xml(data)
+        return etree.fromstring(xml_string if isinstance(xml_string, bytes) else xml_string.encode())
+
+    # ── XML structure ─────────────────────────────────────────────────────────
+
+    def test_xml_gross_price_absent_when_null(self):
+        """GrossPriceProductTradePrice must not appear when gross_price is None."""
+        invoice = self._make_invoice()
+        self._make_line(invoice)
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        gross_el = root.find(".//ram:GrossPriceProductTradePrice", ns)
+        self.assertIsNone(gross_el, "GrossPriceProductTradePrice must be absent when gross_price is null")
+
+    def test_xml_gross_price_present_when_set(self):
+        """GrossPriceProductTradePrice with correct ChargeAmount must appear when gross_price is set."""
+        invoice = self._make_invoice()
+        self._make_line(invoice, gross_price=Decimal("120.00"), unit_price=Decimal("100.00"))
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        gross_el = root.find(".//ram:GrossPriceProductTradePrice", ns)
+        self.assertIsNotNone(gross_el, "GrossPriceProductTradePrice must appear when gross_price is set")
+        charge_el = gross_el.find("ram:ChargeAmount", ns)
+        self.assertIsNotNone(charge_el)
+        self.assertAlmostEqual(float(charge_el.text), 120.0, places=2)
+
+    def test_xml_price_discount_in_applied_allowance(self):
+        """AppliedTradeAllowanceCharge ActualAmount must equal gross_price - unit_price."""
+        invoice = self._make_invoice()
+        self._make_line(invoice, gross_price=Decimal("120.00"), unit_price=Decimal("100.00"))
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS, "udt": self.UDT_NS}
+        gross_el = root.find(".//ram:GrossPriceProductTradePrice", ns)
+        self.assertIsNotNone(gross_el)
+        ac_el = gross_el.find("ram:AppliedTradeAllowanceCharge", ns)
+        self.assertIsNotNone(ac_el, "AppliedTradeAllowanceCharge must appear when gross > net")
+        indicator = ac_el.find("ram:ChargeIndicator/udt:Indicator", ns)
+        self.assertIsNotNone(indicator)
+        self.assertEqual(indicator.text, "false")
+        actual_el = ac_el.find("ram:ActualAmount", ns)
+        self.assertIsNotNone(actual_el)
+        self.assertAlmostEqual(float(actual_el.text), 20.0, places=4)
+
+    def test_xml_no_applied_allowance_when_equal_prices(self):
+        """No AppliedTradeAllowanceCharge when gross_price equals unit_price."""
+        invoice = self._make_invoice()
+        self._make_line(invoice, gross_price=Decimal("100.00"), unit_price=Decimal("100.00"))
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        gross_el = root.find(".//ram:GrossPriceProductTradePrice", ns)
+        self.assertIsNotNone(gross_el)
+        ac_el = gross_el.find("ram:AppliedTradeAllowanceCharge", ns)
+        self.assertIsNone(ac_el, "No AppliedTradeAllowanceCharge when gross_price == unit_price")
+
+    def test_xml_gross_price_before_net_price(self):
+        """GrossPriceProductTradePrice must appear before NetPriceProductTradePrice."""
+        invoice = self._make_invoice()
+        self._make_line(invoice, gross_price=Decimal("120.00"), unit_price=Decimal("100.00"))
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        agreement = root.find(".//ram:SpecifiedLineTradeAgreement", ns)
+        self.assertIsNotNone(agreement)
+        tags = [child.tag.split("}")[-1] for child in agreement]
+        self.assertIn("GrossPriceProductTradePrice", tags)
+        self.assertIn("NetPriceProductTradePrice", tags)
+        self.assertLess(tags.index("GrossPriceProductTradePrice"), tags.index("NetPriceProductTradePrice"))
+
+    # ── Service ───────────────────────────────────────────────────────────────
+
+    def test_service_passes_gross_price(self):
+        """convert_model_to_dict must include gross_price in item dict."""
+        invoice = self._make_invoice()
+        self._make_line(invoice, gross_price=Decimal("120.00"))
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        item = data["items"][0]
+        self.assertAlmostEqual(float(item.get("gross_price")), 120.0, places=2)
+
+    def test_service_gross_price_is_none_when_not_set(self):
+        """convert_model_to_dict must include gross_price=None when field is null."""
+        invoice = self._make_invoice()
+        self._make_line(invoice)
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        item = data["items"][0]
+        self.assertIsNone(item.get("gross_price"))
+
+    # ── Model ─────────────────────────────────────────────────────────────────
+
+    def test_model_gross_price_default_null(self):
+        """gross_price must default to None."""
+        invoice = self._make_invoice()
+        line = self._make_line(invoice)
+        self.assertIsNone(line.gross_price)
+
+
+class ProductIdentifierTests(TestCase):
+    """Test suite for EN16931 BT-155 (SellerAssignedID) + BT-156/157 (GTIN/GlobalID)."""
+
+    RAM_NS = "urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
+
+    def setUp(self):
+        country, _ = Country.objects.get_or_create(
+            code="DE",
+            defaults={
+                "name": "Germany",
+                "eu_member": True,
+                "standard_vat_rate": Decimal("19.00"),
+            },
+        )
+        self.company = Company.objects.create(
+            name="PI Seller GmbH",
+            tax_id="PI123456789",
+            vat_id="DE771122334",
+            address_line1="Verkäuferstr. 1",
+            postal_code="10115",
+            city="Berlin",
+            country=country,
+            email="pi@seller.de",
+        )
+        self.partner = BusinessPartner.objects.create(
+            partner_type=BusinessPartner.PartnerType.BUSINESS,
+            company_name="PI Käufer AG",
+            tax_id="PI987654321",
+            vat_id="DE884433221",
+            address_line1="Käuferstr. 9",
+            postal_code="80331",
+            city="München",
+            country=country,
+            email="info@pibuyer.de",
+        )
+        self.user = User.objects.create_user(username="piuser", password=_TEST_PW)
+        self.xml_generator = ZugferdXmlGenerator(profile="COMFORT")
+        self.invoice_service = InvoiceService()
+
+    def _make_invoice(self, **kwargs):
+        defaults = {
+            "invoice_number": "PI-INV-001",
+            "company": self.company,
+            "business_partner": self.partner,
+            "created_by": self.user,
+            "currency": "EUR",
+            "subtotal": Decimal("100.00"),
+            "tax_amount": Decimal("19.00"),
+            "total_amount": Decimal("119.00"),
+        }
+        defaults.update(kwargs)
+        return Invoice.objects.create(**defaults)
+
+    def _make_product(self, **kwargs):
+        defaults = {
+            "name": "PI Product",
+            "product_code": "PI-001",
+            "base_price": Decimal("100.00"),
+            "default_tax_rate": Decimal("19.00"),
+        }
+        defaults.update(kwargs)
+        return Product.objects.create(**defaults)
+
+    def _make_line(self, invoice, product=None, **kwargs):
+        defaults = {
+            "invoice": invoice,
+            "product": product,
+            "description": "PI Product",
+            "product_code": "PI-001",
+            "quantity": Decimal("1"),
+            "unit_price": Decimal("100.00"),
+            "tax_rate": Decimal("19.00"),
+            "tax_category": "S",
+        }
+        defaults.update(kwargs)
+        return InvoiceLine.objects.create(**defaults)
+
+    def _generate_xml(self, invoice):
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        xml_string = self.xml_generator.generate_xml(data)
+        return etree.fromstring(xml_string if isinstance(xml_string, bytes) else xml_string.encode())
+
+    # ── XML structure ─────────────────────────────────────────────────────────
+
+    def test_xml_gtin_in_global_id(self):
+        """GlobalID with schemeID='0160' must contain the GTIN value."""
+        product = self._make_product(gtin="1234567890123")
+        invoice = self._make_invoice()
+        self._make_line(invoice, product=product)
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        global_id = root.find(".//ram:SpecifiedTradeProduct/ram:GlobalID", ns)
+        self.assertIsNotNone(global_id, "GlobalID must appear when GTIN is set")
+        self.assertEqual(global_id.get("schemeID"), "0160")
+        self.assertEqual(global_id.text, "1234567890123")
+
+    def test_xml_seller_id_in_seller_assigned_id(self):
+        """SellerAssignedID must contain the seller_item_id value."""
+        product = self._make_product(seller_item_id="CAT-9876")
+        invoice = self._make_invoice()
+        self._make_line(invoice, product=product)
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        seller_id = root.find(".//ram:SpecifiedTradeProduct/ram:SellerAssignedID", ns)
+        self.assertIsNotNone(seller_id, "SellerAssignedID must appear when seller_item_id is set")
+        self.assertEqual(seller_id.text, "CAT-9876")
+
+    def test_xml_identifiers_absent_when_empty(self):
+        """GlobalID and SellerAssignedID must not appear when fields are empty."""
+        product = self._make_product()
+        invoice = self._make_invoice()
+        self._make_line(invoice, product=product)
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        global_id = root.find(".//ram:SpecifiedTradeProduct/ram:GlobalID", ns)
+        seller_id = root.find(".//ram:SpecifiedTradeProduct/ram:SellerAssignedID", ns)
+        self.assertIsNone(global_id, "GlobalID must not appear when GTIN is empty")
+        self.assertIsNone(seller_id, "SellerAssignedID must not appear when seller_item_id is empty")
+
+    def test_xml_identifiers_before_name(self):
+        """GlobalID and SellerAssignedID must appear before Name in SpecifiedTradeProduct."""
+        product = self._make_product(gtin="1234567890123", seller_item_id="CAT-9876")
+        invoice = self._make_invoice()
+        self._make_line(invoice, product=product)
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        trade_product = root.find(".//ram:SpecifiedTradeProduct", ns)
+        self.assertIsNotNone(trade_product)
+        tags = [child.tag.split("}")[-1] for child in trade_product]
+        self.assertIn("Name", tags)
+        self.assertIn("GlobalID", tags)
+        self.assertIn("SellerAssignedID", tags)
+        self.assertLess(tags.index("GlobalID"), tags.index("Name"))
+        self.assertLess(tags.index("SellerAssignedID"), tags.index("Name"))
+
+    # ── Model validation ──────────────────────────────────────────────────────
+
+    def test_gtin_validation_13_digits(self):
+        """13-digit GTIN must pass validation."""
+        product = self._make_product(gtin="1234567890123")
+        product.full_clean()  # must not raise
+
+    def test_gtin_validation_14_digits(self):
+        """14-digit GTIN must pass validation."""
+        product = self._make_product(gtin="12345678901234")
+        product.full_clean()  # must not raise
+
+    def test_gtin_validation_invalid_length(self):
+        """GTIN with wrong length must fail validation."""
+        from django.core.exceptions import ValidationError
+
+        product = self._make_product(gtin="123456789")  # too short
+        with self.assertRaises(ValidationError):
+            product.full_clean()
+
+    def test_gtin_validation_non_digits(self):
+        """GTIN with non-digit characters must fail validation."""
+        from django.core.exceptions import ValidationError
+
+        product = self._make_product(gtin="123456789012A")  # letter
+        with self.assertRaises(ValidationError):
+            product.full_clean()
+
+    def test_gtin_empty_passes_validation(self):
+        """Empty GTIN must pass validation."""
+        product = self._make_product(gtin="")
+        product.full_clean()  # must not raise
+
+    # ── Service ───────────────────────────────────────────────────────────────
+
+    def test_service_passes_identifiers(self):
+        """convert_model_to_dict must include seller_item_id and gtin in item dict."""
+        product = self._make_product(gtin="1234567890123", seller_item_id="CAT-9876")
+        invoice = self._make_invoice()
+        self._make_line(invoice, product=product)
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        item = data["items"][0]
+        self.assertEqual(item.get("gtin"), "1234567890123")
+        self.assertEqual(item.get("seller_item_id"), "CAT-9876")

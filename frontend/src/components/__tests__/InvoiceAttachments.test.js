@@ -51,7 +51,8 @@ function mountComponent(isDraft = false) {
 describe('InvoiceAttachments', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    globalThis.URL = { createObjectURL: vi.fn(() => 'blob:test'), revokeObjectURL: vi.fn() }
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test')
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
     globalThis.confirm = vi.fn(() => true)
     attachmentService.getByInvoice.mockResolvedValue(mockAttachments)
   })

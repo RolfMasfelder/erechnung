@@ -24,8 +24,7 @@
         <BaseInput
           id="description"
           v-model="formData.description"
-          type="textarea"
-          rows="3"
+          type="text"
           :error="errors.description"
         />
       </div>
@@ -94,6 +93,29 @@
         />
       </div>
 
+      <!-- EN16931 Produkt-Identifikatoren (BT-155/BT-157) -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="seller_item_id">Verkäufer-Artikelnummer (BT-155)</label>
+          <BaseInput
+            id="seller_item_id"
+            v-model="formData.seller_item_id"
+            placeholder="z.B. Katalognummer"
+            maxlength="50"
+          />
+        </div>
+        <div class="form-group">
+          <label for="gtin">GTIN / EAN (BT-157)</label>
+          <BaseInput
+            id="gtin"
+            v-model="formData.gtin"
+            placeholder="13 oder 14 Ziffern"
+            maxlength="14"
+            :error="errors.gtin"
+          />
+        </div>
+      </div>
+
       <BaseAlert v-if="submitError" variant="danger" @close="submitError = null">
         {{ submitError }}
       </BaseAlert>
@@ -159,7 +181,9 @@ const formData = reactive({
   sku: '',
   product_code: '',
   category: '',
-  is_active: true
+  is_active: true,
+  seller_item_id: '',
+  gtin: '',
 })
 
 const errors = reactive({})
@@ -196,7 +220,9 @@ async function loadProduct() {
       sku: product.sku || '',
       product_code: product.product_code || '',
       category: product.category || '',
-      is_active: product.is_active ?? true
+      is_active: product.is_active ?? true,
+      seller_item_id: product.seller_item_id || '',
+      gtin: product.gtin || '',
     })
   } catch (error) {
     console.error('Fehler beim Laden des Produkts:', error)

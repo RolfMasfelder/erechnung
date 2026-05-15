@@ -5,6 +5,7 @@ Supports physical products, services, digital products, and subscriptions
 with flexible pricing and tax handling.
 """
 
+import re
 from decimal import Decimal
 
 from django.conf import settings
@@ -131,6 +132,22 @@ class Product(models.Model):
     barcode = models.CharField(_("Barcode"), max_length=100, blank=True)
     sku = models.CharField(_("SKU"), max_length=100, blank=True)
     tags = models.CharField(_("Tags"), max_length=500, blank=True, help_text=_("Comma-separated tags"))
+
+    # EN16931 product identifiers
+    seller_item_id = models.CharField(
+        _("Seller Item ID"),
+        max_length=50,
+        blank=True,
+        default="",
+        help_text=_("Seller's own item identifier (EN16931 BT-155), e.g. catalog number"),
+    )
+    gtin = models.CharField(
+        _("GTIN / EAN"),
+        max_length=14,
+        blank=True,
+        default="",
+        help_text=_("Global Trade Item Number, 13 or 14 digits (EN16931 BT-156/BT-157)"),
+    )
 
     # Status and lifecycle
     is_active = models.BooleanField(_("Is Active"), default=True)
@@ -303,3 +320,6 @@ class Product(models.Model):
         if self.discontinuation_date and self.discontinuation_date <= timezone.now().date():
             if self.is_active or self.is_sellable:
                 raise ValidationError(_("Discontinued products cannot be active or sellable."))
+
+        if self.gtin and not re.fullmatch(r"\d{13,14}", self.gtin):
+            raise ValidationError(_("GTIN must be exactly 13 or 14 digits."))

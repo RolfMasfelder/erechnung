@@ -78,6 +78,18 @@ export const invoiceFields = createFieldMapper({
     payment_reference:'payment_reference',
     buyer_reference:  'buyer_reference',
     seller_reference: 'seller_reference',
+    contract_reference:    'contract_reference',
+    billing_period_start:  'billing_period_start',
+    billing_period_end:    'billing_period_end',
+    // BG-15: Delivery address (BT-75–BT-80)
+    delivery_address_line1:   'delivery_address_line1',
+    delivery_address_line2:   'delivery_address_line2',
+    delivery_city:            'delivery_city',
+    delivery_postal_code:     'delivery_postal_code',
+    delivery_country:         'delivery_country',
+    // BG-22: Prepaid / rounding (BT-113 / BT-114)
+    prepaid_amount:        'prepaid_amount',
+    rounding_amount:       'rounding_amount',
     status:           'status',
     notes:            'notes',
     subtotal:         'subtotal',
@@ -113,9 +125,17 @@ export const invoiceLineFields = createFieldMapper({
     unit_price_net:      'unit_price',          // UI "unit_price_net" → API "unit_price"
     unit_of_measure:     'unit_of_measure',
     vat_rate:            'tax_rate',             // UI "vat_rate" → API "tax_rate"
-    discount_percentage: 'discount_percentage',
-    discount_amount:     'discount_amount',
-    discount_reason:     'discount_reason',
+    discount_percentage:  'discount_percentage',
+    discount_amount:      'discount_amount',
+    discount_reason:      'discount_reason',
+    // BT-140/BT-145: UNTDID 5189/7161 reason code for line-level allowance/charge
+    discount_reason_code: 'discount_reason_code',
+    // BT-121: VATEX exemption reason code
+    vat_exemption_reason_code: 'vat_exemption_reason_code',
+    // BT-148: gross price before price-level discount (BG-29)
+    gross_price:          'gross_price',
+    billing_period_start: 'billing_period_start',
+    billing_period_end:   'billing_period_end',
   },
 })
 
@@ -190,6 +210,7 @@ export const companyFields = createFieldMapper({
     fax:                   'fax',
     email:                 'email',
     website:               'website',
+    contact_name:          'contact_name',
     logo:                  'logo',
     bank_name:             'bank_name',
     bank_account:          'bank_account',
@@ -228,6 +249,9 @@ export const productFields = createFieldMapper({
     barcode:               'barcode',
     sku:                   'sku',
     tags:                  'tags',
+    // BT-155: seller's item identifier; BT-156/157: GTIN
+    seller_item_id:        'seller_item_id',
+    gtin:                  'gtin',
     is_active:             'is_active',
     is_sellable:           'is_sellable',
     discontinuation_date:  'discontinuation_date',

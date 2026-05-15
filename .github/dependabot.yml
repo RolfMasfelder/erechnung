@@ -77,3 +77,21 @@ updates:
     ignore:
       - dependency-name: "python"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+  # Docker (Dockerfile.e2e — Playwright image)
+  - package-ecosystem: "docker"
+    directory: "/frontend"
+    target-branch: "main"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "automation"
+      - "docker"
+    commit-message:
+      prefix: "chore"
+      include: "scope"

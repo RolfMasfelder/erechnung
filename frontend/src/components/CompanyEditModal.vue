@@ -93,6 +93,16 @@
         </div>
       </div>
 
+      <div class="form-group">
+        <label for="contact_name">Kontaktperson <span class="field-hint-inline">(BT-39)</span></label>
+        <BaseInput
+          id="contact_name"
+          v-model="formData.contact_name"
+          placeholder="z.B. Max Mustermann"
+          :error="errors.contact_name"
+        />
+      </div>
+
       <!-- Steuernummer / USt-ID / Handelsregister -->
       <div class="form-row">
         <div class="form-group">
@@ -279,6 +289,7 @@ const formData = reactive({
   country: 'DE',
   email: '',
   phone: '',
+  contact_name: '',
   tax_id: '',
   vat_id: '',
   commercial_register: '',

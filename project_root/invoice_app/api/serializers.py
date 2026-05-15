@@ -100,6 +100,7 @@ class CompanySerializer(serializers.ModelSerializer):
             "fax",
             "email",
             "website",
+            "contact_name",
             "logo",
             "bank_name",
             "bank_account",
@@ -122,6 +123,7 @@ class CompanySerializer(serializers.ModelSerializer):
             "fax": {"required": False, "allow_blank": True},
             "email": {"required": False, "allow_blank": True},
             "website": {"required": False, "allow_blank": True},
+            "contact_name": {"required": False, "allow_blank": True},
             "bank_name": {"required": False, "allow_blank": True},
             "bank_account": {"required": False, "allow_blank": True},
             "iban": {"required": False, "allow_blank": True},
@@ -291,6 +293,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "barcode",
             "sku",
             "tags",
+            "seller_item_id",
+            "gtin",
             "is_active",
             "is_sellable",
             "discontinuation_date",
@@ -417,11 +421,31 @@ class InvoiceLineSerializer(serializers.ModelSerializer):
             "discount_percentage",
             "discount_amount",
             "discount_reason",
+            "discount_reason_code",
+            "vat_exemption_reason_code",
+            "gross_price",
+            "billing_period_start",
+            "billing_period_end",
             "line_subtotal",
             "line_total",
             "allowance_charges",
         ]
         read_only_fields = ("tax_amount", "line_subtotal", "line_total")
+
+    def validate(self, data):
+        billing_period_start = data.get(
+            "billing_period_start",
+            getattr(self.instance, "billing_period_start", None) if self.instance else None,
+        )
+        billing_period_end = data.get(
+            "billing_period_end",
+            getattr(self.instance, "billing_period_end", None) if self.instance else None,
+        )
+        if billing_period_start and billing_period_end and billing_period_start > billing_period_end:
+            raise serializers.ValidationError(
+                {"billing_period_start": "Leistungsbeginn darf nicht nach Leistungsende liegen (BT-134/BT-135)."}
+            )
+        return data
 
 
 class InvoiceAttachmentSerializer(serializers.ModelSerializer):
@@ -524,6 +548,9 @@ class InvoiceSerializer(serializers.ModelSerializer):
             "payment_reference",
             "buyer_reference",
             "seller_reference",
+            "contract_reference",
+            "billing_period_start",
+            "billing_period_end",
             "status",
             "status_display",
             "pdf_file",
@@ -537,6 +564,15 @@ class InvoiceSerializer(serializers.ModelSerializer):
             "allowance_charges",
             "is_paid",
             "is_overdue",
+            # BG-15: Delivery address (BT-75–BT-80)
+            "delivery_address_line1",
+            "delivery_address_line2",
+            "delivery_city",
+            "delivery_postal_code",
+            "delivery_country",
+            # BG-22: Prepaid / rounding (BT-113 / BT-114)
+            "prepaid_amount",
+            "rounding_amount",
             # GoBD Compliance
             "is_locked",
             "locked_at",
@@ -591,6 +627,17 @@ class InvoiceSerializer(serializers.ModelSerializer):
         if partner and partner.partner_type == BusinessPartner.PartnerType.GOVERNMENT:
             if not attrs.get("buyer_reference") and partner.leitweg_id:
                 attrs["buyer_reference"] = partner.leitweg_id
+        # BG-14 validation: if both billing period dates are set, start must not be after end
+        start = attrs.get(
+            "billing_period_start", getattr(self.instance, "billing_period_start", None) if self.instance else None
+        )
+        end = attrs.get(
+            "billing_period_end", getattr(self.instance, "billing_period_end", None) if self.instance else None
+        )
+        if start and end and start > end:
+            raise serializers.ValidationError(
+                {"billing_period_start": "Leistungsbeginn darf nicht nach Leistungsende liegen (BT-73/BT-74)."}
+            )
         return attrs
 
 

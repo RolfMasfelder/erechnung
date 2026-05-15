@@ -34,6 +34,12 @@ run_in_docker() {
         COVERAGE_FILE=/tmp/.coverage coverage html --directory=/app/htmlcov
     "
 
+    echo ""
+    echo "--- Backup/Restore Integrationstests ---"
+    docker compose exec web python project_root/manage.py \
+        test integration_tests.backup_restore_tests \
+        --noinput
+
     # Fix ownership so the host user can read the generated files
     sudo chown -R "$(id -un):$(id -gn)" htmlcov/ 2>/dev/null || true
 

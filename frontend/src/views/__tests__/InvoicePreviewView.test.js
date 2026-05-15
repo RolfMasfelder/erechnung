@@ -25,12 +25,13 @@ vi.mock('@/api/services/invoiceService', () => ({
 }))
 
 vi.mock('vue-router', () => ({
-  useRoute: () => ({ params: { id: '1' } }),
-  RouterLink: { template: '<a><slot /></a>' }
+  useRoute: () => ({ params: { id: '1' } })
 }))
 
 import { invoiceService } from '@/api/services/invoiceService'
 import InvoicePreviewView from '../InvoicePreviewView.vue'
+
+const mountView = () => mount(InvoicePreviewView, { global: { stubs: { RouterLink: true } } })
 
 describe('InvoicePreviewView', () => {
   beforeEach(() => {
@@ -39,45 +40,45 @@ describe('InvoicePreviewView', () => {
   })
 
   it('renders preview banner', async () => {
-    const wrapper = mount(InvoicePreviewView)
+    const wrapper = mountView()
     await flushPromises()
     expect(wrapper.find('.preview-banner').exists()).toBe(true)
   })
 
   it('shows loading initially', () => {
     invoiceService.getById.mockReturnValue(new Promise(() => {}))
-    const wrapper = mount(InvoicePreviewView)
+    const wrapper = mountView()
     expect(wrapper.find('.preview-loading').exists()).toBe(true)
   })
 
   it('shows invoice content after load', async () => {
-    const wrapper = mount(InvoicePreviewView)
+    const wrapper = mountView()
     await flushPromises()
     expect(wrapper.find('.invoice-document').exists()).toBe(true)
   })
 
   it('shows error message on load failure', async () => {
     invoiceService.getById.mockRejectedValue(new Error('Not found'))
-    const wrapper = mount(InvoicePreviewView)
+    const wrapper = mountView()
     await flushPromises()
     expect(wrapper.find('.preview-error').exists()).toBe(true)
   })
 
   it('computes company name from company_details', async () => {
-    const wrapper = mount(InvoicePreviewView)
+    const wrapper = mountView()
     await flushPromises()
     expect(wrapper.vm.companyName).toBe('My Company GmbH')
   })
 
   it('computes empty company name when no invoice', async () => {
     invoiceService.getById.mockResolvedValue({ ...mockInvoice, company_details: null })
-    const wrapper = mount(InvoicePreviewView)
+    const wrapper = mountView()
     await flushPromises()
     expect(wrapper.vm.companyName).toBe('')
   })
 
   it('computes logo as null when not set', async () => {
-    const wrapper = mount(InvoicePreviewView)
+    const wrapper = mountView()
     await flushPromises()
     expect(wrapper.vm.companyLogo).toBeNull()
   })
@@ -87,25 +88,25 @@ describe('InvoicePreviewView', () => {
       ...mockInvoice,
       company_details: { name: 'X', logo: 'http://example.com/logo.png' }
     })
-    const wrapper = mount(InvoicePreviewView)
+    const wrapper = mountView()
     await flushPromises()
     expect(wrapper.vm.companyLogo).toBe('http://example.com/logo.png')
   })
 
   it('formatDate returns empty string for null', async () => {
-    const wrapper = mount(InvoicePreviewView)
+    const wrapper = mountView()
     await flushPromises()
     expect(wrapper.vm.formatDate(null)).toBe('')
   })
 
   it('formatDate returns empty string for undefined', async () => {
-    const wrapper = mount(InvoicePreviewView)
+    const wrapper = mountView()
     await flushPromises()
     expect(wrapper.vm.formatDate(undefined)).toBe('')
   })
 
   it('formatDate formats valid date', async () => {
-    const wrapper = mount(InvoicePreviewView)
+    const wrapper = mountView()
     await flushPromises()
     const result = wrapper.vm.formatDate('2026-01-09')
     expect(typeof result).toBe('string')
@@ -113,19 +114,19 @@ describe('InvoicePreviewView', () => {
   })
 
   it('formatCurrency returns dash for null', async () => {
-    const wrapper = mount(InvoicePreviewView)
+    const wrapper = mountView()
     await flushPromises()
     expect(wrapper.vm.formatCurrency(null)).toBe('–')
   })
 
   it('formatCurrency returns dash for undefined', async () => {
-    const wrapper = mount(InvoicePreviewView)
+    const wrapper = mountView()
     await flushPromises()
     expect(wrapper.vm.formatCurrency(undefined)).toBe('–')
   })
 
   it('formatCurrency formats valid number', async () => {
-    const wrapper = mount(InvoicePreviewView)
+    const wrapper = mountView()
     await flushPromises()
     const result = wrapper.vm.formatCurrency('100.00')
     expect(result).toContain('100')
@@ -133,7 +134,7 @@ describe('InvoicePreviewView', () => {
 
   it('uses generic error message when error has no message', async () => {
     invoiceService.getById.mockRejectedValue({})
-    const wrapper = mount(InvoicePreviewView)
+    const wrapper = mountView()
     await flushPromises()
     expect(wrapper.vm.error).toBe('Unbekannter Fehler')
   })
@@ -145,7 +146,7 @@ describe('InvoicePreviewView', () => {
         { id: 2, description: '', product_name: 'Widget', quantity: '2', unit_price: '50.00', line_total: '100.00' }
       ]
     })
-    const wrapper = mount(InvoicePreviewView)
+    const wrapper = mountView()
     await flushPromises()
     expect(wrapper.html()).toContain('Widget')
   })

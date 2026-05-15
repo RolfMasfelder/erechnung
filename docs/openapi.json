@@ -7021,6 +7021,12 @@
                         "format": "uri",
                         "maxLength": 200
                     },
+                    "contact_name": {
+                        "type": "string",
+                        "title": "Kontaktperson (BT-39)",
+                        "description": "EN16931 BT-39: Seller contact person name",
+                        "maxLength": 100
+                    },
                     "logo": {
                         "type": "string",
                         "format": "uri",
@@ -7156,6 +7162,12 @@
                         "type": "string",
                         "format": "uri",
                         "maxLength": 200
+                    },
+                    "contact_name": {
+                        "type": "string",
+                        "title": "Kontaktperson (BT-39)",
+                        "description": "EN16931 BT-39: Seller contact person name",
+                        "maxLength": 100
                     },
                     "logo": {
                         "type": "string",
@@ -7807,6 +7819,69 @@
                         "description": "Our internal reference or project number (Unser Zeichen)",
                         "maxLength": 100
                     },
+                    "contract_reference": {
+                        "type": "string",
+                        "description": "Contract number or identifier (EN16931 BT-12)",
+                        "maxLength": 200
+                    },
+                    "billing_period_start": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "title": "Leistungsbeginn (BT-73)",
+                        "description": "EN16931 BT-73: Start of billing/service period"
+                    },
+                    "billing_period_end": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "title": "Leistungsende (BT-74)",
+                        "description": "EN16931 BT-74: End of billing/service period"
+                    },
+                    "delivery_address_line1": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "title": "Lieferadresse Straße (BT-75)",
+                        "description": "EN16931 BT-75: Delivery address street and house number"
+                    },
+                    "delivery_address_line2": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "title": "Lieferadresse Zusatz (BT-76)",
+                        "description": "EN16931 BT-76: Delivery address additional information"
+                    },
+                    "delivery_city": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "title": "Lieferort (BT-77)",
+                        "description": "EN16931 BT-77: Delivery city"
+                    },
+                    "delivery_postal_code": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "title": "Lieferpostleitzahl (BT-78)",
+                        "description": "EN16931 BT-78: Delivery postal code"
+                    },
+                    "delivery_country": {
+                        "type": "string",
+                        "maxLength": 2,
+                        "title": "Lieferland (BT-80)",
+                        "description": "EN16931 BT-80: ISO 3166-1 alpha-2 country code of delivery address"
+                    },
+                    "prepaid_amount": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
+                        "title": "Anzahlung (BT-113)",
+                        "description": "EN16931 BT-113: Amount already paid"
+                    },
+                    "rounding_amount": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
+                        "title": "Rundungsbetrag (BT-114)",
+                        "description": "EN16931 BT-114: Rounding adjustment for the due amount"
+                    },
                     "status": {
                         "$ref": "#/components/schemas/InvoiceStatusEnum"
                     },
@@ -8296,6 +8371,35 @@
                         "type": "string",
                         "maxLength": 255
                     },
+                    "discount_reason_code": {
+                        "type": "string",
+                        "maxLength": 10,
+                        "description": "UNTDID 5189/7161 reason code for line-level allowance/charge (EN16931 BT-140/BT-145)"
+                    },
+                    "vat_exemption_reason_code": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "description": "VATEX code for VAT exemption reason (EN16931 BT-121, e.g. 'VATEX-EU-AE')"
+                    },
+                    "gross_price": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,6})?$",
+                        "nullable": true,
+                        "description": "Price before price-level discount, BG-29 BT-148 (EN16931). If set, XML includes GrossPriceProductTradePrice."
+                    },
+                    "billing_period_start": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "description": "BT-134: Start of line-specific billing/service period"
+                    },
+                    "billing_period_end": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "description": "BT-135: End of line-specific billing/service period"
+                    },
                     "line_subtotal": {
                         "type": "string",
                         "format": "decimal",
@@ -8385,6 +8489,35 @@
                     "discount_reason": {
                         "type": "string",
                         "maxLength": 255
+                    },
+                    "discount_reason_code": {
+                        "type": "string",
+                        "maxLength": 10,
+                        "description": "UNTDID 5189/7161 reason code for line-level allowance/charge (EN16931 BT-140/BT-145)"
+                    },
+                    "vat_exemption_reason_code": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "description": "VATEX code for VAT exemption reason (EN16931 BT-121, e.g. 'VATEX-EU-AE')"
+                    },
+                    "gross_price": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,6})?$",
+                        "nullable": true,
+                        "description": "Price before price-level discount, BG-29 BT-148 (EN16931). If set, XML includes GrossPriceProductTradePrice."
+                    },
+                    "billing_period_start": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "description": "BT-134: Start of line-specific billing/service period"
+                    },
+                    "billing_period_end": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "description": "BT-135: End of line-specific billing/service period"
                     }
                 },
                 "required": [
@@ -8464,6 +8597,69 @@
                         "type": "string",
                         "description": "Our internal reference or project number (Unser Zeichen)",
                         "maxLength": 100
+                    },
+                    "contract_reference": {
+                        "type": "string",
+                        "description": "Contract number or identifier (EN16931 BT-12)",
+                        "maxLength": 200
+                    },
+                    "billing_period_start": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "title": "Leistungsbeginn (BT-73)",
+                        "description": "EN16931 BT-73: Start of billing/service period"
+                    },
+                    "billing_period_end": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "title": "Leistungsende (BT-74)",
+                        "description": "EN16931 BT-74: End of billing/service period"
+                    },
+                    "delivery_address_line1": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "title": "Lieferadresse Straße (BT-75)",
+                        "description": "EN16931 BT-75: Delivery address street and house number"
+                    },
+                    "delivery_address_line2": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "title": "Lieferadresse Zusatz (BT-76)",
+                        "description": "EN16931 BT-76: Delivery address additional information"
+                    },
+                    "delivery_city": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "title": "Lieferort (BT-77)",
+                        "description": "EN16931 BT-77: Delivery city"
+                    },
+                    "delivery_postal_code": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "title": "Lieferpostleitzahl (BT-78)",
+                        "description": "EN16931 BT-78: Delivery postal code"
+                    },
+                    "delivery_country": {
+                        "type": "string",
+                        "maxLength": 2,
+                        "title": "Lieferland (BT-80)",
+                        "description": "EN16931 BT-80: ISO 3166-1 alpha-2 country code of delivery address"
+                    },
+                    "prepaid_amount": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
+                        "title": "Anzahlung (BT-113)",
+                        "description": "EN16931 BT-113: Amount already paid"
+                    },
+                    "rounding_amount": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
+                        "title": "Rundungsbetrag (BT-114)",
+                        "description": "EN16931 BT-114: Rounding adjustment for the due amount"
                     },
                     "status": {
                         "$ref": "#/components/schemas/InvoiceStatusEnum"
@@ -9191,6 +9387,12 @@
                         "format": "uri",
                         "maxLength": 200
                     },
+                    "contact_name": {
+                        "type": "string",
+                        "title": "Kontaktperson (BT-39)",
+                        "description": "EN16931 BT-39: Seller contact person name",
+                        "maxLength": 100
+                    },
                     "logo": {
                         "type": "string",
                         "format": "binary",
@@ -9451,6 +9653,35 @@
                     "discount_reason": {
                         "type": "string",
                         "maxLength": 255
+                    },
+                    "discount_reason_code": {
+                        "type": "string",
+                        "maxLength": 10,
+                        "description": "UNTDID 5189/7161 reason code for line-level allowance/charge (EN16931 BT-140/BT-145)"
+                    },
+                    "vat_exemption_reason_code": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "description": "VATEX code for VAT exemption reason (EN16931 BT-121, e.g. 'VATEX-EU-AE')"
+                    },
+                    "gross_price": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,6})?$",
+                        "nullable": true,
+                        "description": "Price before price-level discount, BG-29 BT-148 (EN16931). If set, XML includes GrossPriceProductTradePrice."
+                    },
+                    "billing_period_start": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "description": "BT-134: Start of line-specific billing/service period"
+                    },
+                    "billing_period_end": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "description": "BT-135: End of line-specific billing/service period"
                     }
                 }
             },
@@ -9527,6 +9758,69 @@
                         "type": "string",
                         "description": "Our internal reference or project number (Unser Zeichen)",
                         "maxLength": 100
+                    },
+                    "contract_reference": {
+                        "type": "string",
+                        "description": "Contract number or identifier (EN16931 BT-12)",
+                        "maxLength": 200
+                    },
+                    "billing_period_start": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "title": "Leistungsbeginn (BT-73)",
+                        "description": "EN16931 BT-73: Start of billing/service period"
+                    },
+                    "billing_period_end": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "title": "Leistungsende (BT-74)",
+                        "description": "EN16931 BT-74: End of billing/service period"
+                    },
+                    "delivery_address_line1": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "title": "Lieferadresse Straße (BT-75)",
+                        "description": "EN16931 BT-75: Delivery address street and house number"
+                    },
+                    "delivery_address_line2": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "title": "Lieferadresse Zusatz (BT-76)",
+                        "description": "EN16931 BT-76: Delivery address additional information"
+                    },
+                    "delivery_city": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "title": "Lieferort (BT-77)",
+                        "description": "EN16931 BT-77: Delivery city"
+                    },
+                    "delivery_postal_code": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "title": "Lieferpostleitzahl (BT-78)",
+                        "description": "EN16931 BT-78: Delivery postal code"
+                    },
+                    "delivery_country": {
+                        "type": "string",
+                        "maxLength": 2,
+                        "title": "Lieferland (BT-80)",
+                        "description": "EN16931 BT-80: ISO 3166-1 alpha-2 country code of delivery address"
+                    },
+                    "prepaid_amount": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
+                        "title": "Anzahlung (BT-113)",
+                        "description": "EN16931 BT-113: Amount already paid"
+                    },
+                    "rounding_amount": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
+                        "title": "Rundungsbetrag (BT-114)",
+                        "description": "EN16931 BT-114: Rounding adjustment for the due amount"
                     },
                     "status": {
                         "$ref": "#/components/schemas/InvoiceStatusEnum"
@@ -9787,6 +10081,16 @@
                         "type": "string",
                         "description": "Comma-separated tags",
                         "maxLength": 500
+                    },
+                    "seller_item_id": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "description": "Seller's item identifier (EN16931 BT-155)"
+                    },
+                    "gtin": {
+                        "type": "string",
+                        "maxLength": 14,
+                        "description": "GTIN/EAN 13 or 14 digits, schemeID 0160 (EN16931 BT-156/BT-157)"
                     },
                     "is_active": {
                         "type": "boolean"
@@ -10292,6 +10596,16 @@
                         "description": "Comma-separated tags",
                         "maxLength": 500
                     },
+                    "seller_item_id": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "description": "Seller's item identifier (EN16931 BT-155)"
+                    },
+                    "gtin": {
+                        "type": "string",
+                        "maxLength": 14,
+                        "description": "GTIN/EAN 13 or 14 digits, schemeID 0160 (EN16931 BT-156/BT-157)"
+                    },
                     "is_active": {
                         "type": "boolean"
                     },
@@ -10605,6 +10919,16 @@
                         "type": "string",
                         "description": "Comma-separated tags",
                         "maxLength": 500
+                    },
+                    "seller_item_id": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "description": "Seller's item identifier (EN16931 BT-155)"
+                    },
+                    "gtin": {
+                        "type": "string",
+                        "maxLength": 14,
+                        "description": "GTIN/EAN 13 or 14 digits, schemeID 0160 (EN16931 BT-156/BT-157)"
                     },
                     "is_active": {
                         "type": "boolean"

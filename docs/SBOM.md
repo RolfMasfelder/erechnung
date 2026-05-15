@@ -1,6 +1,6 @@
 # Software Bill of Materials (SBOM) - eRechnung Django App
 
-**Generated:** 8. Mai 2026
+**Generated:** 14. Mai 2026
 **Format:** CycloneDX 1.6
 **Generation Method:** Automated (update_sbom.py)
 
@@ -9,7 +9,7 @@
 **eRechnung Django App** - German e-invoicing system implementing ZUGFeRD/Factur-X standards with PDF/A-3 + embedded XML, modern Vue.js 3 frontend, and comprehensive E2E testing.
 
 - **Repository:** https://github.com/RolfMasfelder/erechnung
-- **Version:** 0.2.0
+- **Version:** 0.2.1
 - **License:** AGPL-3.0-only
 - **Architecture:** Full-stack Docker-based microservices with SPA frontend
 
@@ -24,21 +24,21 @@
 ### Backend Framework & Core Libraries
 | Component | Version | License | Purpose |
 |-----------|---------|---------|---------|
-| Django | 5.2.13 | BSD-3-Clause | Web framework |
+| Django | 5.2.14 | BSD-3-Clause | Web framework |
 | Django REST Framework | 3.17.1 | BSD-2-Clause | API framework |
 | drf-spectacular | 0.29.0 | BSD-3-Clause | OpenAPI schema generation |
-| Gunicorn | 25.3.0 | MIT | WSGI server |
+| Gunicorn | 26.0.0 | MIT | WSGI server |
 | Celery | 5.6.3 | BSD-3-Clause | Task queue |
 
 ### Frontend Framework & Core Libraries
 | Component | Version | License | Purpose |
 |-----------|---------|---------|---------|
-| Vue.js | 3.5.33 | MIT | Progressive JavaScript framework |
+| Vue.js | 3.5.34 | MIT | Progressive JavaScript framework |
 | Vue Router | 5.0.6 | MIT | Official router for Vue.js |
 | Pinia | 3.0.4 | MIT | State management for Vue.js |
 | Axios | 1.16.0 | MIT | Promise-based HTTP client |
-| Vite | 8.0.10 | MIT | Next generation frontend build tool |
-| Tailwind CSS | 4.2.4 | MIT | Utility-first CSS framework |
+| Vite | 8.0.12 | MIT | Next generation frontend build tool |
+| Tailwind CSS | 4.3.0 | MIT | Utility-first CSS framework |
 
 ### Database & Cache
 | Component | Version | License | Purpose |
@@ -84,7 +84,7 @@
 |-----------|---------|---------|---------|
 | pytest | 9.0.3 | MIT | Testing framework |
 | pytest-django | 4.12.0 | BSD-3-Clause | Django testing |
-| coverage | 7.13.5 | Apache-2.0 | Code coverage |
+| coverage | 7.14.0 | Apache-2.0 | Code coverage |
 | black | 25.1.0 | MIT | Code formatting |
 | ruff | 0.15.12 | MIT | Linting |
 | pylint | 3.3.8 | GPL-2.0 | Code analysis |
@@ -93,10 +93,10 @@
 ### Frontend Development & Testing Tools
 | Component | Version | License | Purpose |
 |-----------|---------|---------|---------|
-| Vitest | 4.1.5 | MIT | Unit testing framework for Vite |
+| Vitest | 4.1.6 | MIT | Unit testing framework for Vite |
 | @vitest/ui | 4.0.8 | MIT | Vitest UI interface |
 | @vitest/coverage-v8 | 4.0.8 | MIT | Code coverage for Vitest |
-| Playwright | 1.59.1 | Apache-2.0 | End-to-end testing framework |
+| Playwright | 1.60.0 | Apache-2.0 | End-to-end testing framework |
 | @vue/test-utils | 2.4.10 | MIT | Official Vue.js testing utilities |
 | happy-dom | 20.0.10 | MIT | DOM implementation for testing |
 | @vitejs/plugin-vue | 6.0.1 | MIT | Vite plugin for Vue.js |
@@ -106,14 +106,14 @@
 ### Monitoring & Operations
 | Component | Version | License | Purpose |
 |-----------|---------|---------|---------|
-| Sentry SDK | 2.58.0 | MIT | Error tracking |
+| Sentry SDK | 2.59.0 | MIT | Error tracking |
 | WhiteNoise | 6.12.0 | MIT | Static file serving |
 | django-debug-toolbar | 6.0.0 | BSD-3-Clause | Development debugging |
 
 ### System Dependencies
-| Component | Package Type | Purpose |
-|-----------|--------------|---------|
-| Ghostscript | System | PDF/A-3 conversion |
-| libpq-dev | System | PostgreSQL client library |
-| build-essential | System | Compilation tools |
-| gettext | System | Internationalization |
+| Component | Package Type | License | Purpose |
+|-----------|--------------|---------|----------|
+| Ghostscript | System | AGPL-3.0-or-later | PDF/A-3 conversion |
+| libpq-dev | System | PostgreSQL License | PostgreSQL client library |
+| build-essential | System | GPL-3.0-or-later | Compilation tools |
+| gettext | System | GPL-3.0-or-later | Internationalization |

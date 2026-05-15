@@ -129,9 +129,45 @@
             <span class="detail-value">{{ invoice.seller_reference }}</span>
           </div>
 
+          <div v-if="invoice.contract_reference" class="detail-item">
+            <span class="detail-label">Vertragsreferenz:</span>
+            <span class="detail-value">{{ invoice.contract_reference }}</span>
+          </div>
+
+          <div v-if="invoice.billing_period_start || invoice.billing_period_end" class="detail-item">
+            <span class="detail-label">Leistungszeitraum:</span>
+            <span class="detail-value">
+              {{ formatDate(invoice.billing_period_start) || '?' }}
+              &ndash;
+              {{ formatDate(invoice.billing_period_end) || '?' }}
+            </span>
+          </div>
+
+          <div v-if="invoice.delivery_city || invoice.delivery_address_line1" class="detail-item">
+            <span class="detail-label">Lieferadresse:</span>
+            <span class="detail-value">
+              <template v-if="invoice.delivery_address_line1">{{ invoice.delivery_address_line1 }},
+              </template>
+              <template v-if="invoice.delivery_address_line2">{{ invoice.delivery_address_line2 }},
+              </template>
+              {{ invoice.delivery_postal_code }} {{ invoice.delivery_city }}
+              <template v-if="invoice.delivery_country">({{ invoice.delivery_country }})</template>
+            </span>
+          </div>
+
           <div class="detail-item">
             <span class="detail-label">Gesamtbetrag:</span>
             <span class="detail-value strong">{{ formatCurrency(invoice.total_amount) }}</span>
+          </div>
+
+          <div v-if="parseFloat(invoice.prepaid_amount) !== 0" class="detail-item">
+            <span class="detail-label">Anzahlung (BT-113):</span>
+            <span class="detail-value">{{ formatCurrency(invoice.prepaid_amount) }}</span>
+          </div>
+
+          <div v-if="parseFloat(invoice.rounding_amount) !== 0" class="detail-item">
+            <span class="detail-label">Rundungsbetrag (BT-114):</span>
+            <span class="detail-value">{{ formatCurrency(invoice.rounding_amount) }}</span>
           </div>
 
           <!-- Cross-links: Storno-Referenzen -->
