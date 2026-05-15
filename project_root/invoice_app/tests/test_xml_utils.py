@@ -1245,6 +1245,9 @@ class TestGeneratorCoverageGaps(TestCase):
         mock_item.billing_period_end = None
         mock_item.discount_amount = 0
         mock_item.discount_reason = ""
+        mock_item.gtin = ""
+        mock_item.seller_item_id = ""
+        mock_item.gross_price = None
         mock_item.product_name = "Mock Product"
         mock_item.description = "Mock description"
         mock_item.unit_price = 100.0
