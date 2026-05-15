@@ -7838,6 +7838,50 @@
                         "title": "Leistungsende (BT-74)",
                         "description": "EN16931 BT-74: End of billing/service period"
                     },
+                    "delivery_address_line1": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "title": "Lieferadresse Straße (BT-75)",
+                        "description": "EN16931 BT-75: Delivery address street and house number"
+                    },
+                    "delivery_address_line2": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "title": "Lieferadresse Zusatz (BT-76)",
+                        "description": "EN16931 BT-76: Delivery address additional information"
+                    },
+                    "delivery_city": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "title": "Lieferort (BT-77)",
+                        "description": "EN16931 BT-77: Delivery city"
+                    },
+                    "delivery_postal_code": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "title": "Lieferpostleitzahl (BT-78)",
+                        "description": "EN16931 BT-78: Delivery postal code"
+                    },
+                    "delivery_country": {
+                        "type": "string",
+                        "maxLength": 2,
+                        "title": "Lieferland (BT-80)",
+                        "description": "EN16931 BT-80: ISO 3166-1 alpha-2 country code of delivery address"
+                    },
+                    "prepaid_amount": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
+                        "title": "Anzahlung (BT-113)",
+                        "description": "EN16931 BT-113: Amount already paid"
+                    },
+                    "rounding_amount": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
+                        "title": "Rundungsbetrag (BT-114)",
+                        "description": "EN16931 BT-114: Rounding adjustment for the due amount"
+                    },
                     "status": {
                         "$ref": "#/components/schemas/InvoiceStatusEnum"
                     },
@@ -8538,6 +8582,50 @@
                         "nullable": true,
                         "title": "Leistungsende (BT-74)",
                         "description": "EN16931 BT-74: End of billing/service period"
+                    },
+                    "delivery_address_line1": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "title": "Lieferadresse Straße (BT-75)",
+                        "description": "EN16931 BT-75: Delivery address street and house number"
+                    },
+                    "delivery_address_line2": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "title": "Lieferadresse Zusatz (BT-76)",
+                        "description": "EN16931 BT-76: Delivery address additional information"
+                    },
+                    "delivery_city": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "title": "Lieferort (BT-77)",
+                        "description": "EN16931 BT-77: Delivery city"
+                    },
+                    "delivery_postal_code": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "title": "Lieferpostleitzahl (BT-78)",
+                        "description": "EN16931 BT-78: Delivery postal code"
+                    },
+                    "delivery_country": {
+                        "type": "string",
+                        "maxLength": 2,
+                        "title": "Lieferland (BT-80)",
+                        "description": "EN16931 BT-80: ISO 3166-1 alpha-2 country code of delivery address"
+                    },
+                    "prepaid_amount": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
+                        "title": "Anzahlung (BT-113)",
+                        "description": "EN16931 BT-113: Amount already paid"
+                    },
+                    "rounding_amount": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
+                        "title": "Rundungsbetrag (BT-114)",
+                        "description": "EN16931 BT-114: Rounding adjustment for the due amount"
                     },
                     "status": {
                         "$ref": "#/components/schemas/InvoiceStatusEnum"
@@ -9638,6 +9726,50 @@
                         "nullable": true,
                         "title": "Leistungsende (BT-74)",
                         "description": "EN16931 BT-74: End of billing/service period"
+                    },
+                    "delivery_address_line1": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "title": "Lieferadresse Straße (BT-75)",
+                        "description": "EN16931 BT-75: Delivery address street and house number"
+                    },
+                    "delivery_address_line2": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "title": "Lieferadresse Zusatz (BT-76)",
+                        "description": "EN16931 BT-76: Delivery address additional information"
+                    },
+                    "delivery_city": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "title": "Lieferort (BT-77)",
+                        "description": "EN16931 BT-77: Delivery city"
+                    },
+                    "delivery_postal_code": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "title": "Lieferpostleitzahl (BT-78)",
+                        "description": "EN16931 BT-78: Delivery postal code"
+                    },
+                    "delivery_country": {
+                        "type": "string",
+                        "maxLength": 2,
+                        "title": "Lieferland (BT-80)",
+                        "description": "EN16931 BT-80: ISO 3166-1 alpha-2 country code of delivery address"
+                    },
+                    "prepaid_amount": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
+                        "title": "Anzahlung (BT-113)",
+                        "description": "EN16931 BT-113: Amount already paid"
+                    },
+                    "rounding_amount": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
+                        "title": "Rundungsbetrag (BT-114)",
+                        "description": "EN16931 BT-114: Rounding adjustment for the due amount"
                     },
                     "status": {
                         "$ref": "#/components/schemas/InvoiceStatusEnum"

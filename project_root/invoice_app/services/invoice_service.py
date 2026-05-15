@@ -114,6 +114,16 @@ class InvoiceService:
             "subtotal": float(invoice.subtotal),
             "tax_amount": float(invoice.tax_amount),
             "total_amount": float(invoice.total_amount),
+            "prepaid_amount": float(invoice.prepaid_amount),
+            "rounding_amount": float(invoice.rounding_amount),
+            # BG-15: Delivery address (BT-75–BT-80)
+            "delivery_address": {
+                "line1": invoice.delivery_address_line1 or "",
+                "line2": invoice.delivery_address_line2 or "",
+                "city": invoice.delivery_city or "",
+                "postal_code": invoice.delivery_postal_code or "",
+                "country_id": invoice.delivery_country or "",
+            },
             # Company/Seller data with ZUGFeRD-compatible address fields
             "company": {
                 "name": invoice.company.name,

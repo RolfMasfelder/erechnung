@@ -362,6 +362,27 @@ class ZugferdXmlGenerator:
         """
         delivery = etree.SubElement(transaction, f"{{{RAM_NS}}}ApplicableHeaderTradeDelivery")
 
+        # ShipToTradeParty – BG-15: Delivery address (BT-75–BT-80)
+        ship_to = invoice_data.get("delivery_address", {})
+        if ship_to and any(ship_to.get(k) for k in ("city", "postal_code", "country_id")):
+            ship_to_party = etree.SubElement(delivery, f"{{{RAM_NS}}}ShipToTradeParty")
+            postal = etree.SubElement(ship_to_party, f"{{{RAM_NS}}}PostalTradeAddress")
+            if ship_to.get("postal_code"):
+                pc = etree.SubElement(postal, f"{{{RAM_NS}}}PostcodeCode")
+                pc.text = ship_to["postal_code"]
+            if ship_to.get("line1"):
+                ln1 = etree.SubElement(postal, f"{{{RAM_NS}}}LineOne")
+                ln1.text = ship_to["line1"]
+            if ship_to.get("line2"):
+                ln2 = etree.SubElement(postal, f"{{{RAM_NS}}}LineTwo")
+                ln2.text = ship_to["line2"]
+            if ship_to.get("city"):
+                ct = etree.SubElement(postal, f"{{{RAM_NS}}}CityName")
+                ct.text = ship_to["city"]
+            if ship_to.get("country_id"):
+                co = etree.SubElement(postal, f"{{{RAM_NS}}}CountryID")
+                co.text = ship_to["country_id"]
+
         # ActualDeliverySupplyChainEvent – BT-72 (Lieferdatum) ist in COMFORT/EN16931 Pflicht
         # [BR-FX-EN-04]: Rechnung muss BT-72, BG-14 oder BG-26 enthalten.
         # Fallback auf invoice_date ("date"), damit das Element nie leer bleibt.
@@ -855,9 +876,22 @@ class ZugferdXmlGenerator:
         grand_elem = etree.SubElement(summation, f"{{{RAM_NS}}}GrandTotalAmount")
         grand_elem.text = self._format_decimal(grand_total)
 
-        # DuePayableAmount
+        # PrepaidAmount – BT-113 (bereits geleistete Zahlung / Anzahlung)
+        prepaid = float(invoice_data.get("prepaid_amount", 0) or 0)
+        if prepaid != 0:
+            prepaid_elem = etree.SubElement(summation, f"{{{RAM_NS}}}TotalPrepaidAmount")
+            prepaid_elem.text = self._format_decimal(prepaid)
+
+        # RoundingAmount – BT-114 (kaufmännische Rundungsdifferenz)
+        rounding = float(invoice_data.get("rounding_amount", 0) or 0)
+        if rounding != 0:
+            rounding_elem = etree.SubElement(summation, f"{{{RAM_NS}}}RoundingAmount")
+            rounding_elem.text = self._format_decimal(rounding)
+
+        # DuePayableAmount – BT-115 = GrandTotal - Prepaid + Rounding
+        due_payable = grand_total - prepaid + rounding
         due_elem = etree.SubElement(summation, f"{{{RAM_NS}}}DuePayableAmount")
-        due_elem.text = self._format_decimal(grand_total)
+        due_elem.text = self._format_decimal(due_payable)
 
     def _add_included_supply_chain_trade_line_items(self, transaction, invoice_data):
         """

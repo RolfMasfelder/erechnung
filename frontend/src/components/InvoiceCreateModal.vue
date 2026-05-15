@@ -125,6 +125,61 @@
         </div>
       </div>
 
+      <!-- Lieferadresse BG-15 (BT-75–BT-80) -->
+      <div class="form-group">
+        <label class="section-toggle">
+          <input type="checkbox" v-model="showDeliveryAddress" />
+          Abweichende Lieferadresse angeben (BG-15)
+        </label>
+      </div>
+      <template v-if="showDeliveryAddress">
+        <div class="form-row">
+          <div class="form-group flex-2">
+            <BaseInput
+              id="delivery_address_line1"
+              v-model="formData.delivery_address_line1"
+              label="Straße / Hausnummer (BT-75)"
+              placeholder="z.B. Musterstraße 1"
+            />
+          </div>
+          <div class="form-group">
+            <BaseInput
+              id="delivery_address_line2"
+              v-model="formData.delivery_address_line2"
+              label="Adresszusatz (BT-76)"
+              placeholder="z.B. Hinterhaus"
+            />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <BaseInput
+              id="delivery_postal_code"
+              v-model="formData.delivery_postal_code"
+              label="PLZ (BT-78)"
+              placeholder="z.B. 80331"
+            />
+          </div>
+          <div class="form-group flex-2">
+            <BaseInput
+              id="delivery_city"
+              v-model="formData.delivery_city"
+              label="Ort (BT-77)"
+              placeholder="z.B. München"
+            />
+          </div>
+          <div class="form-group">
+            <BaseInput
+              id="delivery_country"
+              v-model="formData.delivery_country"
+              label="Land ISO (BT-80)"
+              placeholder="z.B. DE"
+              maxlength="2"
+            />
+          </div>
+        </div>
+      </template>
+
       <!-- Rechnungspositionen -->
       <div class="invoice-lines-section">
         <div class="section-header">
@@ -363,6 +418,33 @@
         </div>
       </div>
 
+      <!-- Anzahlung / Rundung (BT-113 / BT-114) -->
+      <div class="form-row">
+        <div class="form-group">
+          <BaseInput
+            id="prepaid_amount"
+            v-model.number="formData.prepaid_amount"
+            label="Anzahlung (BT-113, optional)"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="0.00"
+          />
+          <small class="form-hint">Bereits geleistete Zahlung / Vorauszahlung</small>
+        </div>
+        <div class="form-group">
+          <BaseInput
+            id="rounding_amount"
+            v-model.number="formData.rounding_amount"
+            label="Rundungsbetrag (BT-114, optional)"
+            type="number"
+            step="0.01"
+            placeholder="0.00"
+          />
+          <small class="form-hint">Kaufmännische Rundungsdifferenz</small>
+        </div>
+      </div>
+
       <!-- Notizen (optional) -->
       <div class="form-group">
         <BaseTextarea
@@ -440,12 +522,23 @@ const formData = reactive({
   contract_reference: '',
   billing_period_start: null,
   billing_period_end: null,
+  // BG-15: Delivery address
+  delivery_address_line1: '',
+  delivery_address_line2: '',
+  delivery_city: '',
+  delivery_postal_code: '',
+  delivery_country: '',
+  // BT-113 / BT-114
+  prepaid_amount: 0,
+  rounding_amount: 0,
   notes: '',
   lines: [
     createEmptyLine()
   ],
   allowance_charges: []
 })
+
+const showDeliveryAddress = ref(false)
 
 const errors = reactive({})
 
@@ -658,6 +751,13 @@ async function handleSubmit() {
       contract_reference: formData.contract_reference || '',
       billing_period_start: formData.billing_period_start || null,
       billing_period_end: formData.billing_period_end || null,
+      delivery_address_line1: formData.delivery_address_line1 || '',
+      delivery_address_line2: formData.delivery_address_line2 || '',
+      delivery_city: formData.delivery_city || '',
+      delivery_postal_code: formData.delivery_postal_code || '',
+      delivery_country: formData.delivery_country || '',
+      prepaid_amount: formData.prepaid_amount || 0,
+      rounding_amount: formData.rounding_amount || 0,
       notes: formData.notes,
     }
 

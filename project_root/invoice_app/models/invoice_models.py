@@ -119,6 +119,38 @@ class Invoice(models.Model):
         help_text=_("End of billing/service period (EN16931 BT-74)"),
     )
 
+    # ── Delivery Address BG-15 (BT-77–BT-80) ───────────────────────────────
+    delivery_address_line1 = models.CharField(
+        _("Delivery Address Line 1"),
+        max_length=200,
+        blank=True,
+        help_text=_("Street and house number of delivery address (EN16931 BT-75)"),
+    )
+    delivery_address_line2 = models.CharField(
+        _("Delivery Address Line 2"),
+        max_length=200,
+        blank=True,
+        help_text=_("Additional delivery address information (EN16931 BT-76)"),
+    )
+    delivery_city = models.CharField(
+        _("Delivery City"),
+        max_length=100,
+        blank=True,
+        help_text=_("City of delivery address (EN16931 BT-77)"),
+    )
+    delivery_postal_code = models.CharField(
+        _("Delivery Postal Code"),
+        max_length=20,
+        blank=True,
+        help_text=_("Postal code of delivery address (EN16931 BT-78)"),
+    )
+    delivery_country = models.CharField(
+        _("Delivery Country"),
+        max_length=2,
+        blank=True,
+        help_text=_("ISO 3166-1 alpha-2 country code of delivery address (EN16931 BT-80)"),
+    )
+
     # Financial information
     currency = models.CharField(_("Currency"), max_length=3, default="EUR")
     subtotal = models.DecimalField(
@@ -129,6 +161,20 @@ class Invoice(models.Model):
     )
     total_amount = models.DecimalField(
         _("Total Amount"), max_digits=15, decimal_places=2, validators=[MinValueValidator(Decimal("0"))], default=0
+    )
+    prepaid_amount = models.DecimalField(
+        _("Prepaid Amount"),
+        max_digits=15,
+        decimal_places=2,
+        default=0,
+        help_text=_("Amount already paid / advance payment (EN16931 BT-113)"),
+    )
+    rounding_amount = models.DecimalField(
+        _("Rounding Amount"),
+        max_digits=15,
+        decimal_places=2,
+        default=0,
+        help_text=_("Rounding adjustment for the due amount (EN16931 BT-114)"),
     )
 
     # Payment information

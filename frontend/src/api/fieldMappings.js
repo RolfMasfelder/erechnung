@@ -81,6 +81,15 @@ export const invoiceFields = createFieldMapper({
     contract_reference:    'contract_reference',
     billing_period_start:  'billing_period_start',
     billing_period_end:    'billing_period_end',
+    // BG-15: Delivery address (BT-75–BT-80)
+    delivery_address_line1:   'delivery_address_line1',
+    delivery_address_line2:   'delivery_address_line2',
+    delivery_city:            'delivery_city',
+    delivery_postal_code:     'delivery_postal_code',
+    delivery_country:         'delivery_country',
+    // BG-22: Prepaid / rounding (BT-113 / BT-114)
+    prepaid_amount:        'prepaid_amount',
+    rounding_amount:       'rounding_amount',
     status:           'status',
     notes:            'notes',
     subtotal:         'subtotal',
