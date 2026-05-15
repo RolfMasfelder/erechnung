@@ -116,9 +116,11 @@ export const invoiceLineFields = createFieldMapper({
     unit_price_net:      'unit_price',          // UI "unit_price_net" → API "unit_price"
     unit_of_measure:     'unit_of_measure',
     vat_rate:            'tax_rate',             // UI "vat_rate" → API "tax_rate"
-    discount_percentage: 'discount_percentage',
-    discount_amount:     'discount_amount',
-    discount_reason:     'discount_reason',
+    discount_percentage:  'discount_percentage',
+    discount_amount:      'discount_amount',
+    discount_reason:      'discount_reason',
+    billing_period_start: 'billing_period_start',
+    billing_period_end:   'billing_period_end',
   },
 })
 

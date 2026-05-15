@@ -52,6 +52,12 @@ class InvoiceService:
                     "line_total": float(line.line_total),
                     "discount_amount": float(line.discount_amount) if line.discount_amount else 0.0,
                     "discount_reason": line.discount_reason or "",
+                    "billing_period_start": line.billing_period_start.strftime("%Y%m%d")
+                    if line.billing_period_start
+                    else None,
+                    "billing_period_end": line.billing_period_end.strftime("%Y%m%d")
+                    if line.billing_period_end
+                    else None,
                 }
             )
 

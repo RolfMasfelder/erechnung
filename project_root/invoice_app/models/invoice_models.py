@@ -792,6 +792,20 @@ class InvoiceLine(models.Model):
     # EN16931 BR-41: reason or reason code required when AllowanceCharge is present
     discount_reason = models.CharField(_("Discount Reason"), max_length=255, blank=True, default="")
 
+    # EN16931 BG-26: Line-level billing period (BT-134 start, BT-135 end)
+    billing_period_start = models.DateField(
+        _("Line Billing Period Start"),
+        null=True,
+        blank=True,
+        help_text=_("Start of line-specific billing/service period (EN16931 BT-134)"),
+    )
+    billing_period_end = models.DateField(
+        _("Line Billing Period End"),
+        null=True,
+        blank=True,
+        help_text=_("End of line-specific billing/service period (EN16931 BT-135)"),
+    )
+
     class Meta:
         verbose_name = _("Invoice Line")
         verbose_name_plural = _("Invoice Lines")

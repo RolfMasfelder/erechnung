@@ -8327,6 +8327,18 @@
                         "type": "string",
                         "maxLength": 255
                     },
+                    "billing_period_start": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "description": "BT-134: Start of line-specific billing/service period"
+                    },
+                    "billing_period_end": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "description": "BT-135: End of line-specific billing/service period"
+                    },
                     "line_subtotal": {
                         "type": "string",
                         "format": "decimal",
@@ -8416,6 +8428,18 @@
                     "discount_reason": {
                         "type": "string",
                         "maxLength": 255
+                    },
+                    "billing_period_start": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "description": "BT-134: Start of line-specific billing/service period"
+                    },
+                    "billing_period_end": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "description": "BT-135: End of line-specific billing/service period"
                     }
                 },
                 "required": [
@@ -9507,6 +9531,18 @@
                     "discount_reason": {
                         "type": "string",
                         "maxLength": 255
+                    },
+                    "billing_period_start": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "description": "BT-134: Start of line-specific billing/service period"
+                    },
+                    "billing_period_end": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "description": "BT-135: End of line-specific billing/service period"
                     }
                 }
             },

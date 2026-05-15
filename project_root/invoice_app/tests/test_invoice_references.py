@@ -1162,3 +1162,179 @@ class BillingPeriodTests(TestCase):
         data = self.invoice_service.convert_model_to_dict(invoice)
         self.assertEqual(data.get("billing_period_start"), "20260401")
         self.assertEqual(data.get("billing_period_end"), "20260430")
+
+
+class LineBillingPeriodTests(TestCase):
+    """Test suite for BG-26 Zeilenspezifischer Leistungszeitraum (BT-134 / BT-135)."""
+
+    RAM_NS = "urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
+    UDT_NS = "urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100"
+
+    def setUp(self):
+        country, _ = Country.objects.get_or_create(
+            code="DE",
+            defaults={
+                "name": "Germany",
+                "eu_member": True,
+                "standard_vat_rate": Decimal("19.00"),
+            },
+        )
+        self.company = Company.objects.create(
+            name="Line Billing Seller GmbH",
+            tax_id="LB123456789",
+            vat_id="DE555555555",
+            address_line1="Linestr. 1",
+            postal_code="10115",
+            city="Berlin",
+            country=country,
+            email="line@seller.de",
+        )
+        self.partner = BusinessPartner.objects.create(
+            partner_type=BusinessPartner.PartnerType.BUSINESS,
+            company_name="Line Billing Käufer AG",
+            tax_id="LB987654321",
+            vat_id="DE666666666",
+            address_line1="Linestr. 2",
+            postal_code="80331",
+            city="München",
+            country=country,
+            email="info@linebillingbuyer.de",
+        )
+        self.user = User.objects.create_user(username="linebillingperioduser", password="testpass123")
+        self.product = Product.objects.create(
+            name="Linebillingprodukt",
+            product_code="LB-PROD-001",
+            base_price=Decimal("100.00"),
+            default_tax_rate=Decimal("19.00"),
+        )
+        self.xml_generator = ZugferdXmlGenerator(profile="COMFORT")
+        self.invoice_service = InvoiceService()
+
+    def _make_invoice(self):
+        return Invoice.objects.create(
+            invoice_number="LB-INV-001",
+            company=self.company,
+            business_partner=self.partner,
+            created_by=self.user,
+            currency="EUR",
+            subtotal=Decimal("100.00"),
+            tax_amount=Decimal("19.00"),
+            total_amount=Decimal("119.00"),
+        )
+
+    def _generate_xml(self, line_kwargs):
+        invoice = self._make_invoice()
+        defaults = {
+            "product": self.product,
+            "description": "Linebillingprodukt",
+            "quantity": Decimal("1"),
+            "unit_price": Decimal("100.00"),
+            "tax_rate": Decimal("19.00"),
+        }
+        defaults.update(line_kwargs)
+        InvoiceLine.objects.create(invoice=invoice, **defaults)
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        xml_string = self.xml_generator.generate_xml(data)
+        return etree.fromstring(xml_string if isinstance(xml_string, bytes) else xml_string.encode())
+
+    def test_xml_line_billing_period_present_when_set(self):
+        """BillingSpecifiedPeriod in SpecifiedLineTradeDelivery when BT-134/BT-135 are set."""
+        from datetime import date
+
+        root = self._generate_xml(
+            {
+                "billing_period_start": date(2026, 5, 1),
+                "billing_period_end": date(2026, 5, 31),
+            }
+        )
+        ns = {"ram": self.RAM_NS}
+        period = root.find(".//ram:SpecifiedLineTradeDelivery/ram:BillingSpecifiedPeriod", ns)
+        self.assertIsNotNone(period, "BillingSpecifiedPeriod must be in SpecifiedLineTradeDelivery")
+
+    def test_xml_line_billing_period_absent_when_empty(self):
+        """BillingSpecifiedPeriod must not appear in line delivery when dates are None."""
+        root = self._generate_xml({})
+        ns = {"ram": self.RAM_NS}
+        period = root.find(".//ram:SpecifiedLineTradeDelivery/ram:BillingSpecifiedPeriod", ns)
+        self.assertIsNone(period, "BillingSpecifiedPeriod must not appear when line dates are empty")
+
+    def test_xml_line_start_datetime_value_bt134(self):
+        """BT-134: StartDateTime DateTimeString must be YYYYMMDD with format 102."""
+        from datetime import date
+
+        root = self._generate_xml({"billing_period_start": date(2026, 5, 1)})
+        ns = {"ram": self.RAM_NS, "udt": self.UDT_NS}
+        start_str = root.find(
+            ".//ram:SpecifiedLineTradeDelivery/ram:BillingSpecifiedPeriod/ram:StartDateTime/udt:DateTimeString", ns
+        )
+        self.assertIsNotNone(start_str, "StartDateTime DateTimeString (BT-134) must be present")
+        self.assertEqual(start_str.text, "20260501")
+        self.assertEqual(start_str.get("format"), "102")
+
+    def test_xml_line_end_datetime_value_bt135(self):
+        """BT-135: EndDateTime DateTimeString must be YYYYMMDD with format 102."""
+        from datetime import date
+
+        root = self._generate_xml({"billing_period_end": date(2026, 5, 31)})
+        ns = {"ram": self.RAM_NS, "udt": self.UDT_NS}
+        end_str = root.find(
+            ".//ram:SpecifiedLineTradeDelivery/ram:BillingSpecifiedPeriod/ram:EndDateTime/udt:DateTimeString", ns
+        )
+        self.assertIsNotNone(end_str, "EndDateTime DateTimeString (BT-135) must be present")
+        self.assertEqual(end_str.text, "20260531")
+        self.assertEqual(end_str.get("format"), "102")
+
+    def test_xml_line_only_start_without_end(self):
+        """BillingSpecifiedPeriod with only StartDateTime when only BT-134 is set."""
+        from datetime import date
+
+        root = self._generate_xml({"billing_period_start": date(2026, 5, 1)})
+        ns = {"ram": self.RAM_NS, "udt": self.UDT_NS}
+        period = root.find(".//ram:SpecifiedLineTradeDelivery/ram:BillingSpecifiedPeriod", ns)
+        self.assertIsNotNone(period)
+        start_str = period.find("ram:StartDateTime/udt:DateTimeString", ns)
+        self.assertIsNotNone(start_str)
+        end_str = period.find("ram:EndDateTime/udt:DateTimeString", ns)
+        self.assertIsNone(end_str, "EndDateTime must not appear when billing_period_end is empty")
+
+    def test_serializer_rejects_line_start_after_end(self):
+        """InvoiceLineSerializer must reject billing_period_start > billing_period_end."""
+        from rest_framework.test import APIClient
+
+        invoice = self._make_invoice()
+        client = APIClient()
+        client.force_authenticate(user=self.user)
+        url = "/api/invoice-lines/"
+        payload = {
+            "invoice": invoice.pk,
+            "product": self.product.pk,
+            "quantity": "1.00",
+            "unit_price": "100.00",
+            "tax_rate": "19.00",
+            "billing_period_start": "2026-05-31",
+            "billing_period_end": "2026-05-01",
+        }
+        response = client.post(url, payload, format="json")
+        self.assertEqual(response.status_code, 400)
+        error_details = response.data.get("error", {}).get("details", response.data)
+        self.assertIn("billing_period_start", error_details)
+
+    def test_service_passes_line_billing_period_to_dict(self):
+        """convert_model_to_dict must include per-line billing_period_start/end as YYYYMMDD."""
+        from datetime import date
+
+        invoice = self._make_invoice()
+        InvoiceLine.objects.create(
+            invoice=invoice,
+            product=self.product,
+            description="Linebillingprodukt",
+            quantity=Decimal("1"),
+            unit_price=Decimal("100.00"),
+            tax_rate=Decimal("19.00"),
+            billing_period_start=date(2026, 5, 1),
+            billing_period_end=date(2026, 5, 31),
+        )
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        item = data["items"][0]
+        self.assertEqual(item.get("billing_period_start"), "20260501")
+        self.assertEqual(item.get("billing_period_end"), "20260531")

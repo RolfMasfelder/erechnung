@@ -419,11 +419,28 @@ class InvoiceLineSerializer(serializers.ModelSerializer):
             "discount_percentage",
             "discount_amount",
             "discount_reason",
+            "billing_period_start",
+            "billing_period_end",
             "line_subtotal",
             "line_total",
             "allowance_charges",
         ]
         read_only_fields = ("tax_amount", "line_subtotal", "line_total")
+
+    def validate(self, data):
+        billing_period_start = data.get(
+            "billing_period_start",
+            getattr(self.instance, "billing_period_start", None) if self.instance else None,
+        )
+        billing_period_end = data.get(
+            "billing_period_end",
+            getattr(self.instance, "billing_period_end", None) if self.instance else None,
+        )
+        if billing_period_start and billing_period_end and billing_period_start > billing_period_end:
+            raise serializers.ValidationError(
+                {"billing_period_start": "Leistungsbeginn darf nicht nach Leistungsende liegen (BT-134/BT-135)."}
+            )
+        return data
 
 
 class InvoiceAttachmentSerializer(serializers.ModelSerializer):

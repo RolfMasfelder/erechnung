@@ -242,6 +242,28 @@
             />
           </div>
 
+          <!-- Zeilenspezifischer Leistungszeitraum (EN16931 BG-26: BT-134/BT-135) -->
+          <div class="form-row">
+            <div class="form-group">
+              <label :for="`line_billing_start_${index}`">Leistungszeitraum Beginn (BT-134)</label>
+              <BaseInput
+                :id="`line_billing_start_${index}`"
+                v-model="line.billing_period_start"
+                type="date"
+                placeholder="JJJJ-MM-TT"
+              />
+            </div>
+            <div class="form-group">
+              <label :for="`line_billing_end_${index}`">Leistungszeitraum Ende (BT-135)</label>
+              <BaseInput
+                :id="`line_billing_end_${index}`"
+                v-model="line.billing_period_end"
+                type="date"
+                placeholder="JJJJ-MM-TT"
+              />
+            </div>
+          </div>
+
           <!-- Positionsrabatt (EN16931 SpecifiedTradeAllowanceCharge) -->
           <div class="form-row">
             <div class="form-group">
@@ -493,7 +515,9 @@ function createEmptyLine() {
     description: '',
     line_total_gross: 0,
     discount_percentage: 0,
-    discount_reason: ''
+    discount_reason: '',
+    billing_period_start: null,
+    billing_period_end: null
   }
 }
 
@@ -650,7 +674,9 @@ async function handleSubmit() {
         vat_rate: line.vat_rate,
         description: line.description || '',
         discount_percentage: line.discount_percentage || 0,
-        discount_reason: line.discount_reason || ''
+        discount_reason: line.discount_reason || '',
+        billing_period_start: line.billing_period_start || null,
+        billing_period_end: line.billing_period_end || null
       }))
     await Promise.all(linePromises)
 

@@ -948,6 +948,28 @@ class ZugferdXmlGenerator:
         quantity_element.set("unitCode", unit_code)
         quantity_element.text = self._format_decimal(quantity, decimals=2)
 
+        # BillingSpecifiedPeriod (BG-26: BT-134 start, BT-135 end)
+        if isinstance(item, dict):
+            billing_start = item.get("billing_period_start")
+            billing_end = item.get("billing_period_end")
+        else:
+            bp_start = getattr(item, "billing_period_start", None)
+            bp_end = getattr(item, "billing_period_end", None)
+            billing_start = bp_start.strftime("%Y%m%d") if bp_start else None
+            billing_end = bp_end.strftime("%Y%m%d") if bp_end else None
+        if billing_start or billing_end:
+            billing_period = etree.SubElement(delivery_element, f"{{{RAM_NS}}}BillingSpecifiedPeriod")
+            if billing_start:
+                start_dt = etree.SubElement(billing_period, f"{{{RAM_NS}}}StartDateTime")
+                start_str = etree.SubElement(start_dt, f"{{{UDT_NS}}}DateTimeString")
+                start_str.set("format", "102")
+                start_str.text = "".join(c for c in str(billing_start) if c.isdigit())[:8]
+            if billing_end:
+                end_dt = etree.SubElement(billing_period, f"{{{RAM_NS}}}EndDateTime")
+                end_str = etree.SubElement(end_dt, f"{{{UDT_NS}}}DateTimeString")
+                end_str.set("format", "102")
+                end_str.text = "".join(c for c in str(billing_end) if c.isdigit())[:8]
+
     def _add_specified_line_trade_settlement(self, line_item, item):
         """Add SpecifiedLineTradeSettlement (tax and totals) to line item."""
         settlement_element = etree.SubElement(line_item, f"{{{RAM_NS}}}SpecifiedLineTradeSettlement")

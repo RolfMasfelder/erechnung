@@ -285,6 +285,29 @@
             />
           </div>
 
+          <!-- Zeilenspezifischer Leistungszeitraum (EN16931 BG-26: BT-134/BT-135) -->
+          <div class="form-row" v-if="line.billing_period_start || line.billing_period_end || formData.status === 'draft'">
+            <div class="form-group">
+              <label :for="`line_billing_start_${index}`">Leistungszeitraum Beginn (BT-134)</label>
+              <BaseInput
+                :id="`line_billing_start_${index}`"
+                v-model="line.billing_period_start"
+                type="date"
+                :readonly="formData.status !== 'draft'"
+              />
+            </div>
+            <div class="form-group">
+              <label :for="`line_billing_end_${index}`">Leistungszeitraum Ende (BT-135)</label>
+              <BaseInput
+                :id="`line_billing_end_${index}`"
+                v-model="line.billing_period_end"
+                type="date"
+                :min-date="line.billing_period_start"
+                :readonly="formData.status !== 'draft'"
+              />
+            </div>
+          </div>
+
           <!-- Positionsrabatt (EN16931 SpecifiedTradeAllowanceCharge) -->
           <div class="form-row">
             <div class="form-group">
@@ -580,7 +603,9 @@ function createEmptyLine() {
     description: '',
     line_total_gross: 0,
     discount_percentage: 0,
-    discount_reason: ''
+    discount_reason: '',
+    billing_period_start: null,
+    billing_period_end: null
   }
 }
 
@@ -704,7 +729,9 @@ async function loadData() {
         description: line.description || '',
         line_total_gross: parseFloat(line.line_total) || 0,
         discount_percentage: parseFloat(line.discount_percentage || 0),
-        discount_reason: line.discount_reason || ''
+        discount_reason: line.discount_reason || '',
+        billing_period_start: line.billing_period_start || null,
+        billing_period_end: line.billing_period_end || null
       })),
       allowance_charges: (invoice.allowance_charges || []).map(ac => ({
         id: ac.id,
@@ -811,7 +838,9 @@ async function handleSubmit() {
           vat_rate: line.vat_rate,
           description: line.description || '',
           discount_percentage: line.discount_percentage || 0,
-          discount_reason: line.discount_reason || ''
+          discount_reason: line.discount_reason || '',
+          billing_period_start: line.billing_period_start || null,
+          billing_period_end: line.billing_period_end || null
         }
         if (line.id) {
           return invoiceService.updateLine(line.id, linePayload)

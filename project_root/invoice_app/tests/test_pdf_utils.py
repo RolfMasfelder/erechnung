@@ -1416,3 +1416,34 @@ class TestPdfFullComfortValidation(TestCase):
                     rels[str(fs.get("/F", "?"))] = str(fs.get("/AFRelationship", "?"))
             self.assertEqual(rels.get("factur-x.xml"), "/Data")
             self.assertEqual(rels.get("Lieferschein_2026-03.pdf"), "/Supplement")
+
+
+class TestFormatDateGerman(TestCase):
+    """Cover _format_date_german — completely untested previously."""
+
+    def setUp(self):
+        import tempfile
+
+        self.temp_dir = tempfile.mkdtemp()
+        self.generator = PdfA3Generator(output_dir=self.temp_dir, xml_dir=self.temp_dir)
+
+    def test_valid_date_converts_correctly(self):
+        """YYYYMMDD → DD.MM.YYYY."""
+        self.assertEqual(self.generator._format_date_german("20230115"), "15.01.2023")
+
+    def test_valid_date_december(self):
+        """Boundary check: December."""
+        self.assertEqual(self.generator._format_date_german("20231231"), "31.12.2023")
+
+    def test_empty_string_returned_as_is(self):
+        """Empty string is returned unchanged (guard branch)."""
+        self.assertEqual(self.generator._format_date_german(""), "")
+
+    def test_none_returned_as_is(self):
+        """None is returned unchanged (falsy guard branch)."""
+        self.assertIsNone(self.generator._format_date_german(None))
+
+    def test_wrong_length_returned_as_is(self):
+        """String with length != 8 is returned unchanged."""
+        self.assertEqual(self.generator._format_date_german("2023"), "2023")
+        self.assertEqual(self.generator._format_date_german("202301150"), "202301150")
