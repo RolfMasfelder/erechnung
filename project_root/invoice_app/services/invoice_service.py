@@ -34,11 +34,17 @@ class InvoiceService:
             dict: Dictionary with invoice data
         """
         # Get invoice lines
-        lines = invoice.lines.all().select_related("invoice")
+        lines = invoice.lines.all().select_related("invoice", "product")
 
         # Create items list
         items = []
         for line in lines:
+            # 3.17-I: product identifiers from linked product (if any)
+            product_seller_id = ""
+            product_gtin = ""
+            if line.product_id:
+                product_seller_id = line.product.seller_item_id or ""
+                product_gtin = line.product.gtin or ""
             items.append(
                 {
                     "product_name": line.description,
@@ -47,11 +53,24 @@ class InvoiceService:
                     "tax_rate": float(line.tax_rate),
                     "tax_category_code": line.tax_category_code,
                     "tax_exemption_reason": line.tax_exemption_reason or "",
+                    "vat_exemption_reason_code": line.vat_exemption_reason_code or "",
                     "product_code": line.product_code,
                     "unit_of_measure": line.unit_of_measure,
                     "line_total": float(line.line_total),
                     "discount_amount": float(line.discount_amount) if line.discount_amount else 0.0,
                     "discount_reason": line.discount_reason or "",
+                    "discount_reason_code": line.discount_reason_code or "",
+                    # 3.17-H: gross price (BT-148) — None if not set
+                    "gross_price": float(line.gross_price) if line.gross_price is not None else None,
+                    # 3.17-I: product identifiers (BT-155/BT-156)
+                    "seller_item_id": product_seller_id,
+                    "gtin": product_gtin,
+                    "billing_period_start": line.billing_period_start.strftime("%Y%m%d")
+                    if line.billing_period_start
+                    else None,
+                    "billing_period_end": line.billing_period_end.strftime("%Y%m%d")
+                    if line.billing_period_end
+                    else None,
                 }
             )
 
@@ -94,13 +113,30 @@ class InvoiceService:
             "date": invoice.issue_date.strftime("%Y%m%d"),
             "due_date": invoice.due_date.strftime("%Y%m%d"),
             "delivery_date": invoice.delivery_date.strftime("%Y%m%d") if invoice.delivery_date else None,
+            "billing_period_start": invoice.billing_period_start.strftime("%Y%m%d")
+            if invoice.billing_period_start
+            else None,
+            "billing_period_end": invoice.billing_period_end.strftime("%Y%m%d")
+            if invoice.billing_period_end
+            else None,
             # Business references (B2B)
             "buyer_reference": invoice.buyer_reference or "",
             "seller_reference": invoice.seller_reference or "",
+            "contract_reference": invoice.contract_reference or "",
             "currency": invoice.currency,
             "subtotal": float(invoice.subtotal),
             "tax_amount": float(invoice.tax_amount),
             "total_amount": float(invoice.total_amount),
+            "prepaid_amount": float(invoice.prepaid_amount),
+            "rounding_amount": float(invoice.rounding_amount),
+            # BG-15: Delivery address (BT-75–BT-80)
+            "delivery_address": {
+                "line1": invoice.delivery_address_line1 or "",
+                "line2": invoice.delivery_address_line2 or "",
+                "city": invoice.delivery_city or "",
+                "postal_code": invoice.delivery_postal_code or "",
+                "country_id": invoice.delivery_country or "",
+            },
             # Company/Seller data with ZUGFeRD-compatible address fields
             "company": {
                 "name": invoice.company.name,
@@ -114,6 +150,8 @@ class InvoiceService:
                 "postcode_code": invoice.company.postcode_code,  # Uses property
                 "country_id": invoice.company.country_id,  # Uses property (ISO code)
                 "email": invoice.company.email,
+                "contact_name": invoice.company.contact_name,
+                "phone": invoice.company.phone,
                 # Bank details for SpecifiedTradeSettlementPaymentMeans
                 "iban": invoice.company.iban,
                 "bic": invoice.company.bic,
@@ -130,6 +168,8 @@ class InvoiceService:
                 "postcode_code": invoice.company.postcode_code,
                 "country_id": invoice.company.country_id,
                 "email": invoice.company.email,
+                "contact_name": invoice.company.contact_name,
+                "phone": invoice.company.phone,
                 "iban": invoice.company.iban,
                 "bic": invoice.company.bic,
                 "bank_name": invoice.company.bank_name,

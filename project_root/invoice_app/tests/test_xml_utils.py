@@ -767,7 +767,6 @@ class TestZugferdXmlGeneratorEdgeCases(TestCase):
             places=2,
             msg="BR-CO-5: sum(BasisAmount) must equal TaxBasisTotalAmount",
         )
-        # LineTotalAmount(300) - AllowanceTotalAmount(30) = 270.00
         self.assertAlmostEqual(tax_basis_total, 270.00, places=2)
         # 19%-group share: 100/300 * 270 = 90.00
         # 7%-group share:  200/300 * 270 = 180.00
@@ -1071,3 +1070,198 @@ class TestZugferdXmlGeneratorEdgeCases(TestCase):
                 f"(individual values: {calculated_amounts})"
             ),
         )
+
+
+class TestGeneratorCoverageGaps(TestCase):
+    """Cover previously-uncovered branches in ZugferdXmlGenerator."""
+
+    def setUp(self):
+        from invoice_app.utils.xml import ZugferdXmlGenerator
+
+        self.gen = ZugferdXmlGenerator(profile="COMFORT")
+
+    # ---------- _format_decimal exception handler (line 1050) ----------
+
+    def test_format_decimal_invalid_string_returns_zero(self):
+        """_format_decimal('not_a_number') hits except and returns '0.00'."""
+        result = self.gen._format_decimal("not_a_number")
+        self.assertEqual(result, "0.00")
+
+    def test_format_decimal_none_returns_zero(self):
+        """_format_decimal(None) hits except and returns '0.00'."""
+        result = self.gen._format_decimal(None)
+        self.assertEqual(result, "0.00")
+
+    # ---------- _map_unit_code string path (lines 1057-1058) ----------
+
+    def test_map_unit_code_known_string_alias(self):
+        """_map_unit_code with a string key returns mapped or uppercased code."""
+        # Pass a string; covers the str branch
+        result = self.gen._map_unit_code("MTR")
+        self.assertIsInstance(result, str)
+        self.assertTrue(len(result) > 0)
+
+    def test_map_unit_code_unknown_string_returns_it_uppercased(self):
+        """_map_unit_code with unknown string returns the uppercased string."""
+        result = self.gen._map_unit_code("xyz")
+        self.assertEqual(result, "XYZ")
+
+    # ---------- _map_unit_code fallback (line 1075) ----------
+
+    def test_map_unit_code_none_returns_c62(self):
+        """_map_unit_code(None) hits the fallback return 'C62'."""
+        self.assertEqual(self.gen._map_unit_code(None), "C62")
+
+    def test_map_unit_code_empty_string_returns_c62(self):
+        """_map_unit_code('') hits the fallback (empty string is falsy)."""
+        self.assertEqual(self.gen._map_unit_code(""), "C62")
+
+    # ---------- generate_xml validation warning logging (lines 79-83) ----------
+
+    def test_generate_xml_logs_validation_warning_when_invalid(self):
+        """When _validator returns invalid, the warning block (lines 79-83) runs."""
+        from unittest.mock import MagicMock
+
+        from invoice_app.utils.xml import ValidationResult
+
+        mock_result = ValidationResult(is_valid=False)
+        mock_result.add_error("Synthetic validation error")
+        mock_validator = MagicMock()
+        mock_validator.validate_xml.return_value = mock_result
+
+        self.gen._validator = mock_validator
+
+        invoice_data = {
+            "number": "WARN-001",
+            "date": "20230101",
+            "due_date": "20230131",
+            "currency": "EUR",
+            "issuer": {"name": "Seller GmbH", "tax_id": "DE123456789", "address": "Berlin"},
+            "customer": {"name": "Buyer AG", "address": "Munich"},
+            "items": [{"product_name": "Item", "quantity": 1, "price": 100.0, "tax_rate": 19.0}],
+        }
+        # Should not raise; the warning is only logged
+        xml_str = self.gen.generate_xml(invoice_data)
+        self.assertIsInstance(xml_str, str)
+        mock_validator.validate_xml.assert_called_once()
+
+    # ---------- DefinedTradeContact phone block (lines 291-292) ----------
+
+    def test_generate_xml_issuer_with_phone_includes_telephone_element(self):
+        """issuer with 'phone' populates TelephoneUniversalCommunication (lines 291-292)."""
+        invoice_data = {
+            "number": "PHONE-001",
+            "date": "20230101",
+            "due_date": "20230131",
+            "currency": "EUR",
+            "issuer": {
+                "name": "Seller GmbH",
+                "tax_id": "DE123456789",
+                "address": "Seller Street 1, Berlin",
+                "phone": "+49 30 12345678",
+                "email": "info@seller.de",
+            },
+            "customer": {"name": "Buyer AG", "address": "Munich"},
+            "items": [{"product_name": "Item", "quantity": 1, "price": 100.0, "tax_rate": 19.0}],
+        }
+        xml_str = self.gen.generate_xml(invoice_data)
+        self.assertIn("TelephoneUniversalCommunication", xml_str)
+        self.assertIn("+49 30 12345678", xml_str)
+
+    # ---------- Line item discount block (lines 1025-1033) ----------
+
+    def test_generate_xml_line_item_with_discount(self):
+        """Line item with discount_amount > 0 creates SpecifiedTradeAllowanceCharge (lines 1025-1033)."""
+        invoice_data = {
+            "number": "DISC-001",
+            "date": "20230101",
+            "due_date": "20230131",
+            "currency": "EUR",
+            "issuer": {"name": "Seller GmbH", "tax_id": "DE123456789", "address": "Berlin"},
+            "customer": {"name": "Buyer AG", "address": "Munich"},
+            "items": [
+                {
+                    "product_name": "Discounted Item",
+                    "quantity": 1,
+                    "price": 100.0,
+                    "tax_rate": 19.0,
+                    "discount_amount": 10.0,
+                    "discount_reason": "Promotional discount",
+                    "line_total": 90.0,
+                }
+            ],
+        }
+        xml_str = self.gen.generate_xml(invoice_data)
+        self.assertIn("SpecifiedTradeAllowanceCharge", xml_str)
+        self.assertIn("Promotional discount", xml_str)
+
+    # ---------- Date fallback for non-string or short date (lines 143, 145) ----------
+
+    def test_generate_xml_with_short_date_uses_fallback(self):
+        """Date string shorter than 8 digits triggers fallback '20000101' (line 143)."""
+        invoice_data = {
+            "number": "DATE-001",
+            "date": "2023",  # too short — triggers fallback
+            "due_date": "20230131",
+            "currency": "EUR",
+            "issuer": {"name": "Seller GmbH", "tax_id": "DE123456789", "address": "Berlin"},
+            "customer": {"name": "Buyer AG", "address": "Munich"},
+            "items": [{"product_name": "Item", "quantity": 1, "price": 100.0, "tax_rate": 19.0}],
+        }
+        xml_str = self.gen.generate_xml(invoice_data)
+        # Fallback date used
+        self.assertIn("20000101", xml_str)
+
+    def test_generate_xml_with_non_string_date_uses_fallback(self):
+        """Non-string date triggers the else fallback '20000101' (line 145)."""
+        invoice_data = {
+            "number": "DATE-002",
+            "date": 20230101,  # integer — not a string, triggers else branch
+            "due_date": "20230131",
+            "currency": "EUR",
+            "issuer": {"name": "Seller GmbH", "tax_id": "DE123456789", "address": "Berlin"},
+            "customer": {"name": "Buyer AG", "address": "Munich"},
+            "items": [{"product_name": "Item", "quantity": 1, "price": 100.0, "tax_rate": 19.0}],
+        }
+        xml_str = self.gen.generate_xml(invoice_data)
+        self.assertIn("20000101", xml_str)
+
+    # ---------- Model-instance line item paths (lines 681-684, 944-945, 1003-1033) ----------
+
+    def test_generate_xml_with_mock_model_instance_line_items(self):
+        """Non-dict line items use getattr paths (covers 681-684, 944-945, model instance branches)."""
+        from unittest.mock import MagicMock
+
+        mock_item = MagicMock()
+        mock_item.__class__.__name__ = "InvoiceLine"
+        # Make isinstance(mock_item, dict) return False (default for MagicMock)
+        mock_item.tax_rate = 19.0
+        mock_item.tax_category_code = "S"
+        mock_item.tax_exemption_reason = ""
+        mock_item.line_total = 100.0
+        mock_item.quantity = 1
+        mock_item.unit_code = "C62"
+        mock_item.billing_period_start = None
+        mock_item.billing_period_end = None
+        mock_item.discount_amount = 0
+        mock_item.discount_reason = ""
+        mock_item.gtin = ""
+        mock_item.seller_item_id = ""
+        mock_item.gross_price = None
+        mock_item.product_name = "Mock Product"
+        mock_item.description = "Mock description"
+        mock_item.unit_price = 100.0
+        mock_item.position = 1
+
+        invoice_data = {
+            "number": "MOCK-001",
+            "date": "20230101",
+            "due_date": "20230131",
+            "currency": "EUR",
+            "issuer": {"name": "Seller GmbH", "tax_id": "DE123456789", "address": "Berlin"},
+            "customer": {"name": "Buyer AG", "address": "Munich"},
+            "items": [mock_item],
+        }
+        xml_str = self.gen.generate_xml(invoice_data)
+        self.assertIsInstance(xml_str, str)
+        self.assertIn("BilledQuantity", xml_str)

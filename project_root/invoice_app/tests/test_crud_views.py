@@ -541,3 +541,193 @@ class PermissionTests(CRUDTestCase):
         # Should be able to view details
         response = self.client.get(reverse("company-detail", kwargs={"pk": self.company.pk}))
         self.assertEqual(response.status_code, 200)
+
+
+class BusinessPartnerViewExtraTests(CRUDTestCase):
+    """Cover BusinessPartner view context methods and delete path."""
+
+    def test_business_partner_create_view_get(self):
+        """GET BusinessPartnerCreateView returns correct context title/action."""
+        url = reverse("business-partner-create")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["title"], "Create Business Partner")
+        self.assertEqual(response.context["action"], "Create")
+
+    def test_business_partner_update_view_get(self):
+        """GET BusinessPartnerUpdateView returns correct context title/action."""
+        url = reverse("business-partner-update", kwargs={"pk": self.business_partner.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["title"], "Update Business Partner")
+        self.assertEqual(response.context["action"], "Update")
+
+    def test_business_partner_update_view_post(self):
+        """POST BusinessPartnerUpdateView updates the partner."""
+        url = reverse("business-partner-update", kwargs={"pk": self.business_partner.pk})
+        data = {
+            "partner_type": self.business_partner.partner_type,
+            "partner_number": self.business_partner.partner_number,
+            "company_name": "Updated Corp Name",
+            "legal_name": self.business_partner.legal_name or "",
+            "tax_id": self.business_partner.tax_id or "",
+            "address_line1": self.business_partner.address_line1,
+            "city": self.business_partner.city,
+            "postal_code": self.business_partner.postal_code,
+            "country": self.business_partner.country.pk,
+            "email": self.business_partner.email,
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 302)
+        self.business_partner.refresh_from_db()
+        self.assertEqual(self.business_partner.company_name, "Updated Corp Name")
+
+    def test_business_partner_delete_view_post(self):
+        """POST BusinessPartnerDeleteView deletes the partner."""
+        url = reverse("business-partner-delete", kwargs={"pk": self.business_partner.pk})
+        pk = self.business_partner.pk
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(BusinessPartner.objects.filter(pk=pk).exists())
+
+
+class InvoiceViewExtraTests(InvoiceCRUDTests):
+    """Cover Invoice/InvoiceLine/Attachment view context methods and delete paths."""
+
+    def test_invoice_create_view_get(self):
+        """GET InvoiceCreateView returns correct context title/action."""
+        url = reverse("invoice-create")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["title"], "Create Invoice")
+        self.assertEqual(response.context["action"], "Create")
+
+    def test_invoice_update_view_get(self):
+        """GET InvoiceUpdateView returns correct context title/action."""
+        url = reverse("invoice-update", kwargs={"pk": self.invoice.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["title"], "Update Invoice")
+        self.assertEqual(response.context["action"], "Update")
+
+    def test_invoice_update_view_post(self):
+        """POST InvoiceUpdateView updates the invoice."""
+        url = reverse("invoice-update", kwargs={"pk": self.invoice.pk})
+        data = {
+            "invoice_number": "INV-2025-001-UPDATED",
+            "invoice_type": Invoice.InvoiceType.INVOICE,
+            "company": self.company.pk,
+            "business_partner": self.business_partner.pk,
+            "issue_date": self.invoice.issue_date,
+            "due_date": self.invoice.due_date,
+            "currency": "EUR",
+            "status": Invoice.InvoiceStatus.DRAFT,
+            "payment_terms": 30,
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 302)
+        self.invoice.refresh_from_db()
+        self.assertEqual(self.invoice.invoice_number, "INV-2025-001-UPDATED")
+
+    def test_invoice_delete_view_post(self):
+        """POST InvoiceDeleteView deletes the invoice."""
+        url = reverse("invoice-delete", kwargs={"pk": self.invoice.pk})
+        pk = self.invoice.pk
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Invoice.objects.filter(pk=pk).exists())
+
+    def test_invoice_line_create_view_get(self):
+        """GET InvoiceLineCreateView returns correct context."""
+        url = reverse("invoice-line-create", kwargs={"invoice_pk": self.invoice.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["invoice"], self.invoice)
+        self.assertEqual(response.context["action"], "Create")
+
+    def test_invoice_line_update_view_get(self):
+        """GET InvoiceLineUpdateView returns correct context."""
+        url = reverse("invoice-line-update", kwargs={"pk": self.invoice_line.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["invoice"], self.invoice)
+        self.assertEqual(response.context["action"], "Update")
+
+    def test_invoice_line_update_view_post(self):
+        """POST InvoiceLineUpdateView updates the line."""
+        url = reverse("invoice-line-update", kwargs={"pk": self.invoice_line.pk})
+        data = {
+            "description": "Updated line description",
+            "quantity": "2.00",
+            "unit_price": "50.00",
+            "unit_of_measure": 1,
+            "tax_rate": "19.00",
+            "discount_percentage": "0.00",
+            "discount_amount": "0.00",
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 302)
+        self.invoice_line.refresh_from_db()
+        self.assertEqual(self.invoice_line.description, "Updated line description")
+
+    def test_invoice_line_delete_view_post(self):
+        """POST InvoiceLineDeleteView deletes the line."""
+        url = reverse("invoice-line-delete", kwargs={"pk": self.invoice_line.pk})
+        pk = self.invoice_line.pk
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(InvoiceLine.objects.filter(pk=pk).exists())
+
+    def test_invoice_attachment_create_view_get(self):
+        """GET InvoiceAttachmentCreateView returns correct context."""
+        url = reverse("invoice-attachment-create", kwargs={"invoice_pk": self.invoice.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["invoice"], self.invoice)
+        self.assertEqual(response.context["action"], "Upload")
+
+    def test_invoice_attachment_delete_view_post(self):
+        """POST InvoiceAttachmentDeleteView deletes the attachment."""
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        from invoice_app.models import InvoiceAttachment
+
+        attachment = InvoiceAttachment.objects.create(
+            invoice=self.invoice,
+            file=SimpleUploadedFile("test.pdf", b"dummy", content_type="application/pdf"),
+            description="Test attachment",
+        )
+        url = reverse("invoice-attachment-delete", kwargs={"pk": attachment.pk})
+        pk = attachment.pk
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(InvoiceAttachment.objects.filter(pk=pk).exists())
+
+    def test_admin_generate_pdf_view(self):
+        """GET AdminGeneratePdfView with staff user: mocked service, expect redirect."""
+        from unittest.mock import patch
+
+        from django.test import RequestFactory
+
+        from invoice_app.views.invoice import AdminGeneratePdfView
+
+        self.user.is_staff = True
+        self.user.save()
+
+        factory = RequestFactory()
+        request = factory.get(f"/admin/invoice/{self.invoice.pk}/generate_pdf/")
+        request.user = self.user
+        # Provide minimal session for messages middleware
+        from django.contrib.messages.storage.fallback import FallbackStorage
+
+        request.session = self.client.session
+        request._messages = FallbackStorage(request)
+
+        with patch("invoice_app.views.invoice.InvoiceService") as MockService:
+            MockService.return_value.generate_invoice_files.return_value = {
+                "is_valid": True,
+                "validation_errors": [],
+            }
+            view = AdminGeneratePdfView.as_view()
+            response = view(request, pk=self.invoice.pk)
+        self.assertEqual(response.status_code, 302)

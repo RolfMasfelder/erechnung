@@ -7,7 +7,8 @@ import { productService } from '@/api/services/productService'
 vi.mock('@/api/services/productService', () => ({
   productService: {
     getAll: vi.fn(),
-    delete: vi.fn()
+    delete: vi.fn(),
+    getById: vi.fn()
   }
 }))
 

@@ -130,8 +130,12 @@ erechnung/
 docker compose exec web python project_root/manage.py makemigrations
 docker compose exec web python project_root/manage.py migrate
 
-# Alle Tests ausführen
+# Alle Tests ausführen (ohne Backup-Tests)
 cd scripts && ./run_tests_docker.sh
+
+# Backup-Tests separat (nur bei Migrations-Änderungen nötig)
+cd scripts && ./run_backup_tests.sh          # auto: nur wenn migrations/ geändert
+cd scripts && ./run_backup_tests.sh --always # immer ausführen
 
 # Einzelnes Test-Modul
 docker compose exec web python project_root/manage.py test invoice_app.tests.test_api
@@ -315,8 +319,11 @@ Das Projekt hat ~40 Testdateien. Alle unter `invoice_app/tests/`:
 | `test_exception_handler.py` | Fehler-Response-Format |
 
 ```bash
-# Alle Tests (empfohlen)
+# Alle Tests (empfohlen, ohne Backup-Tests)
 cd scripts && ./run_tests_docker.sh
+
+# Backup-Tests separat (bei Migrations-Änderungen)
+cd scripts && ./run_backup_tests.sh
 
 # Mit Coverage-Report
 docker compose exec web python project_root/manage.py test invoice_app.tests \

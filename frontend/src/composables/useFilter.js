@@ -1,4 +1,4 @@
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, getCurrentInstance } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 /**
@@ -255,10 +255,12 @@ export function useFilter(options = {}) {
     { deep: true }
   )
 
-  // Initialize from URL on mount
-  onMounted(() => {
-    initFromUrl()
-  })
+  // Initialize from URL on mount (only when called inside a component's setup())
+  if (getCurrentInstance()) {
+    onMounted(() => {
+      initFromUrl()
+    })
+  }
 
   return {
     // State

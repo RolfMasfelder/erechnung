@@ -95,7 +95,99 @@
           />
           <small class="form-hint">Interne Referenz / Projektnummer</small>
         </div>
+
+        <div class="form-group">
+          <label for="contract_reference">Vertragsreferenz (optional)</label>
+          <BaseInput
+            id="contract_reference"
+            v-model="formData.contract_reference"
+            placeholder="z.B. VTR-2026-001"
+            :error="errors.contract_reference"
+          />
+          <small class="form-hint">Vertragsnummer / Rahmenvertrag (BT-12)</small>
+        </div>
       </div>
+
+      <!-- Leistungszeitraum (BG-14) -->
+      <div class="form-row">
+        <div class="form-group">
+          <BaseDatePicker
+            id="billing_period_start"
+            v-model="formData.billing_period_start"
+            label="Leistungsbeginn (optional)"
+            placeholder="Datum auswählen"
+            :error="errors.billing_period_start"
+          />
+          <small class="form-hint">Beginn des Leistungszeitraums, z.B. 01.04.2026 (BT-73)</small>
+        </div>
+
+        <div class="form-group">
+          <BaseDatePicker
+            id="billing_period_end"
+            v-model="formData.billing_period_end"
+            label="Leistungsende (optional)"
+            placeholder="Datum auswählen"
+            :min-date="formData.billing_period_start"
+            :error="errors.billing_period_end"
+          />
+          <small class="form-hint">Ende des Leistungszeitraums, z.B. 30.04.2026 (BT-74)</small>
+        </div>
+      </div>
+
+      <!-- Lieferadresse BG-15 (BT-75–BT-80) -->
+      <div class="form-group">
+        <label class="section-toggle">
+          <input type="checkbox" v-model="showDeliveryAddress" />
+          Abweichende Lieferadresse angeben (BG-15)
+        </label>
+      </div>
+      <template v-if="showDeliveryAddress">
+        <div class="form-row">
+          <div class="form-group flex-2">
+            <BaseInput
+              id="delivery_address_line1"
+              v-model="formData.delivery_address_line1"
+              label="Straße / Hausnummer (BT-75)"
+              placeholder="z.B. Musterstraße 1"
+            />
+          </div>
+          <div class="form-group">
+            <BaseInput
+              id="delivery_address_line2"
+              v-model="formData.delivery_address_line2"
+              label="Adresszusatz (BT-76)"
+              placeholder="z.B. Hinterhaus"
+            />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <BaseInput
+              id="delivery_postal_code"
+              v-model="formData.delivery_postal_code"
+              label="PLZ (BT-78)"
+              placeholder="z.B. 80331"
+            />
+          </div>
+          <div class="form-group flex-2">
+            <BaseInput
+              id="delivery_city"
+              v-model="formData.delivery_city"
+              label="Ort (BT-77)"
+              placeholder="z.B. München"
+            />
+          </div>
+          <div class="form-group">
+            <BaseInput
+              id="delivery_country"
+              v-model="formData.delivery_country"
+              label="Land ISO (BT-80)"
+              placeholder="z.B. DE"
+              maxlength="2"
+            />
+          </div>
+        </div>
+      </template>
 
       <!-- Datumfelder -->
       <div class="form-row">
@@ -132,7 +224,7 @@
             v-if="formData.status === 'draft'"
             type="button"
             variant="secondary"
-            size="small"
+            size="sm"
             @click="addLine"
           >
             + Position hinzufügen
@@ -150,7 +242,7 @@
               v-if="formData.status === 'draft' && formData.lines.length > 1"
               type="button"
               variant="danger"
-              size="small"
+              size="sm"
               @click="removeLine(index)"
             >
               Entfernen
@@ -248,6 +340,29 @@
             />
           </div>
 
+          <!-- Zeilenspezifischer Leistungszeitraum (EN16931 BG-26: BT-134/BT-135) -->
+          <div class="form-row" v-if="line.billing_period_start || line.billing_period_end || formData.status === 'draft'">
+            <div class="form-group">
+              <label :for="`line_billing_start_${index}`">Leistungszeitraum Beginn (BT-134)</label>
+              <BaseInput
+                :id="`line_billing_start_${index}`"
+                v-model="line.billing_period_start"
+                type="date"
+                :readonly="formData.status !== 'draft'"
+              />
+            </div>
+            <div class="form-group">
+              <label :for="`line_billing_end_${index}`">Leistungszeitraum Ende (BT-135)</label>
+              <BaseInput
+                :id="`line_billing_end_${index}`"
+                v-model="line.billing_period_end"
+                type="date"
+                :min-date="line.billing_period_start"
+                :readonly="formData.status !== 'draft'"
+              />
+            </div>
+          </div>
+
           <!-- Positionsrabatt (EN16931 SpecifiedTradeAllowanceCharge) -->
           <div class="form-row">
             <div class="form-group">
@@ -270,6 +385,46 @@
                 :id="`discount_reason_${index}`"
                 v-model="line.discount_reason"
                 placeholder="z.B. Mengenrabatt"
+                :readonly="formData.status !== 'draft'"
+              />
+            </div>
+            <div class="form-group" v-if="line.discount_percentage > 0">
+              <label :for="`discount_reason_code_${index}`">Rabattcode (BT-140)</label>
+              <BaseInput
+                :id="`discount_reason_code_${index}`"
+                v-model="line.discount_reason_code"
+                placeholder="z.B. 95"
+                maxlength="10"
+                :readonly="formData.status !== 'draft'"
+              />
+            </div>
+          </div>
+
+          <!-- VAT Exemption Reason Code (EN16931 BT-121) -->
+          <div class="form-row" v-if="line.vat_rate == 0 || line.vat_exemption_reason_code">
+            <div class="form-group flex-2">
+              <label :for="`vat_exemption_reason_code_${index}`">VATEX-Code (BT-121)</label>
+              <BaseInput
+                :id="`vat_exemption_reason_code_${index}`"
+                v-model="line.vat_exemption_reason_code"
+                placeholder="z.B. VATEX-EU-AE"
+                maxlength="20"
+                :readonly="formData.status !== 'draft'"
+              />
+            </div>
+          </div>
+
+          <!-- Bruttopreis BG-29 BT-148 (optional) -->
+          <div class="form-row">
+            <div class="form-group">
+              <label :for="`gross_price_${index}`">Bruttopreis vor Rabatt (BT-148, optional)</label>
+              <BaseInput
+                :id="`gross_price_${index}`"
+                v-model.number="line.gross_price"
+                type="number"
+                step="0.000001"
+                min="0"
+                placeholder="leer = nur Nettopreis (BT-146)"
                 :readonly="formData.status !== 'draft'"
               />
             </div>
@@ -301,15 +456,16 @@
         >
           <div class="form-row">
             <div class="form-group">
-              <label>Typ</label>
-              <select v-model="ac.is_charge" class="base-select" :disabled="formData.status !== 'draft'">
+              <label :for="'ac-type-' + acIdx">Typ</label>
+              <select :id="'ac-type-' + acIdx" v-model="ac.is_charge" class="base-select" :disabled="formData.status !== 'draft'">
                 <option :value="false">Rabatt (–)</option>
                 <option :value="true">Zuschlag (+)</option>
               </select>
             </div>
             <div class="form-group">
-              <label>Betrag (Netto)</label>
+              <label :for="'ac-amount-' + acIdx">Betrag (Netto)</label>
               <BaseInput
+                :id="'ac-amount-' + acIdx"
                 v-model.number="ac.actual_amount"
                 type="number"
                 step="0.01"
@@ -319,15 +475,15 @@
               />
             </div>
             <div class="form-group flex-2">
-              <label>Grund</label>
+              <label :for="'ac-reason-' + acIdx">Grund</label>
               <BaseInput
+                :id="'ac-reason-' + acIdx"
                 v-model="ac.reason"
                 placeholder="z.B. Skonto, Versandkosten"
                 :readonly="formData.status !== 'draft'"
               />
             </div>
             <div class="form-group" v-if="formData.status === 'draft'">
-              <label>&nbsp;</label>
               <BaseButton
                 type="button"
                 variant="danger"
@@ -354,6 +510,33 @@
         <div class="summary-row total">
           <span>Gesamt (Brutto):</span>
           <span>{{ formatCurrency(calculatedTotals.gross) }}</span>
+        </div>
+      </div>
+
+      <!-- Anzahlung / Rundung (BT-113 / BT-114) -->
+      <div class="form-row">
+        <div class="form-group">
+          <BaseInput
+            id="prepaid_amount"
+            v-model.number="formData.prepaid_amount"
+            label="Anzahlung (BT-113, optional)"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="0.00"
+          />
+          <small class="form-hint">Bereits geleistete Zahlung / Vorauszahlung</small>
+        </div>
+        <div class="form-group">
+          <BaseInput
+            id="rounding_amount"
+            v-model.number="formData.rounding_amount"
+            label="Rundungsbetrag (BT-114, optional)"
+            type="number"
+            step="0.01"
+            placeholder="0.00"
+          />
+          <small class="form-hint">Kaufmännische Rundungsdifferenz</small>
         </div>
       </div>
 
@@ -446,11 +629,25 @@ const formData = reactive({
   due_date: '',
   buyer_reference: '',
   seller_reference: '',
+  contract_reference: '',
+  billing_period_start: null,
+  billing_period_end: null,
+  // BG-15: Delivery address
+  delivery_address_line1: '',
+  delivery_address_line2: '',
+  delivery_city: '',
+  delivery_postal_code: '',
+  delivery_country: '',
+  // BT-113 / BT-114
+  prepaid_amount: 0,
+  rounding_amount: 0,
   status: 'draft',
   notes: '',
   lines: [],
   allowance_charges: []
 })
+
+const showDeliveryAddress = ref(false)
 
 const errors = reactive({})
 
@@ -484,34 +681,31 @@ const calculatedTotals = computed(() => {
   const allowancesTotal = acAllowances.reduce((s, ac) => s + (ac.actual_amount || 0), 0)
   const netAdjustment = chargesTotal - allowancesTotal  // positiv = Zuschlag
 
-  if (netAdjustment !== 0) {
-    // Nettosumme aller Positionen als Basis für proportionale MwSt.-Verteilung
-    const totalLineNet = totals.net
-    // VAT-Gruppen aus den Positionen aufbauen
-    const vatGroups = {}
-    formData.lines.forEach(line => {
-      if (line.quantity && line.unit_price_net !== null && line.vat_rate !== null) {
-        const baseNet = line.quantity * line.unit_price_net
-        const discount = baseNet * ((line.discount_percentage || 0) / 100)
-        const lineNet = baseNet - discount
-        const rate = line.vat_rate
-        vatGroups[rate] = (vatGroups[rate] || 0) + lineNet
-      }
-    })
-    // Proportionale MwSt.-Korrektur
-    let vatAdjustment = 0
-    Object.entries(vatGroups).forEach(([rate, groupNet]) => {
-      const share = totalLineNet > 0 ? groupNet / totalLineNet : 0
-      vatAdjustment += netAdjustment * share * (parseFloat(rate) / 100)
-    })
-    totals.net += netAdjustment
-    totals.vat += vatAdjustment
-    totals.gross += netAdjustment + vatAdjustment
-  } else {
-    totals.net += netAdjustment
-    totals.gross += netAdjustment
+  if (netAdjustment === 0) {
+    return totals
   }
-
+  // Nettosumme aller Positionen als Basis für proportionale MwSt.-Verteilung
+  const totalLineNet = totals.net
+  // VAT-Gruppen aus den Positionen aufbauen
+  const vatGroups = {}
+  formData.lines.forEach(line => {
+    if (line.quantity && line.unit_price_net !== null && line.vat_rate !== null) {
+      const baseNet = line.quantity * line.unit_price_net
+      const discount = baseNet * ((line.discount_percentage || 0) / 100)
+      const lineNet = baseNet - discount
+      const rate = line.vat_rate
+      vatGroups[rate] = (vatGroups[rate] || 0) + lineNet
+    }
+  })
+  // Proportionale MwSt.-Korrektur
+  let vatAdjustment = 0
+  Object.entries(vatGroups).forEach(([rate, groupNet]) => {
+    const share = totalLineNet > 0 ? groupNet / totalLineNet : 0
+    vatAdjustment += netAdjustment * share * (Number.parseFloat(rate) / 100)
+  })
+  totals.net += netAdjustment
+  totals.vat += vatAdjustment
+  totals.gross += netAdjustment + vatAdjustment
   return totals
 })
 
@@ -540,7 +734,12 @@ function createEmptyLine() {
     description: '',
     line_total_gross: 0,
     discount_percentage: 0,
-    discount_reason: ''
+    discount_reason: '',
+    discount_reason_code: '',
+    vat_exemption_reason_code: '',
+    gross_price: null,
+    billing_period_start: null,
+    billing_period_end: null
   }
 }
 
@@ -558,8 +757,8 @@ function handleProductChange(index) {
   const product = products.value.find(p => p.id == line.product)
 
   if (product) {
-    line.unit_price_net = parseFloat(product.current_price) || 0
-    line.vat_rate = parseFloat(product.default_tax_rate) || 19
+    line.unit_price_net = Number.parseFloat(product.current_price) || 0
+    line.vat_rate = Number.parseFloat(product.default_tax_rate) || 19
     if (!line.description) {
       line.description = product.description || ''
     }
@@ -650,23 +849,41 @@ async function loadData() {
       due_date: invoice.due_date,
       buyer_reference: invoice.buyer_reference || '',
       seller_reference: invoice.seller_reference || '',
+      contract_reference: invoice.contract_reference || '',
+      billing_period_start: invoice.billing_period_start || null,
+      billing_period_end: invoice.billing_period_end || null,
+      delivery_address_line1: invoice.delivery_address_line1 || '',
+      delivery_address_line2: invoice.delivery_address_line2 || '',
+      delivery_city: invoice.delivery_city || '',
+      delivery_postal_code: invoice.delivery_postal_code || '',
+      delivery_country: invoice.delivery_country || '',
+      prepaid_amount: Number.parseFloat(invoice.prepaid_amount) || 0,
+      rounding_amount: Number.parseFloat(invoice.rounding_amount) || 0,
       status: invoice.status,
       notes: invoice.notes || '',
+    })
+    showDeliveryAddress.value = !!(invoice.delivery_address_line1 || invoice.delivery_city || invoice.delivery_country)
+    Object.assign(formData, {
       lines: (invoice.lines || invoice.invoice_lines || []).map(line => ({
         id: line.id,
         product: line.product,
-        quantity: parseFloat(line.quantity) || 1,
-        unit_price_net: parseFloat(line.unit_price_net) || 0,
-        vat_rate: parseFloat(line.vat_rate) ?? 19,
+        quantity: Number.parseFloat(line.quantity) || 1,
+        unit_price_net: Number.parseFloat(line.unit_price_net) || 0,
+        vat_rate: Number.parseFloat(line.vat_rate) ?? 19,
         description: line.description || '',
-        line_total_gross: parseFloat(line.line_total) || 0,
-        discount_percentage: parseFloat(line.discount_percentage || 0),
-        discount_reason: line.discount_reason || ''
+        line_total_gross: Number.parseFloat(line.line_total) || 0,
+        discount_percentage: Number.parseFloat(line.discount_percentage || 0),
+        discount_reason: line.discount_reason || '',
+        discount_reason_code: line.discount_reason_code || '',
+        vat_exemption_reason_code: line.vat_exemption_reason_code || '',
+        gross_price: line.gross_price == null ? null : Number.parseFloat(line.gross_price),
+        billing_period_start: line.billing_period_start || null,
+        billing_period_end: line.billing_period_end || null
       })),
       allowance_charges: (invoice.allowance_charges || []).map(ac => ({
         id: ac.id,
         is_charge: ac.is_charge,
-        actual_amount: parseFloat(ac.actual_amount),
+        actual_amount: Number.parseFloat(ac.actual_amount),
         reason: ac.reason || '',
         reason_code: ac.reason_code || ''
       }))
@@ -741,6 +958,16 @@ async function handleSubmit() {
       due_date: formData.due_date,
       buyer_reference: formData.buyer_reference,
       seller_reference: formData.seller_reference,
+      contract_reference: formData.contract_reference,
+      billing_period_start: formData.billing_period_start || null,
+      billing_period_end: formData.billing_period_end || null,
+      delivery_address_line1: formData.delivery_address_line1 || '',
+      delivery_address_line2: formData.delivery_address_line2 || '',
+      delivery_city: formData.delivery_city || '',
+      delivery_postal_code: formData.delivery_postal_code || '',
+      delivery_country: formData.delivery_country || '',
+      prepaid_amount: formData.prepaid_amount || 0,
+      rounding_amount: formData.rounding_amount || 0,
       notes: formData.notes,
       // lines ist im InvoiceSerializer read_only – werden separat via /invoice-lines/ verwaltet
     }
@@ -749,8 +976,8 @@ async function handleSubmit() {
 
     // Positionen aktualisieren (InvoiceSerializer.lines ist read_only → eigene Requests)
     if (formData.status === 'draft') {
-      const currentLineIds = formData.lines.filter(l => l.id).map(l => l.id)
-      const removedLineIds = originalLineIds.value.filter(id => !currentLineIds.includes(id))
+      const currentLineIds = new Set(formData.lines.filter(l => l.id).map(l => l.id))
+      const removedLineIds = originalLineIds.value.filter(id => !currentLineIds.has(id))
 
       // Gelöschte Positionen entfernen
       await Promise.all(removedLineIds.map(id => invoiceService.deleteLine(id)))
@@ -765,7 +992,12 @@ async function handleSubmit() {
           vat_rate: line.vat_rate,
           description: line.description || '',
           discount_percentage: line.discount_percentage || 0,
-          discount_reason: line.discount_reason || ''
+          discount_reason: line.discount_reason || '',
+          discount_reason_code: line.discount_reason_code || '',
+          vat_exemption_reason_code: line.vat_exemption_reason_code || '',
+          gross_price: line.gross_price ? Number.parseFloat(line.gross_price) : null,
+          billing_period_start: line.billing_period_start || null,
+          billing_period_end: line.billing_period_end || null
         }
         if (line.id) {
           return invoiceService.updateLine(line.id, linePayload)

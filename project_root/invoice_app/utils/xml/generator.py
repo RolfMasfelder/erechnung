@@ -212,6 +212,13 @@ class ZugferdXmlGenerator:
             buyer_order_id = etree.SubElement(buyer_order_doc, f"{{{RAM_NS}}}IssuerAssignedID")
             buyer_order_id.text = buyer_reference
 
+        # ContractReferencedDocument (optional - BT-12 Vertragsreferenz)
+        contract_reference = invoice_data.get("contract_reference", "")
+        if contract_reference:
+            contract_doc = etree.SubElement(agreement, f"{{{RAM_NS}}}ContractReferencedDocument")
+            contract_id = etree.SubElement(contract_doc, f"{{{RAM_NS}}}IssuerAssignedID")
+            contract_id.text = contract_reference
+
         # AdditionalReferencedDocument (Phase C – rechnungsbegründende Dokumente)
         # Per XSD sequence: comes after BuyerOrderReferencedDocument
         self._add_additional_referenced_documents(agreement, invoice_data)
@@ -287,6 +294,25 @@ class ZugferdXmlGenerator:
             legal_org_id.set("schemeID", "0002")
             legal_org_id.text = commercial_register
 
+        # DefinedTradeContact (BG-6: BT-39 name, BT-40 phone, BT-41 email)
+        # Per CII XSD: after SpecifiedLegalOrganization, before PostalTradeAddress
+        contact_name = get_val("contact_name")
+        contact_phone = get_val("phone")
+        contact_email = get_val("email")
+        if contact_name or contact_phone or contact_email:
+            contact = etree.SubElement(party_element, f"{{{RAM_NS}}}DefinedTradeContact")
+            if contact_name:
+                person_name = etree.SubElement(contact, f"{{{RAM_NS}}}PersonName")
+                person_name.text = contact_name
+            if contact_phone:
+                phone_comm = etree.SubElement(contact, f"{{{RAM_NS}}}TelephoneUniversalCommunication")
+                phone_num = etree.SubElement(phone_comm, f"{{{RAM_NS}}}CompleteNumber")
+                phone_num.text = contact_phone
+            if contact_email:
+                email_comm = etree.SubElement(contact, f"{{{RAM_NS}}}EmailURIUniversalCommunication")
+                email_id = etree.SubElement(email_comm, f"{{{RAM_NS}}}URIID")
+                email_id.text = contact_email
+
         # PostalTradeAddress
         address = etree.SubElement(party_element, f"{{{RAM_NS}}}PostalTradeAddress")
 
@@ -335,6 +361,27 @@ class ZugferdXmlGenerator:
             invoice_data: Invoice data dictionary
         """
         delivery = etree.SubElement(transaction, f"{{{RAM_NS}}}ApplicableHeaderTradeDelivery")
+
+        # ShipToTradeParty – BG-15: Delivery address (BT-75–BT-80)
+        ship_to = invoice_data.get("delivery_address", {})
+        if ship_to and any(ship_to.get(k) for k in ("city", "postal_code", "country_id")):
+            ship_to_party = etree.SubElement(delivery, f"{{{RAM_NS}}}ShipToTradeParty")
+            postal = etree.SubElement(ship_to_party, f"{{{RAM_NS}}}PostalTradeAddress")
+            if ship_to.get("postal_code"):
+                pc = etree.SubElement(postal, f"{{{RAM_NS}}}PostcodeCode")
+                pc.text = ship_to["postal_code"]
+            if ship_to.get("line1"):
+                ln1 = etree.SubElement(postal, f"{{{RAM_NS}}}LineOne")
+                ln1.text = ship_to["line1"]
+            if ship_to.get("line2"):
+                ln2 = etree.SubElement(postal, f"{{{RAM_NS}}}LineTwo")
+                ln2.text = ship_to["line2"]
+            if ship_to.get("city"):
+                ct = etree.SubElement(postal, f"{{{RAM_NS}}}CityName")
+                ct.text = ship_to["city"]
+            if ship_to.get("country_id"):
+                co = etree.SubElement(postal, f"{{{RAM_NS}}}CountryID")
+                co.text = ship_to["country_id"]
 
         # ActualDeliverySupplyChainEvent – BT-72 (Lieferdatum) ist in COMFORT/EN16931 Pflicht
         # [BR-FX-EN-04]: Rechnung muss BT-72, BG-14 oder BG-26 enthalten.
@@ -421,6 +468,23 @@ class ZugferdXmlGenerator:
 
         # ApplicableTradeTax (tax summary – kommt vor SpecifiedTradeAllowanceCharge in CII D16B)
         self._add_applicable_trade_tax(settlement, invoice_data, split_acs)
+
+        # BillingSpecifiedPeriod (BG-14: BT-73 start, BT-74 end) – nach ApplicableTradeTax
+        # Per CII D16B XSD: after ApplicableTradeTax, before SpecifiedTradeAllowanceCharge
+        billing_start = invoice_data.get("billing_period_start")
+        billing_end = invoice_data.get("billing_period_end")
+        if billing_start or billing_end:
+            billing_period = etree.SubElement(settlement, f"{{{RAM_NS}}}BillingSpecifiedPeriod")
+            if billing_start:
+                start_dt = etree.SubElement(billing_period, f"{{{RAM_NS}}}StartDateTime")
+                start_str = etree.SubElement(start_dt, f"{{{UDT_NS}}}DateTimeString")
+                start_str.set("format", "102")
+                start_str.text = "".join(c for c in str(billing_start) if c.isdigit())[:8]
+            if billing_end:
+                end_dt = etree.SubElement(billing_period, f"{{{RAM_NS}}}EndDateTime")
+                end_str = etree.SubElement(end_dt, f"{{{UDT_NS}}}DateTimeString")
+                end_str.set("format", "102")
+                end_str.text = "".join(c for c in str(billing_end) if c.isdigit())[:8]
 
         # SpecifiedTradeAllowanceCharge (header level – kommt nach ApplicableTradeTax in CII D16B)
         # Write split entries (one per rate) when applicable, otherwise original entries.
@@ -628,6 +692,7 @@ class ZugferdXmlGenerator:
                 tax_rate = float(item.get("tax_rate", 0))
                 cat_code = item.get("tax_category_code", "")
                 exemption_reason = item.get("tax_exemption_reason", "")
+                exemption_reason_code = item.get("vat_exemption_reason_code", "")
                 if "line_total" in item:
                     line_total = float(item["line_total"])
                 else:
@@ -638,6 +703,7 @@ class ZugferdXmlGenerator:
                 tax_rate = float(getattr(item, "tax_rate", 0))
                 cat_code = getattr(item, "tax_category_code", "S")
                 exemption_reason = getattr(item, "tax_exemption_reason", "")
+                exemption_reason_code = getattr(item, "vat_exemption_reason_code", "")
                 line_total = float(getattr(item, "line_total", 0))
 
             # Derive category code if not explicitly set
@@ -646,7 +712,12 @@ class ZugferdXmlGenerator:
 
             group_key = (tax_rate, cat_code)
             if group_key not in tax_groups:
-                tax_groups[group_key] = {"basis": 0, "tax": 0, "exemption_reason": exemption_reason}
+                tax_groups[group_key] = {
+                    "basis": 0,
+                    "tax": 0,
+                    "exemption_reason": exemption_reason,
+                    "exemption_reason_code": exemption_reason_code,
+                }
             tax_groups[group_key]["basis"] += line_total
 
         if split_acs:
@@ -704,6 +775,12 @@ class ZugferdXmlGenerator:
             if exemption_reason and cat_code in ("AE", "G", "E"):
                 exemption_el = etree.SubElement(tax_element, f"{{{RAM_NS}}}ExemptionReason")
                 exemption_el.text = exemption_reason
+
+            # ExemptionReasonCode (BT-121, VATEX code, optional)
+            exemption_reason_code = amounts.get("exemption_reason_code", "")
+            if exemption_reason_code and cat_code in ("AE", "G", "E"):
+                exemption_code_el = etree.SubElement(tax_element, f"{{{RAM_NS}}}ExemptionReasonCode")
+                exemption_code_el.text = exemption_reason_code
 
             # BasisAmount
             basis = etree.SubElement(tax_element, f"{{{RAM_NS}}}BasisAmount")
@@ -812,9 +889,22 @@ class ZugferdXmlGenerator:
         grand_elem = etree.SubElement(summation, f"{{{RAM_NS}}}GrandTotalAmount")
         grand_elem.text = self._format_decimal(grand_total)
 
-        # DuePayableAmount
+        # PrepaidAmount – BT-113 (bereits geleistete Zahlung / Anzahlung)
+        prepaid = float(invoice_data.get("prepaid_amount", 0) or 0)
+        if prepaid != 0:
+            prepaid_elem = etree.SubElement(summation, f"{{{RAM_NS}}}TotalPrepaidAmount")
+            prepaid_elem.text = self._format_decimal(prepaid)
+
+        # RoundingAmount – BT-114 (kaufmännische Rundungsdifferenz)
+        rounding = float(invoice_data.get("rounding_amount", 0) or 0)
+        if rounding != 0:
+            rounding_elem = etree.SubElement(summation, f"{{{RAM_NS}}}RoundingAmount")
+            rounding_elem.text = self._format_decimal(rounding)
+
+        # DuePayableAmount – BT-115 = GrandTotal - Prepaid + Rounding
+        due_payable = grand_total - prepaid + rounding
         due_elem = etree.SubElement(summation, f"{{{RAM_NS}}}DuePayableAmount")
-        due_elem.text = self._format_decimal(grand_total)
+        due_elem.text = self._format_decimal(due_payable)
 
     def _add_included_supply_chain_trade_line_items(self, transaction, invoice_data):
         """
@@ -850,12 +940,30 @@ class ZugferdXmlGenerator:
         """Add SpecifiedTradeProduct to line item."""
         product_element = etree.SubElement(line_item, f"{{{RAM_NS}}}SpecifiedTradeProduct")
 
-        # Add product name
+        # GlobalID (BT-157 schemeID + BT-156 GTIN) — optional
+        if isinstance(item, dict):
+            gtin = item.get("gtin", "")
+        else:
+            gtin = getattr(item, "gtin", "")
+        if gtin:
+            global_id_el = etree.SubElement(product_element, f"{{{RAM_NS}}}GlobalID")
+            global_id_el.set("schemeID", "0160")
+            global_id_el.text = gtin
+
+        # SellerAssignedID (BT-155) — optional
+        if isinstance(item, dict):
+            seller_item_id = item.get("seller_item_id", "")
+        else:
+            seller_item_id = getattr(item, "seller_item_id", "")
+        if seller_item_id:
+            seller_id_el = etree.SubElement(product_element, f"{{{RAM_NS}}}SellerAssignedID")
+            seller_id_el.text = seller_item_id
+
+        # Name (BT-153, required)
         name_element = etree.SubElement(product_element, f"{{{RAM_NS}}}Name")
         if isinstance(item, dict):
             product_name = item.get("product_name", item.get("description", "Unknown Product"))
         else:
-            # Model instance
             product_name = getattr(item, "description", "Unknown Product")
         name_element.text = product_name
 
@@ -863,7 +971,29 @@ class ZugferdXmlGenerator:
         """Add SpecifiedLineTradeAgreement (price information) to line item."""
         agreement_element = etree.SubElement(line_item, f"{{{RAM_NS}}}SpecifiedLineTradeAgreement")
 
-        # NetPriceProductTradePrice
+        # GrossPriceProductTradePrice (BG-29: BT-148 + optional BT-147 discount)
+        if isinstance(item, dict):
+            gross_price = item.get("gross_price")
+            unit_price = float(item.get("price", item.get("unit_price", 0)))
+        else:
+            gross_price = getattr(item, "gross_price", None)
+            unit_price = float(getattr(item, "unit_price", 0))
+        if gross_price is not None:
+            gross_price_f = float(gross_price)
+            gross_el = etree.SubElement(agreement_element, f"{{{RAM_NS}}}GrossPriceProductTradePrice")
+            gross_charge_el = etree.SubElement(gross_el, f"{{{RAM_NS}}}ChargeAmount")
+            gross_charge_el.text = self._format_decimal(gross_price_f)
+            # AppliedTradeAllowanceCharge (BT-147: price discount = gross - net) — only if > 0
+            price_discount = round(gross_price_f - unit_price, 6)
+            if price_discount > 0:
+                ac_el = etree.SubElement(gross_el, f"{{{RAM_NS}}}AppliedTradeAllowanceCharge")
+                indicator_el = etree.SubElement(ac_el, f"{{{RAM_NS}}}ChargeIndicator")
+                ind_el = etree.SubElement(indicator_el, f"{{{UDT_NS}}}Indicator")
+                ind_el.text = "false"
+                actual_el = etree.SubElement(ac_el, f"{{{RAM_NS}}}ActualAmount")
+                actual_el.text = self._format_decimal(price_discount)
+
+        # NetPriceProductTradePrice (BT-146 net unit price)
         net_price_element = etree.SubElement(agreement_element, f"{{{RAM_NS}}}NetPriceProductTradePrice")
 
         # ChargeAmount (unit price) - MUST come before BasisQuantity per schema
@@ -905,6 +1035,28 @@ class ZugferdXmlGenerator:
         quantity_element.set("unitCode", unit_code)
         quantity_element.text = self._format_decimal(quantity, decimals=2)
 
+        # BillingSpecifiedPeriod (BG-26: BT-134 start, BT-135 end)
+        if isinstance(item, dict):
+            billing_start = item.get("billing_period_start")
+            billing_end = item.get("billing_period_end")
+        else:
+            bp_start = getattr(item, "billing_period_start", None)
+            bp_end = getattr(item, "billing_period_end", None)
+            billing_start = bp_start.strftime("%Y%m%d") if bp_start else None
+            billing_end = bp_end.strftime("%Y%m%d") if bp_end else None
+        if billing_start or billing_end:
+            billing_period = etree.SubElement(delivery_element, f"{{{RAM_NS}}}BillingSpecifiedPeriod")
+            if billing_start:
+                start_dt = etree.SubElement(billing_period, f"{{{RAM_NS}}}StartDateTime")
+                start_str = etree.SubElement(start_dt, f"{{{UDT_NS}}}DateTimeString")
+                start_str.set("format", "102")
+                start_str.text = "".join(c for c in str(billing_start) if c.isdigit())[:8]
+            if billing_end:
+                end_dt = etree.SubElement(billing_period, f"{{{RAM_NS}}}EndDateTime")
+                end_str = etree.SubElement(end_dt, f"{{{UDT_NS}}}DateTimeString")
+                end_str.set("format", "102")
+                end_str.text = "".join(c for c in str(billing_end) if c.isdigit())[:8]
+
     def _add_specified_line_trade_settlement(self, line_item, item):
         """Add SpecifiedLineTradeSettlement (tax and totals) to line item."""
         settlement_element = etree.SubElement(line_item, f"{{{RAM_NS}}}SpecifiedLineTradeSettlement")
@@ -934,11 +1086,17 @@ class ZugferdXmlGenerator:
         # ExemptionReason (required for AE=Reverse Charge, G=Export)
         if isinstance(item, dict):
             exemption_reason = item.get("tax_exemption_reason", "")
+            exemption_reason_code = item.get("vat_exemption_reason_code", "")
         else:
             exemption_reason = getattr(item, "tax_exemption_reason", "")
+            exemption_reason_code = getattr(item, "vat_exemption_reason_code", "")
         if exemption_reason and category in ("AE", "G", "E"):
             exemption_el = etree.SubElement(tax_element, f"{{{RAM_NS}}}ExemptionReason")
             exemption_el.text = exemption_reason
+        # ExemptionReasonCode (BT-121, VATEX code, optional)
+        if exemption_reason_code and category in ("AE", "G", "E"):
+            exemption_code_el = etree.SubElement(tax_element, f"{{{RAM_NS}}}ExemptionReasonCode")
+            exemption_code_el.text = exemption_reason_code
 
         # RateApplicablePercent
         rate_element = etree.SubElement(tax_element, f"{{{RAM_NS}}}RateApplicablePercent")
@@ -952,9 +1110,11 @@ class ZugferdXmlGenerator:
         if isinstance(item, dict):
             discount_amount = float(item.get("discount_amount", 0) or 0)
             discount_reason = item.get("discount_reason", "") or ""
+            discount_reason_code = item.get("discount_reason_code", "") or ""
         else:
             discount_amount = float(getattr(item, "discount_amount", 0) or 0)
             discount_reason = getattr(item, "discount_reason", "") or ""
+            discount_reason_code = getattr(item, "discount_reason_code", "") or ""
 
         if discount_amount > 0:
             line_ac = etree.SubElement(settlement_element, f"{{{RAM_NS}}}SpecifiedTradeAllowanceCharge")
@@ -963,6 +1123,9 @@ class ZugferdXmlGenerator:
             udt_indicator.text = "false"
             actual_el = etree.SubElement(line_ac, f"{{{RAM_NS}}}ActualAmount")
             actual_el.text = self._format_decimal(discount_amount)
+            if discount_reason_code:
+                rc_el = etree.SubElement(line_ac, f"{{{RAM_NS}}}ReasonCode")
+                rc_el.text = discount_reason_code
             reason_text = discount_reason if discount_reason else "Discount"
             reason_el = etree.SubElement(line_ac, f"{{{RAM_NS}}}Reason")
             reason_el.text = reason_text
