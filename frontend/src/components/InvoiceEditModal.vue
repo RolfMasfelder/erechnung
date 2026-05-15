@@ -413,6 +413,22 @@
               />
             </div>
           </div>
+
+          <!-- Bruttopreis BG-29 BT-148 (optional) -->
+          <div class="form-row">
+            <div class="form-group">
+              <label :for="`gross_price_${index}`">Bruttopreis vor Rabatt (BT-148, optional)</label>
+              <BaseInput
+                :id="`gross_price_${index}`"
+                v-model.number="line.gross_price"
+                type="number"
+                step="0.000001"
+                min="0"
+                placeholder="leer = nur Nettopreis (BT-146)"
+                :readonly="formData.status !== 'draft'"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -440,15 +456,16 @@
         >
           <div class="form-row">
             <div class="form-group">
-              <label>Typ</label>
-              <select v-model="ac.is_charge" class="base-select" :disabled="formData.status !== 'draft'">
+              <label :for="'ac-type-' + acIdx">Typ</label>
+              <select :id="'ac-type-' + acIdx" v-model="ac.is_charge" class="base-select" :disabled="formData.status !== 'draft'">
                 <option :value="false">Rabatt (–)</option>
                 <option :value="true">Zuschlag (+)</option>
               </select>
             </div>
             <div class="form-group">
-              <label>Betrag (Netto)</label>
+              <label :for="'ac-amount-' + acIdx">Betrag (Netto)</label>
               <BaseInput
+                :id="'ac-amount-' + acIdx"
                 v-model.number="ac.actual_amount"
                 type="number"
                 step="0.01"
@@ -458,15 +475,15 @@
               />
             </div>
             <div class="form-group flex-2">
-              <label>Grund</label>
+              <label :for="'ac-reason-' + acIdx">Grund</label>
               <BaseInput
+                :id="'ac-reason-' + acIdx"
                 v-model="ac.reason"
                 placeholder="z.B. Skonto, Versandkosten"
                 :readonly="formData.status !== 'draft'"
               />
             </div>
             <div class="form-group" v-if="formData.status === 'draft'">
-              <label>&nbsp;</label>
               <BaseButton
                 type="button"
                 variant="danger"
@@ -664,34 +681,31 @@ const calculatedTotals = computed(() => {
   const allowancesTotal = acAllowances.reduce((s, ac) => s + (ac.actual_amount || 0), 0)
   const netAdjustment = chargesTotal - allowancesTotal  // positiv = Zuschlag
 
-  if (netAdjustment !== 0) {
-    // Nettosumme aller Positionen als Basis für proportionale MwSt.-Verteilung
-    const totalLineNet = totals.net
-    // VAT-Gruppen aus den Positionen aufbauen
-    const vatGroups = {}
-    formData.lines.forEach(line => {
-      if (line.quantity && line.unit_price_net !== null && line.vat_rate !== null) {
-        const baseNet = line.quantity * line.unit_price_net
-        const discount = baseNet * ((line.discount_percentage || 0) / 100)
-        const lineNet = baseNet - discount
-        const rate = line.vat_rate
-        vatGroups[rate] = (vatGroups[rate] || 0) + lineNet
-      }
-    })
-    // Proportionale MwSt.-Korrektur
-    let vatAdjustment = 0
-    Object.entries(vatGroups).forEach(([rate, groupNet]) => {
-      const share = totalLineNet > 0 ? groupNet / totalLineNet : 0
-      vatAdjustment += netAdjustment * share * (parseFloat(rate) / 100)
-    })
-    totals.net += netAdjustment
-    totals.vat += vatAdjustment
-    totals.gross += netAdjustment + vatAdjustment
-  } else {
-    totals.net += netAdjustment
-    totals.gross += netAdjustment
+  if (netAdjustment === 0) {
+    return totals
   }
-
+  // Nettosumme aller Positionen als Basis für proportionale MwSt.-Verteilung
+  const totalLineNet = totals.net
+  // VAT-Gruppen aus den Positionen aufbauen
+  const vatGroups = {}
+  formData.lines.forEach(line => {
+    if (line.quantity && line.unit_price_net !== null && line.vat_rate !== null) {
+      const baseNet = line.quantity * line.unit_price_net
+      const discount = baseNet * ((line.discount_percentage || 0) / 100)
+      const lineNet = baseNet - discount
+      const rate = line.vat_rate
+      vatGroups[rate] = (vatGroups[rate] || 0) + lineNet
+    }
+  })
+  // Proportionale MwSt.-Korrektur
+  let vatAdjustment = 0
+  Object.entries(vatGroups).forEach(([rate, groupNet]) => {
+    const share = totalLineNet > 0 ? groupNet / totalLineNet : 0
+    vatAdjustment += netAdjustment * share * (Number.parseFloat(rate) / 100)
+  })
+  totals.net += netAdjustment
+  totals.vat += vatAdjustment
+  totals.gross += netAdjustment + vatAdjustment
   return totals
 })
 
@@ -723,6 +737,7 @@ function createEmptyLine() {
     discount_reason: '',
     discount_reason_code: '',
     vat_exemption_reason_code: '',
+    gross_price: null,
     billing_period_start: null,
     billing_period_end: null
   }
@@ -742,8 +757,8 @@ function handleProductChange(index) {
   const product = products.value.find(p => p.id == line.product)
 
   if (product) {
-    line.unit_price_net = parseFloat(product.current_price) || 0
-    line.vat_rate = parseFloat(product.default_tax_rate) || 19
+    line.unit_price_net = Number.parseFloat(product.current_price) || 0
+    line.vat_rate = Number.parseFloat(product.default_tax_rate) || 19
     if (!line.description) {
       line.description = product.description || ''
     }
@@ -842,8 +857,8 @@ async function loadData() {
       delivery_city: invoice.delivery_city || '',
       delivery_postal_code: invoice.delivery_postal_code || '',
       delivery_country: invoice.delivery_country || '',
-      prepaid_amount: parseFloat(invoice.prepaid_amount) || 0,
-      rounding_amount: parseFloat(invoice.rounding_amount) || 0,
+      prepaid_amount: Number.parseFloat(invoice.prepaid_amount) || 0,
+      rounding_amount: Number.parseFloat(invoice.rounding_amount) || 0,
       status: invoice.status,
       notes: invoice.notes || '',
     })
@@ -852,22 +867,23 @@ async function loadData() {
       lines: (invoice.lines || invoice.invoice_lines || []).map(line => ({
         id: line.id,
         product: line.product,
-        quantity: parseFloat(line.quantity) || 1,
-        unit_price_net: parseFloat(line.unit_price_net) || 0,
-        vat_rate: parseFloat(line.vat_rate) ?? 19,
+        quantity: Number.parseFloat(line.quantity) || 1,
+        unit_price_net: Number.parseFloat(line.unit_price_net) || 0,
+        vat_rate: Number.parseFloat(line.vat_rate) ?? 19,
         description: line.description || '',
-        line_total_gross: parseFloat(line.line_total) || 0,
-        discount_percentage: parseFloat(line.discount_percentage || 0),
+        line_total_gross: Number.parseFloat(line.line_total) || 0,
+        discount_percentage: Number.parseFloat(line.discount_percentage || 0),
         discount_reason: line.discount_reason || '',
         discount_reason_code: line.discount_reason_code || '',
         vat_exemption_reason_code: line.vat_exemption_reason_code || '',
+        gross_price: line.gross_price == null ? null : Number.parseFloat(line.gross_price),
         billing_period_start: line.billing_period_start || null,
         billing_period_end: line.billing_period_end || null
       })),
       allowance_charges: (invoice.allowance_charges || []).map(ac => ({
         id: ac.id,
         is_charge: ac.is_charge,
-        actual_amount: parseFloat(ac.actual_amount),
+        actual_amount: Number.parseFloat(ac.actual_amount),
         reason: ac.reason || '',
         reason_code: ac.reason_code || ''
       }))
@@ -960,8 +976,8 @@ async function handleSubmit() {
 
     // Positionen aktualisieren (InvoiceSerializer.lines ist read_only → eigene Requests)
     if (formData.status === 'draft') {
-      const currentLineIds = formData.lines.filter(l => l.id).map(l => l.id)
-      const removedLineIds = originalLineIds.value.filter(id => !currentLineIds.includes(id))
+      const currentLineIds = new Set(formData.lines.filter(l => l.id).map(l => l.id))
+      const removedLineIds = originalLineIds.value.filter(id => !currentLineIds.has(id))
 
       // Gelöschte Positionen entfernen
       await Promise.all(removedLineIds.map(id => invoiceService.deleteLine(id)))
@@ -979,6 +995,7 @@ async function handleSubmit() {
           discount_reason: line.discount_reason || '',
           discount_reason_code: line.discount_reason_code || '',
           vat_exemption_reason_code: line.vat_exemption_reason_code || '',
+          gross_price: line.gross_price ? Number.parseFloat(line.gross_price) : null,
           billing_period_start: line.billing_period_start || null,
           billing_period_end: line.billing_period_end || null
         }

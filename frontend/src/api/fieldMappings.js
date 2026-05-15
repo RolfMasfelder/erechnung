@@ -132,6 +132,8 @@ export const invoiceLineFields = createFieldMapper({
     discount_reason_code: 'discount_reason_code',
     // BT-121: VATEX exemption reason code
     vat_exemption_reason_code: 'vat_exemption_reason_code',
+    // BT-148: gross price before price-level discount (BG-29)
+    gross_price:          'gross_price',
     billing_period_start: 'billing_period_start',
     billing_period_end:   'billing_period_end',
   },
@@ -247,6 +249,9 @@ export const productFields = createFieldMapper({
     barcode:               'barcode',
     sku:                   'sku',
     tags:                  'tags',
+    // BT-155: seller's item identifier; BT-156/157: GTIN
+    seller_item_id:        'seller_item_id',
+    gtin:                  'gtin',
     is_active:             'is_active',
     is_sellable:           'is_sellable',
     discontinuation_date:  'discontinuation_date',

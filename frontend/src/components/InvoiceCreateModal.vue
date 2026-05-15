@@ -365,6 +365,21 @@
               />
             </div>
           </div>
+
+          <!-- Bruttopreis BG-29 BT-148 (optional) -->
+          <div class="form-row">
+            <div class="form-group">
+              <label :for="`gross_price_${index}`">Bruttopreis vor Rabatt (BT-148, optional)</label>
+              <BaseInput
+                :id="`gross_price_${index}`"
+                v-model.number="line.gross_price"
+                type="number"
+                step="0.000001"
+                min="0"
+                placeholder="leer = nur Nettopreis (BT-146)"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -386,15 +401,16 @@
         >
           <div class="form-row">
             <div class="form-group">
-              <label>Typ</label>
-              <select v-model="ac.is_charge" class="base-select">
+              <label :for="'ac-type-' + acIdx">Typ</label>
+              <select :id="'ac-type-' + acIdx" v-model="ac.is_charge" class="base-select">
                 <option :value="false">Rabatt (–)</option>
                 <option :value="true">Zuschlag (+)</option>
               </select>
             </div>
             <div class="form-group">
-              <label>Betrag (Netto)</label>
+              <label :for="'ac-amount-' + acIdx">Betrag (Netto)</label>
               <BaseInput
+                :id="'ac-amount-' + acIdx"
                 v-model.number="ac.actual_amount"
                 type="number"
                 step="0.01"
@@ -403,14 +419,14 @@
               />
             </div>
             <div class="form-group flex-2">
-              <label>Grund</label>
+              <label :for="'ac-reason-' + acIdx">Grund</label>
               <BaseInput
+                :id="'ac-reason-' + acIdx"
                 v-model="ac.reason"
                 placeholder="z.B. Skonto, Versandkosten"
               />
             </div>
             <div class="form-group">
-              <label>&nbsp;</label>
               <BaseButton
                 type="button"
                 variant="danger"
@@ -633,6 +649,7 @@ function createEmptyLine() {
     discount_reason: '',
     discount_reason_code: '',
     vat_exemption_reason_code: '',
+    gross_price: null,
     billing_period_start: null,
     billing_period_end: null
   }
@@ -658,8 +675,8 @@ function handleProductChange(index) {
   const product = products.value.find(p => p.id == line.product)
 
   if (product) {
-    line.unit_price_net = parseFloat(product.current_price) || 0
-    line.vat_rate = parseFloat(product.default_tax_rate) || 19
+    line.unit_price_net = Number.parseFloat(product.current_price) || 0
+    line.vat_rate = Number.parseFloat(product.default_tax_rate) || 19
     line.description = product.description || ''
     calculateLineTotal(index)
   }
@@ -801,6 +818,7 @@ async function handleSubmit() {
         discount_reason: line.discount_reason || '',
         discount_reason_code: line.discount_reason_code || '',
         vat_exemption_reason_code: line.vat_exemption_reason_code || '',
+        gross_price: line.gross_price ? Number.parseFloat(line.gross_price) : null,
         billing_period_start: line.billing_period_start || null,
         billing_period_end: line.billing_period_end || null
       }))

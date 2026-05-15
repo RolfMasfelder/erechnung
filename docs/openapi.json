@@ -8381,6 +8381,13 @@
                         "maxLength": 20,
                         "description": "VATEX code for VAT exemption reason (EN16931 BT-121, e.g. 'VATEX-EU-AE')"
                     },
+                    "gross_price": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,6})?$",
+                        "nullable": true,
+                        "description": "Price before price-level discount, BG-29 BT-148 (EN16931). If set, XML includes GrossPriceProductTradePrice."
+                    },
                     "billing_period_start": {
                         "type": "string",
                         "format": "date",
@@ -8492,6 +8499,13 @@
                         "type": "string",
                         "maxLength": 20,
                         "description": "VATEX code for VAT exemption reason (EN16931 BT-121, e.g. 'VATEX-EU-AE')"
+                    },
+                    "gross_price": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,6})?$",
+                        "nullable": true,
+                        "description": "Price before price-level discount, BG-29 BT-148 (EN16931). If set, XML includes GrossPriceProductTradePrice."
                     },
                     "billing_period_start": {
                         "type": "string",
@@ -9650,6 +9664,13 @@
                         "maxLength": 20,
                         "description": "VATEX code for VAT exemption reason (EN16931 BT-121, e.g. 'VATEX-EU-AE')"
                     },
+                    "gross_price": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,6})?$",
+                        "nullable": true,
+                        "description": "Price before price-level discount, BG-29 BT-148 (EN16931). If set, XML includes GrossPriceProductTradePrice."
+                    },
                     "billing_period_start": {
                         "type": "string",
                         "format": "date",
@@ -10060,6 +10081,16 @@
                         "type": "string",
                         "description": "Comma-separated tags",
                         "maxLength": 500
+                    },
+                    "seller_item_id": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "description": "Seller's item identifier (EN16931 BT-155)"
+                    },
+                    "gtin": {
+                        "type": "string",
+                        "maxLength": 14,
+                        "description": "GTIN/EAN 13 or 14 digits, schemeID 0160 (EN16931 BT-156/BT-157)"
                     },
                     "is_active": {
                         "type": "boolean"
@@ -10565,6 +10596,16 @@
                         "description": "Comma-separated tags",
                         "maxLength": 500
                     },
+                    "seller_item_id": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "description": "Seller's item identifier (EN16931 BT-155)"
+                    },
+                    "gtin": {
+                        "type": "string",
+                        "maxLength": 14,
+                        "description": "GTIN/EAN 13 or 14 digits, schemeID 0160 (EN16931 BT-156/BT-157)"
+                    },
                     "is_active": {
                         "type": "boolean"
                     },
@@ -10878,6 +10919,16 @@
                         "type": "string",
                         "description": "Comma-separated tags",
                         "maxLength": 500
+                    },
+                    "seller_item_id": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "description": "Seller's item identifier (EN16931 BT-155)"
+                    },
+                    "gtin": {
+                        "type": "string",
+                        "maxLength": 14,
+                        "description": "GTIN/EAN 13 or 14 digits, schemeID 0160 (EN16931 BT-156/BT-157)"
                     },
                     "is_active": {
                         "type": "boolean"

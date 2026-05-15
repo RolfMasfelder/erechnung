@@ -34,11 +34,17 @@ class InvoiceService:
             dict: Dictionary with invoice data
         """
         # Get invoice lines
-        lines = invoice.lines.all().select_related("invoice")
+        lines = invoice.lines.all().select_related("invoice", "product")
 
         # Create items list
         items = []
         for line in lines:
+            # 3.17-I: product identifiers from linked product (if any)
+            product_seller_id = ""
+            product_gtin = ""
+            if line.product_id:
+                product_seller_id = line.product.seller_item_id or ""
+                product_gtin = line.product.gtin or ""
             items.append(
                 {
                     "product_name": line.description,
@@ -54,6 +60,11 @@ class InvoiceService:
                     "discount_amount": float(line.discount_amount) if line.discount_amount else 0.0,
                     "discount_reason": line.discount_reason or "",
                     "discount_reason_code": line.discount_reason_code or "",
+                    # 3.17-H: gross price (BT-148) — None if not set
+                    "gross_price": float(line.gross_price) if line.gross_price is not None else None,
+                    # 3.17-I: product identifiers (BT-155/BT-156)
+                    "seller_item_id": product_seller_id,
+                    "gtin": product_gtin,
                     "billing_period_start": line.billing_period_start.strftime("%Y%m%d")
                     if line.billing_period_start
                     else None,

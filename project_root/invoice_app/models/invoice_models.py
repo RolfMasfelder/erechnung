@@ -704,6 +704,7 @@ class Invoice(models.Model):
                 discount_reason=line.discount_reason,
                 discount_reason_code=line.discount_reason_code,
                 vat_exemption_reason_code=line.vat_exemption_reason_code,
+                gross_price=line.gross_price,
             )
 
         # Mark original as cancelled
@@ -854,6 +855,18 @@ class InvoiceLine(models.Model):
         blank=True,
         default="",
         help_text=_("VATEX code for VAT exemption reason (EN16931 BT-121, e.g. 'VATEX-EU-AE')"),
+    )
+
+    # EN16931 BG-29: Gross price (BT-148) — optional, triggers GrossPriceProductTradePrice in XML
+    # When set: price_discount (BT-147) = gross_price - unit_price
+    gross_price = models.DecimalField(
+        _("Gross Price"),
+        max_digits=15,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0"))],
+        help_text=_("Price before price-level discount (EN16931 BT-148). Net price = gross_price - price_discount."),
     )
 
     # EN16931 BG-26: Line-level billing period (BT-134 start, BT-135 end)

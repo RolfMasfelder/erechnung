@@ -767,7 +767,6 @@ class TestZugferdXmlGeneratorEdgeCases(TestCase):
             places=2,
             msg="BR-CO-5: sum(BasisAmount) must equal TaxBasisTotalAmount",
         )
-        # LineTotalAmount(300) - AllowanceTotalAmount(30) = 270.00
         self.assertAlmostEqual(tax_basis_total, 270.00, places=2)
         # 19%-group share: 100/300 * 270 = 90.00
         # 7%-group share:  200/300 * 270 = 180.00

@@ -940,12 +940,30 @@ class ZugferdXmlGenerator:
         """Add SpecifiedTradeProduct to line item."""
         product_element = etree.SubElement(line_item, f"{{{RAM_NS}}}SpecifiedTradeProduct")
 
-        # Add product name
+        # GlobalID (BT-157 schemeID + BT-156 GTIN) — optional
+        if isinstance(item, dict):
+            gtin = item.get("gtin", "")
+        else:
+            gtin = getattr(item, "gtin", "")
+        if gtin:
+            global_id_el = etree.SubElement(product_element, f"{{{RAM_NS}}}GlobalID")
+            global_id_el.set("schemeID", "0160")
+            global_id_el.text = gtin
+
+        # SellerAssignedID (BT-155) — optional
+        if isinstance(item, dict):
+            seller_item_id = item.get("seller_item_id", "")
+        else:
+            seller_item_id = getattr(item, "seller_item_id", "")
+        if seller_item_id:
+            seller_id_el = etree.SubElement(product_element, f"{{{RAM_NS}}}SellerAssignedID")
+            seller_id_el.text = seller_item_id
+
+        # Name (BT-153, required)
         name_element = etree.SubElement(product_element, f"{{{RAM_NS}}}Name")
         if isinstance(item, dict):
             product_name = item.get("product_name", item.get("description", "Unknown Product"))
         else:
-            # Model instance
             product_name = getattr(item, "description", "Unknown Product")
         name_element.text = product_name
 
@@ -953,7 +971,29 @@ class ZugferdXmlGenerator:
         """Add SpecifiedLineTradeAgreement (price information) to line item."""
         agreement_element = etree.SubElement(line_item, f"{{{RAM_NS}}}SpecifiedLineTradeAgreement")
 
-        # NetPriceProductTradePrice
+        # GrossPriceProductTradePrice (BG-29: BT-148 + optional BT-147 discount)
+        if isinstance(item, dict):
+            gross_price = item.get("gross_price")
+            unit_price = float(item.get("price", item.get("unit_price", 0)))
+        else:
+            gross_price = getattr(item, "gross_price", None)
+            unit_price = float(getattr(item, "unit_price", 0))
+        if gross_price is not None:
+            gross_price_f = float(gross_price)
+            gross_el = etree.SubElement(agreement_element, f"{{{RAM_NS}}}GrossPriceProductTradePrice")
+            gross_charge_el = etree.SubElement(gross_el, f"{{{RAM_NS}}}ChargeAmount")
+            gross_charge_el.text = self._format_decimal(gross_price_f)
+            # AppliedTradeAllowanceCharge (BT-147: price discount = gross - net) — only if > 0
+            price_discount = round(gross_price_f - unit_price, 6)
+            if price_discount > 0:
+                ac_el = etree.SubElement(gross_el, f"{{{RAM_NS}}}AppliedTradeAllowanceCharge")
+                indicator_el = etree.SubElement(ac_el, f"{{{RAM_NS}}}ChargeIndicator")
+                ind_el = etree.SubElement(indicator_el, f"{{{UDT_NS}}}Indicator")
+                ind_el.text = "false"
+                actual_el = etree.SubElement(ac_el, f"{{{RAM_NS}}}ActualAmount")
+                actual_el.text = self._format_decimal(price_discount)
+
+        # NetPriceProductTradePrice (BT-146 net unit price)
         net_price_element = etree.SubElement(agreement_element, f"{{{RAM_NS}}}NetPriceProductTradePrice")
 
         # ChargeAmount (unit price) - MUST come before BasisQuantity per schema
