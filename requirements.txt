@@ -114,7 +114,7 @@ djangorestframework==3.17.1
     #   drf-spectacular
 djangorestframework-simplejwt==5.5.1
     # via -r requirements.in
-djangorestframework-stubs==3.16.9
+djangorestframework-stubs==3.17.0
     # via -r requirements.in
 drf-spectacular==0.29.0
     # via -r requirements.in
