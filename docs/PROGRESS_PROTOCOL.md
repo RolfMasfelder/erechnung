@@ -5,6 +5,49 @@ For template format, see: `docs/PROGRESS_PROTOCOL_TEMPLATE.md`
 
 ---
 
+## 2026-05-15 — Backup-Tests aus normalem Test-Lauf isoliert ✅
+
+### Summary
+
+Die Backup-Unit-Tests (`test_backup_restore.py`) haben den normalen Testlauf durch
+Nebenwirkungen auf die Testdatenbank unterbrochen (`test_erechnung_ci does not exist`,
+101 Fehler). Die Tests wurden durch Umbenennung aus der Django-Auto-Discovery ausgeklinkt
+und sind nur noch über ein separates Skript explizit ausführbar.
+
+### Technical Achievements
+
+- **Umbenennung:** `test_backup_restore.py` → `backup_restore_tests.py`
+  Django Auto-Discovery ignoriert Dateien ohne `test_`-Präfix. Keine Tag-Konfiguration
+  nötig — kein implizites Wissen für Entwickler erforderlich.
+
+- **Separates Aufrufskript** (`scripts/run_backup_tests.sh`):
+  Erkennt automatisch ob `invoice_app/migrations/` oder `backup_database.py`
+  geändert wurden (via `git diff`). Führt Backup-Tests nur dann aus.
+  `--always`-Flag für manuelle/Release-Läufe.
+
+- **Pre-Commit-Hook angepasst** (`.pre-commit-config.yaml`):
+  `name-tests-test`-Hook kennt die Ausnahme `backup_restore_tests.py`.
+
+### Test Results
+
+```txt
+Normaler Testlauf (manage.py test invoice_app): backup-Tests nicht enthalten ✅
+Separater Lauf (run_backup_tests.sh --always):  Ran 10 tests in 0.193s OK ✅
+```
+
+### Files Created / Modified
+
+**Umbenannt:**
+- `project_root/invoice_app/tests/test_backup_restore.py` → `backup_restore_tests.py`
+
+**Neu:**
+- `scripts/run_backup_tests.sh` — Backup-Test-Skript mit Migration-Detektion
+
+**Geändert:**
+- `.pre-commit-config.yaml` — Ausnahme für `backup_restore_tests.py`
+
+---
+
 ## 2026-05-06 — §2.10: Monitoring-Stack Alertkette E2E-Test ✅
 
 ### Summary
@@ -1029,7 +1072,7 @@ Vollständige Implementierung der automatisierten Backup- & Restore-Infrastruktu
   - JSON-Output-Modus für CI/CD-Integration
   - `--db-only`/`--media-only` Optionen
 
-- **Unit Tests** (`test_backup_restore.py`):
+- **Unit Tests** (`backup_restore_tests.py`):
   - 10 Tests: Dateierstellung, Checksummen, AuditLog, JSON-Output,
     Fehlerbehandlung, Media-Backup, SHA256-Determinismus
   - Alle Tests bestanden ✅
@@ -1056,7 +1099,7 @@ Restore Verification Tests: 11/11 ✅
 - `scripts/backup_restore_test.sh` — Automatisierte Restore-Verifikation
 - `docker-compose.backup-test.yml` — Temporärer PostgreSQL-Container
 - `project_root/invoice_app/management/commands/backup_database.py` — Django Command
-- `project_root/invoice_app/tests/test_backup_restore.py` — 10 Unit Tests
+- `project_root/invoice_app/tests/backup_restore_tests.py` — 10 Unit Tests (separat ausführbar, nicht in normalem Test-Lauf)
 - `docs/DISASTER_RECOVERY.md` — Disaster-Recovery-Dokumentation
 - `backups/.gitkeep` — Backup-Verzeichnis (Inhalte in .gitignore)
 
