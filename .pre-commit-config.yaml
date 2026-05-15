@@ -38,7 +38,7 @@ repos:
 #      - id: double-quote-string-fixer
       - id: name-tests-test
         args: [--django]
-        exclude: (conftest\.py|factories\.py|backup_restore_tests\.py)$
+        exclude: (conftest\.py|factories\.py)$
       - id: requirements-txt-fixer
 
   # Frontend unit tests (Vitest) — runs on pre-push, not pre-commit (too slow + requires Docker)
