@@ -1688,3 +1688,208 @@ class PrepaidRoundingTests(TestCase):
         )
         self.assertEqual(invoice.prepaid_amount, Decimal("0"))
         self.assertEqual(invoice.rounding_amount, Decimal("0"))
+
+
+class ReasonCodesTests(TestCase):
+    """Test suite for BT-121 (VATEX), BT-140/BT-145 (line-level reason codes)."""
+
+    RAM_NS = "urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
+
+    def setUp(self):
+        country, _ = Country.objects.get_or_create(
+            code="DE",
+            defaults={
+                "name": "Germany",
+                "eu_member": True,
+                "standard_vat_rate": Decimal("19.00"),
+            },
+        )
+        self.company = Company.objects.create(
+            name="RC Seller GmbH",
+            tax_id="RC123456789",
+            vat_id="DE111222333",
+            address_line1="Verkäuferstr. 1",
+            postal_code="10115",
+            city="Berlin",
+            country=country,
+            email="rc@seller.de",
+        )
+        self.partner = BusinessPartner.objects.create(
+            partner_type=BusinessPartner.PartnerType.BUSINESS,
+            company_name="RC Käufer AG",
+            tax_id="RC987654321",
+            vat_id="DE444555666",
+            address_line1="Käuferstr. 9",
+            postal_code="80331",
+            city="München",
+            country=country,
+            email="info@rcbuyer.de",
+        )
+        self.user = User.objects.create_user(username="rcuser", password="testpass123")
+        self.product = Product.objects.create(
+            name="RC Product",
+            product_code="RC-001",
+            base_price=Decimal("100.00"),
+            default_tax_rate=Decimal("19.00"),
+        )
+        self.xml_generator = ZugferdXmlGenerator(profile="COMFORT")
+        self.invoice_service = InvoiceService()
+
+    def _make_invoice(self, **kwargs):
+        defaults = {
+            "invoice_number": "RC-INV-001",
+            "company": self.company,
+            "business_partner": self.partner,
+            "created_by": self.user,
+            "currency": "EUR",
+            "subtotal": Decimal("100.00"),
+            "tax_amount": Decimal("0.00"),
+            "total_amount": Decimal("100.00"),
+        }
+        defaults.update(kwargs)
+        return Invoice.objects.create(**defaults)
+
+    def _generate_xml(self, invoice):
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        xml_string = self.xml_generator.generate_xml(data)
+        return etree.fromstring(xml_string if isinstance(xml_string, bytes) else xml_string.encode())
+
+    def _make_line(self, invoice, **kwargs):
+        defaults = {
+            "invoice": invoice,
+            "product": None,
+            "description": "RC Product",
+            "product_code": "RC-001",
+            "quantity": Decimal("1"),
+            "unit_price": Decimal("100.00"),
+            "tax_rate": Decimal("0.00"),
+            "tax_category": "AE",
+        }
+        defaults.update(kwargs)
+        return InvoiceLine.objects.create(**defaults)
+
+    # ── BT-121: ExemptionReasonCode in line-level ApplicableTradeTax ─────────
+
+    def test_xml_exemption_reason_code_absent_when_empty(self):
+        """ExemptionReasonCode must not appear when vat_exemption_reason_code is empty."""
+        invoice = self._make_invoice()
+        self._make_line(invoice)
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        code_el = root.find(".//ram:ExemptionReasonCode", ns)
+        self.assertIsNone(code_el, "ExemptionReasonCode must not appear when field is empty")
+
+    def test_xml_exemption_reason_code_present_when_set(self):
+        """ExemptionReasonCode (BT-121) must appear in line-level ApplicableTradeTax."""
+        invoice = self._make_invoice()
+        self._make_line(invoice, vat_exemption_reason_code="VATEX-EU-AE")
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        code_el = root.find(".//ram:ExemptionReasonCode", ns)
+        self.assertIsNotNone(code_el, "ExemptionReasonCode must appear when set")
+        self.assertEqual(code_el.text, "VATEX-EU-AE")
+
+    def test_xml_exemption_reason_code_in_header_tax(self):
+        """ExemptionReasonCode must also appear in header-level ApplicableTradeTax aggregation."""
+        invoice = self._make_invoice()
+        self._make_line(invoice, vat_exemption_reason_code="VATEX-EU-G", tax_category="G")
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        settlement = root.find(".//ram:ApplicableHeaderTradeSettlement", ns)
+        self.assertIsNotNone(settlement)
+        header_tax = settlement.find("ram:ApplicableTradeTax", ns)
+        self.assertIsNotNone(header_tax)
+        code_el = header_tax.find("ram:ExemptionReasonCode", ns)
+        self.assertIsNotNone(code_el, "ExemptionReasonCode must be in header ApplicableTradeTax")
+        self.assertEqual(code_el.text, "VATEX-EU-G")
+
+    def test_xml_exemption_reason_code_only_for_exempt_categories(self):
+        """ExemptionReasonCode must NOT appear for standard tax category S."""
+        invoice = self._make_invoice(
+            subtotal=Decimal("100.00"),
+            tax_amount=Decimal("19.00"),
+            total_amount=Decimal("119.00"),
+        )
+        self._make_line(
+            invoice,
+            tax_rate=Decimal("19.00"),
+            tax_category="S",
+            vat_exemption_reason_code="VATEX-EU-AE",
+        )
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        code_el = root.find(".//ram:ExemptionReasonCode", ns)
+        self.assertIsNone(code_el, "ExemptionReasonCode must not appear for S category")
+
+    # ── BT-140: ReasonCode in line-level SpecifiedTradeAllowanceCharge ────────
+
+    def test_xml_line_discount_no_reason_code_when_empty(self):
+        """ReasonCode must not appear in line AllowanceCharge when discount_reason_code is empty."""
+        invoice = self._make_invoice()
+        self._make_line(invoice, discount_percentage=Decimal("10.00"), discount_amount=Decimal("10.00"))
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        line_ac = root.find(".//ram:SpecifiedLineTradeSettlement/ram:SpecifiedTradeAllowanceCharge", ns)
+        if line_ac is not None:
+            code_el = line_ac.find("ram:ReasonCode", ns)
+            self.assertIsNone(code_el, "ReasonCode must not appear when discount_reason_code is empty")
+
+    def test_xml_line_discount_reason_code_present(self):
+        """ReasonCode (BT-140) must appear in line-level SpecifiedTradeAllowanceCharge when set."""
+        invoice = self._make_invoice()
+        self._make_line(
+            invoice,
+            discount_percentage=Decimal("10.00"),
+            discount_amount=Decimal("10.00"),
+            discount_reason_code="95",
+        )
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        line_ac = root.find(".//ram:SpecifiedLineTradeSettlement/ram:SpecifiedTradeAllowanceCharge", ns)
+        self.assertIsNotNone(line_ac, "SpecifiedTradeAllowanceCharge must be present")
+        code_el = line_ac.find("ram:ReasonCode", ns)
+        self.assertIsNotNone(code_el, "ReasonCode must appear when discount_reason_code is set")
+        self.assertEqual(code_el.text, "95")
+
+    def test_xml_line_discount_reason_code_before_reason(self):
+        """ReasonCode must appear before Reason in line-level AllowanceCharge."""
+        invoice = self._make_invoice()
+        self._make_line(
+            invoice,
+            discount_percentage=Decimal("10.00"),
+            discount_amount=Decimal("10.00"),
+            discount_reason="Mengenrabatt",
+            discount_reason_code="95",
+        )
+        root = self._generate_xml(invoice)
+        ns = {"ram": self.RAM_NS}
+        line_ac = root.find(".//ram:SpecifiedLineTradeSettlement/ram:SpecifiedTradeAllowanceCharge", ns)
+        self.assertIsNotNone(line_ac)
+        tags = [child.tag.split("}")[-1] for child in line_ac]
+        self.assertIn("ReasonCode", tags)
+        self.assertIn("Reason", tags)
+        self.assertLess(tags.index("ReasonCode"), tags.index("Reason"))
+
+    # ── Service dict ─────────────────────────────────────────────────────────
+
+    def test_service_passes_new_reason_code_fields(self):
+        """convert_model_to_dict must include discount_reason_code and vat_exemption_reason_code."""
+        invoice = self._make_invoice()
+        self._make_line(
+            invoice,
+            discount_reason_code="95",
+            vat_exemption_reason_code="VATEX-EU-AE",
+        )
+        data = self.invoice_service.convert_model_to_dict(invoice)
+        item = data["items"][0]
+        self.assertEqual(item.get("discount_reason_code"), "95")
+        self.assertEqual(item.get("vat_exemption_reason_code"), "VATEX-EU-AE")
+
+    # ── Model defaults ───────────────────────────────────────────────────────
+
+    def test_model_reason_code_fields_default_empty(self):
+        """discount_reason_code and vat_exemption_reason_code must default to empty string."""
+        invoice = self._make_invoice()
+        line = self._make_line(invoice)
+        self.assertEqual(line.discount_reason_code, "")
+        self.assertEqual(line.vat_exemption_reason_code, "")

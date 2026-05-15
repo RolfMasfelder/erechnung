@@ -47,11 +47,13 @@ class InvoiceService:
                     "tax_rate": float(line.tax_rate),
                     "tax_category_code": line.tax_category_code,
                     "tax_exemption_reason": line.tax_exemption_reason or "",
+                    "vat_exemption_reason_code": line.vat_exemption_reason_code or "",
                     "product_code": line.product_code,
                     "unit_of_measure": line.unit_of_measure,
                     "line_total": float(line.line_total),
                     "discount_amount": float(line.discount_amount) if line.discount_amount else 0.0,
                     "discount_reason": line.discount_reason or "",
+                    "discount_reason_code": line.discount_reason_code or "",
                     "billing_period_start": line.billing_period_start.strftime("%Y%m%d")
                     if line.billing_period_start
                     else None,

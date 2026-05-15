@@ -388,6 +388,30 @@
                 :readonly="formData.status !== 'draft'"
               />
             </div>
+            <div class="form-group" v-if="line.discount_percentage > 0">
+              <label :for="`discount_reason_code_${index}`">Rabattcode (BT-140)</label>
+              <BaseInput
+                :id="`discount_reason_code_${index}`"
+                v-model="line.discount_reason_code"
+                placeholder="z.B. 95"
+                maxlength="10"
+                :readonly="formData.status !== 'draft'"
+              />
+            </div>
+          </div>
+
+          <!-- VAT Exemption Reason Code (EN16931 BT-121) -->
+          <div class="form-row" v-if="line.vat_rate == 0 || line.vat_exemption_reason_code">
+            <div class="form-group flex-2">
+              <label :for="`vat_exemption_reason_code_${index}`">VATEX-Code (BT-121)</label>
+              <BaseInput
+                :id="`vat_exemption_reason_code_${index}`"
+                v-model="line.vat_exemption_reason_code"
+                placeholder="z.B. VATEX-EU-AE"
+                maxlength="20"
+                :readonly="formData.status !== 'draft'"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -697,6 +721,8 @@ function createEmptyLine() {
     line_total_gross: 0,
     discount_percentage: 0,
     discount_reason: '',
+    discount_reason_code: '',
+    vat_exemption_reason_code: '',
     billing_period_start: null,
     billing_period_end: null
   }
@@ -833,6 +859,8 @@ async function loadData() {
         line_total_gross: parseFloat(line.line_total) || 0,
         discount_percentage: parseFloat(line.discount_percentage || 0),
         discount_reason: line.discount_reason || '',
+        discount_reason_code: line.discount_reason_code || '',
+        vat_exemption_reason_code: line.vat_exemption_reason_code || '',
         billing_period_start: line.billing_period_start || null,
         billing_period_end: line.billing_period_end || null
       })),
@@ -949,6 +977,8 @@ async function handleSubmit() {
           description: line.description || '',
           discount_percentage: line.discount_percentage || 0,
           discount_reason: line.discount_reason || '',
+          discount_reason_code: line.discount_reason_code || '',
+          vat_exemption_reason_code: line.vat_exemption_reason_code || '',
           billing_period_start: line.billing_period_start || null,
           billing_period_end: line.billing_period_end || null
         }

@@ -702,6 +702,8 @@ class Invoice(models.Model):
                 tax_exemption_reason=line.tax_exemption_reason,
                 discount_percentage=line.discount_percentage,
                 discount_reason=line.discount_reason,
+                discount_reason_code=line.discount_reason_code,
+                vat_exemption_reason_code=line.vat_exemption_reason_code,
             )
 
         # Mark original as cancelled
@@ -837,6 +839,22 @@ class InvoiceLine(models.Model):
     )
     # EN16931 BR-41: reason or reason code required when AllowanceCharge is present
     discount_reason = models.CharField(_("Discount Reason"), max_length=255, blank=True, default="")
+    # EN16931 BT-140 / BT-145: UNTDID 5189 (allowance) or 7161 (charge) reason code for line-level discount
+    discount_reason_code = models.CharField(
+        _("Discount Reason Code"),
+        max_length=10,
+        blank=True,
+        default="",
+        help_text=_("UNTDID 5189 or 7161 reason code for line-level allowance/charge (EN16931 BT-140/BT-145)"),
+    )
+    # EN16931 BT-121: VATEX exemption reason code (e.g. 'VATEX-EU-AE', 'VATEX-EU-G')
+    vat_exemption_reason_code = models.CharField(
+        _("VAT Exemption Reason Code"),
+        max_length=20,
+        blank=True,
+        default="",
+        help_text=_("VATEX code for VAT exemption reason (EN16931 BT-121, e.g. 'VATEX-EU-AE')"),
+    )
 
     # EN16931 BG-26: Line-level billing period (BT-134 start, BT-135 end)
     billing_period_start = models.DateField(

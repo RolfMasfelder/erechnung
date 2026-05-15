@@ -128,6 +128,10 @@ export const invoiceLineFields = createFieldMapper({
     discount_percentage:  'discount_percentage',
     discount_amount:      'discount_amount',
     discount_reason:      'discount_reason',
+    // BT-140/BT-145: UNTDID 5189/7161 reason code for line-level allowance/charge
+    discount_reason_code: 'discount_reason_code',
+    // BT-121: VATEX exemption reason code
+    vat_exemption_reason_code: 'vat_exemption_reason_code',
     billing_period_start: 'billing_period_start',
     billing_period_end:   'billing_period_end',
   },

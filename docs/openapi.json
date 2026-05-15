@@ -8371,6 +8371,16 @@
                         "type": "string",
                         "maxLength": 255
                     },
+                    "discount_reason_code": {
+                        "type": "string",
+                        "maxLength": 10,
+                        "description": "UNTDID 5189/7161 reason code for line-level allowance/charge (EN16931 BT-140/BT-145)"
+                    },
+                    "vat_exemption_reason_code": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "description": "VATEX code for VAT exemption reason (EN16931 BT-121, e.g. 'VATEX-EU-AE')"
+                    },
                     "billing_period_start": {
                         "type": "string",
                         "format": "date",
@@ -8472,6 +8482,16 @@
                     "discount_reason": {
                         "type": "string",
                         "maxLength": 255
+                    },
+                    "discount_reason_code": {
+                        "type": "string",
+                        "maxLength": 10,
+                        "description": "UNTDID 5189/7161 reason code for line-level allowance/charge (EN16931 BT-140/BT-145)"
+                    },
+                    "vat_exemption_reason_code": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "description": "VATEX code for VAT exemption reason (EN16931 BT-121, e.g. 'VATEX-EU-AE')"
                     },
                     "billing_period_start": {
                         "type": "string",
@@ -9619,6 +9639,16 @@
                     "discount_reason": {
                         "type": "string",
                         "maxLength": 255
+                    },
+                    "discount_reason_code": {
+                        "type": "string",
+                        "maxLength": 10,
+                        "description": "UNTDID 5189/7161 reason code for line-level allowance/charge (EN16931 BT-140/BT-145)"
+                    },
+                    "vat_exemption_reason_code": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "description": "VATEX code for VAT exemption reason (EN16931 BT-121, e.g. 'VATEX-EU-AE')"
                     },
                     "billing_period_start": {
                         "type": "string",

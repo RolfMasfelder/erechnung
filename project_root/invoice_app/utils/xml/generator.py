@@ -692,6 +692,7 @@ class ZugferdXmlGenerator:
                 tax_rate = float(item.get("tax_rate", 0))
                 cat_code = item.get("tax_category_code", "")
                 exemption_reason = item.get("tax_exemption_reason", "")
+                exemption_reason_code = item.get("vat_exemption_reason_code", "")
                 if "line_total" in item:
                     line_total = float(item["line_total"])
                 else:
@@ -702,6 +703,7 @@ class ZugferdXmlGenerator:
                 tax_rate = float(getattr(item, "tax_rate", 0))
                 cat_code = getattr(item, "tax_category_code", "S")
                 exemption_reason = getattr(item, "tax_exemption_reason", "")
+                exemption_reason_code = getattr(item, "vat_exemption_reason_code", "")
                 line_total = float(getattr(item, "line_total", 0))
 
             # Derive category code if not explicitly set
@@ -710,7 +712,12 @@ class ZugferdXmlGenerator:
 
             group_key = (tax_rate, cat_code)
             if group_key not in tax_groups:
-                tax_groups[group_key] = {"basis": 0, "tax": 0, "exemption_reason": exemption_reason}
+                tax_groups[group_key] = {
+                    "basis": 0,
+                    "tax": 0,
+                    "exemption_reason": exemption_reason,
+                    "exemption_reason_code": exemption_reason_code,
+                }
             tax_groups[group_key]["basis"] += line_total
 
         if split_acs:
@@ -768,6 +775,12 @@ class ZugferdXmlGenerator:
             if exemption_reason and cat_code in ("AE", "G", "E"):
                 exemption_el = etree.SubElement(tax_element, f"{{{RAM_NS}}}ExemptionReason")
                 exemption_el.text = exemption_reason
+
+            # ExemptionReasonCode (BT-121, VATEX code, optional)
+            exemption_reason_code = amounts.get("exemption_reason_code", "")
+            if exemption_reason_code and cat_code in ("AE", "G", "E"):
+                exemption_code_el = etree.SubElement(tax_element, f"{{{RAM_NS}}}ExemptionReasonCode")
+                exemption_code_el.text = exemption_reason_code
 
             # BasisAmount
             basis = etree.SubElement(tax_element, f"{{{RAM_NS}}}BasisAmount")
@@ -1033,11 +1046,17 @@ class ZugferdXmlGenerator:
         # ExemptionReason (required for AE=Reverse Charge, G=Export)
         if isinstance(item, dict):
             exemption_reason = item.get("tax_exemption_reason", "")
+            exemption_reason_code = item.get("vat_exemption_reason_code", "")
         else:
             exemption_reason = getattr(item, "tax_exemption_reason", "")
+            exemption_reason_code = getattr(item, "vat_exemption_reason_code", "")
         if exemption_reason and category in ("AE", "G", "E"):
             exemption_el = etree.SubElement(tax_element, f"{{{RAM_NS}}}ExemptionReason")
             exemption_el.text = exemption_reason
+        # ExemptionReasonCode (BT-121, VATEX code, optional)
+        if exemption_reason_code and category in ("AE", "G", "E"):
+            exemption_code_el = etree.SubElement(tax_element, f"{{{RAM_NS}}}ExemptionReasonCode")
+            exemption_code_el.text = exemption_reason_code
 
         # RateApplicablePercent
         rate_element = etree.SubElement(tax_element, f"{{{RAM_NS}}}RateApplicablePercent")
@@ -1051,9 +1070,11 @@ class ZugferdXmlGenerator:
         if isinstance(item, dict):
             discount_amount = float(item.get("discount_amount", 0) or 0)
             discount_reason = item.get("discount_reason", "") or ""
+            discount_reason_code = item.get("discount_reason_code", "") or ""
         else:
             discount_amount = float(getattr(item, "discount_amount", 0) or 0)
             discount_reason = getattr(item, "discount_reason", "") or ""
+            discount_reason_code = getattr(item, "discount_reason_code", "") or ""
 
         if discount_amount > 0:
             line_ac = etree.SubElement(settlement_element, f"{{{RAM_NS}}}SpecifiedTradeAllowanceCharge")
@@ -1062,6 +1083,9 @@ class ZugferdXmlGenerator:
             udt_indicator.text = "false"
             actual_el = etree.SubElement(line_ac, f"{{{RAM_NS}}}ActualAmount")
             actual_el.text = self._format_decimal(discount_amount)
+            if discount_reason_code:
+                rc_el = etree.SubElement(line_ac, f"{{{RAM_NS}}}ReasonCode")
+                rc_el.text = discount_reason_code
             reason_text = discount_reason if discount_reason else "Discount"
             reason_el = etree.SubElement(line_ac, f"{{{RAM_NS}}}Reason")
             reason_el.text = reason_text

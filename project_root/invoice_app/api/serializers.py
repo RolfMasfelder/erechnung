@@ -419,6 +419,8 @@ class InvoiceLineSerializer(serializers.ModelSerializer):
             "discount_percentage",
             "discount_amount",
             "discount_reason",
+            "discount_reason_code",
+            "vat_exemption_reason_code",
             "billing_period_start",
             "billing_period_end",
             "line_subtotal",
