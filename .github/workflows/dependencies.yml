@@ -56,13 +56,12 @@ jobs:
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v8
       with:
-        # NOTE: If this step fails with:
-        #   "GitHub Actions is not permitted to create or approve pull requests."
-        # then enable the repository setting:
-        #   Settings -> Actions -> General -> Workflow permissions -> Read and write permissions
-        # AND check the box: "Allow GitHub Actions to create and approve pull requests".
-        # Alternatively provide a fine-grained PAT in a secret (e.g. PR_CREATION_TOKEN) and switch token to that.
-        token: ${{ secrets.GITHUB_TOKEN }}
+        # Fine-grained PAT required so that opening the PR triggers CI workflows.
+        # GITHUB_TOKEN suppresses subsequent workflow triggers (GitHub anti-loop protection).
+        # Create at: GitHub -> Settings -> Developer settings -> Fine-grained tokens
+        # Required permissions: Contents (rw), Pull requests (rw), Workflows (rw)
+        # Store as repository secret: Settings -> Secrets -> Actions -> PR_CREATION_TOKEN
+        token: ${{ secrets.PR_CREATION_TOKEN }}
         commit-message: 'chore: update Python dependencies'
         title: 'chore: update Python dependencies'
         body: |
@@ -137,7 +136,7 @@ jobs:
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v8
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.PR_CREATION_TOKEN }}
         commit-message: 'chore: update frontend npm dependencies'
         title: 'chore: update frontend npm dependencies'
         body: |
