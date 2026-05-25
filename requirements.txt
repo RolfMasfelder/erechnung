@@ -277,7 +277,7 @@ rpds-py==0.30.0
     # via
     #   jsonschema
     #   referencing
-ruff==0.15.13
+ruff==0.15.14
     # via -r requirements.in
 saxonche==12.9.0
     # via
