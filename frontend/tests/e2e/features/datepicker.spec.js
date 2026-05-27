@@ -1,6 +1,14 @@
 import { test, expect } from '@playwright/test'
 import { login } from '../fixtures/auth.js'
 
+const getDateInput = (modal, fieldId = 'issue_date') => modal.locator(
+  `#${fieldId} input, input#${fieldId}, [data-testid="${fieldId}"] input, [data-testid="${fieldId}"]`
+).first()
+
+const getVisibleCalendar = (page) => page.locator(
+  '.dp__menu:visible, .dp--menu:visible, .dp__calendar:visible, .dp--calendar:visible'
+).first()
+
 test.describe('Date Picker in Forms', () => {
   test.beforeEach(async ({ page }) => {
     // Login first
@@ -40,12 +48,12 @@ test.describe('Date Picker in Forms', () => {
 
     // Click on the date input itself to open the calendar
     // VueDatePicker opens on input focus/click
-    const dateInput = modal.locator('.dp__input').first()
+    const dateInput = getDateInput(modal)
     await expect(dateInput).toBeVisible({ timeout: 3000 })
     await dateInput.click()
 
-    // Calendar should be visible (dp__menu is the VueDatePicker popup)
-    const calendar = page.locator('.dp__menu').first()
+    // Calendar should be visible after focusing the date input
+    const calendar = getVisibleCalendar(page)
     await expect(calendar).toBeVisible({ timeout: 3000 })
   })
 
@@ -56,16 +64,18 @@ test.describe('Date Picker in Forms', () => {
     await expect(modal).toBeVisible({ timeout: 5000 })
 
     // Click date input to open calendar
-    const dateInput = modal.locator('.dp__input').first()
+    const dateInput = getDateInput(modal)
     await expect(dateInput).toBeVisible({ timeout: 3000 })
     await dateInput.click()
 
     // Wait for calendar to appear
-    const calendar = page.locator('.dp__menu').first()
+    const calendar = getVisibleCalendar(page)
     await expect(calendar).toBeVisible({ timeout: 3000 })
 
-    // Select a day (15th) using the inner cell element
-    const day15 = calendar.locator('.dp__cell_inner').filter({ hasText: /^15$/ }).first()
+    // Select a day (15th) using either the legacy or new datepicker markup
+    const day15 = calendar.locator(
+      '.dp__cell_inner, .dp--cell-inner, .dp__calendar_item, .dp--calendar-item, button'
+    ).filter({ hasText: /^15$/ }).first()
     await expect(day15).toBeVisible({ timeout: 2000 })
     await day15.click({ force: true })
 
@@ -81,8 +91,7 @@ test.describe('Date Picker in Forms', () => {
     const modal = page.locator('.modal, [role="dialog"]').filter({ hasText: /Neue.*Rechnung/i })
 
     // Get date input (find input within DatePicker component)
-    const issueDatePicker = modal.locator('#issue_date')
-    const input = issueDatePicker.locator('input').first()
+    const input = getDateInput(modal)
 
     // Clear and fill date in DD.MM.YYYY format
     await input.click()
@@ -108,9 +117,13 @@ test.describe('Date Picker in Forms', () => {
     await issueDateInput.first().click()
 
     // Select today
-    const calendar = page.locator('.dp__menu, .dp__calendar')
+    const calendar = page.locator(
+      '.dp__menu:visible, .dp--menu:visible, .dp__calendar:visible, .dp--calendar:visible'
+    )
     await expect(calendar.first()).toBeVisible({ timeout: 3000 })
-    const today = calendar.locator('.dp__today, .dp__calendar_item.dp__today').first()
+    const today = calendar.locator(
+      '.dp__today, .dp--today, .dp__calendar_item.dp__today, .dp--calendar-item.dp--today'
+    ).first()
     if (await today.isVisible()) {
       await today.click()
     }
@@ -120,11 +133,15 @@ test.describe('Date Picker in Forms', () => {
     await dueDateInput.first().click()
 
     // Calendar should show - past dates before issue date should be disabled
-    const dueCalendar = page.locator('.dp__menu, .dp__calendar').last()
+    const dueCalendar = page.locator(
+      '.dp__menu:visible, .dp--menu:visible, .dp__calendar:visible, .dp--calendar:visible'
+    ).last()
     await expect(dueCalendar).toBeVisible({ timeout: 3000 })
 
     // Try to select a past date (should be disabled)
-    const pastDate = dueCalendar.locator('.dp__calendar_item, .dp__cell').filter({
+    const pastDate = dueCalendar.locator(
+      '.dp__calendar_item, .dp--calendar-item, .dp__cell, .dp--cell-inner'
+    ).filter({
       hasText: /^[1-9]$/
     }).first()
 
@@ -143,7 +160,7 @@ test.describe('Date Picker in Forms', () => {
 
     // Set a date via keyboard (find input within DatePicker)
     const issueDatePicker = modal.locator('#issue_date')
-    const input = issueDatePicker.locator('input').first()
+    const input = getDateInput(modal)
     await input.click()
     await input.fill('15.12.2024')
 
@@ -170,7 +187,9 @@ test.describe('Date Picker in Forms', () => {
     const modal = page.locator('.modal, [role="dialog"]').filter({ hasText: /Neue.*Rechnung/i })
 
     // Check for calendar icon
-    const calendarIcon = modal.locator('.calendar-icon, .dp__input_icon, [data-calendar-icon]')
+    const calendarIcon = modal.locator(
+      '.calendar-icon, .dp__input_icon, .dp--input-icon, [data-calendar-icon]'
+    )
 
     // Should have at least 2 (issue date + due date)
     const count = await calendarIcon.count()

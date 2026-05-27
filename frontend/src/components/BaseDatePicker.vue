@@ -294,7 +294,8 @@ const handleCleared = () => {
 
 <style>
 /* Global styles for vue-datepicker to match project design */
-.dp__theme_light {
+.dp__theme_light,
+.dp--theme-light {
   --dp-background-color: #ffffff;
   --dp-text-color: #111827;
   --dp-hover-color: #f3f4f6;
@@ -357,16 +358,19 @@ const handleCleared = () => {
 }
 
 /* Calendar popup styling */
-.dp__menu {
+.dp__menu,
+.dp--menu {
   border-radius: 0.5rem;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-.dp__cell_inner {
+.dp__cell_inner,
+.dp--cell-inner {
   border-radius: 0.375rem;
 }
 
-.dp__range_between {
+.dp__range_between,
+.dp--range-between {
   border-radius: 0;
 }
 
