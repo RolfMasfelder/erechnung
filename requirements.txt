@@ -277,7 +277,7 @@ rpds-py==0.30.0
     #   referencing
 ruff==0.15.15
     # via -r requirements.in
-saxonche==12.9.0
+saxonche==13.0.0
     # via
     #   -r requirements.in
     #   factur-x
