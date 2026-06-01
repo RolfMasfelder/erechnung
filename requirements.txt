@@ -95,7 +95,7 @@ django-extensions==4.1
     # via -r requirements.in
 django-filter==25.2
     # via -r requirements.in
-django-prometheus==2.4.1
+django-prometheus==2.5.0
     # via -r requirements.in
 django-redis==6.0.0
     # via -r requirements.in
