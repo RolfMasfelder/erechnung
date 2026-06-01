@@ -281,7 +281,7 @@ saxonche==12.9.0
     # via
     #   -r requirements.in
     #   factur-x
-sentry-sdk==2.60.0
+sentry-sdk==2.61.1
     # via -r requirements.in
 six==1.17.0
     # via python-dateutil
