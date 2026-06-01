@@ -255,7 +255,7 @@ pyyaml==6.0.3
     #   bandit
     #   drf-spectacular
     #   pre-commit
-redis==7.4.0
+redis==8.0.0
     # via
     #   -r requirements.in
     #   django-redis
