@@ -15,6 +15,7 @@ updates:
     labels:
       - "dependencies"
       - "automation"
+      - "python"
     commit-message:
       prefix: "chore"
       include: "scope"
