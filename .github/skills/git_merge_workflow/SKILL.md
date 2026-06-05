@@ -91,3 +91,9 @@ git push github dev
 ```
 
 This ensures `dev` never falls behind `main` and PRs into `main` are always conflict-free.
+
+Check SHA on all repos (local, origin, github) before merging to confirm they are in sync. If you see a mismatch, do not merge until you have pulled from both remotes and resolved any conflicts.
+
+```bash
+git for-each-ref --format='%(refname:short) %(objectname:short)' refs/heads/main refs/heads/dev refs/remotes/origin/main refs/remotes/origin/dev refs/remotes/github/main refs/remotes/github/dev
+```
