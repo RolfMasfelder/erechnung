@@ -51,6 +51,7 @@ repos:
         language: system
         pass_filenames: false
         stages: [pre-push]
+        files: ^frontend/
 
   # dependency management
   # - repo: local
