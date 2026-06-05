@@ -16,7 +16,7 @@
     "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
-    "@rollup/rollup-linux-x64-musl": "^4.61.0",
+    "@rollup/rollup-linux-x64-musl": "^4.61.1",
     "@vuepic/vue-datepicker": "^13.0.0",
     "axios": "^1.17.0",
     "date-fns": "^4.4.0",
