@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@rollup/rollup-linux-x64-musl": "^4.61.1",
-    "@vuepic/vue-datepicker": "^13.0.0",
+    "@vuepic/vue-datepicker": "^14.0.0",
     "axios": "^1.17.0",
     "date-fns": "^4.4.0",
     "pinia": "^3.0.4",
