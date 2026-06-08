@@ -64,7 +64,7 @@ defusedxml==0.7.1
     # via py-serializable
 distlib==0.4.1
     # via virtualenv
-django==5.2.15
+django==6.0.6
     # via
     #   -r requirements.in
     #   django-allauth

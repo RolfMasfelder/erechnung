@@ -8,34 +8,34 @@ description: Reference for GitHub Actions versions and workflow conventions used
 
 # GitHub Actions & Workflows
 
-Use this skill when creating or editing GitHub Actions workflow files (`.github/workflows/*.yml`).
+Use this skill when creating or editing GitHub Actions workflow files (`.github/workflows/*.yml`). When editing an existing workflow, apply these conventions only to the actions and steps you are adding or modifying. Do not upgrade unrelated actions unless explicitly asked.
 
 ## Current Action Versions (Stand: April 2026)
 
-Always use these versions when referencing actions. Do NOT use older major versions.
+Always use these versions when referencing actions. Do NOT use older major versions. If an action is not listed in the version tables below, state that no approved version is on record and ask the user to confirm the version before including it in a workflow.
 
 ### Core Actions (GitHub)
 
 | Action | Version | Node Runtime | Notes |
 |--------|---------|-------------|-------|
-| `actions/checkout` | `@v6` | Node 24 | Requires runner v2.329.0+ |
-| `actions/setup-python` | `@v6` | Node 24 | Requires runner v2.327.1+ |
-| `actions/setup-node` | `@v6` | Node 24 | Auto-caching since v5+ |
-| `actions/upload-artifact` | `@v7` | Node 24 | Breaking: new `archive` param, ESM |
+| `actions/checkout` | `@v6` | Node 24 | Runner v2.329.0+ required (github-hosted `ubuntu-latest` already meets this; for self-hosted runners, add a comment citing this minimum) |
+| `actions/setup-python` | `@v6` | Node 24 | Runner v2.327.1+ required (see above) |
+| `actions/setup-node` | `@v6` | Node 24 | Auto-caching since v5+. **Note:** the action's Node runtime (Node 24) is distinct from the project Node version installed for builds (`node-version: '24'`). |
+| `actions/upload-artifact` | `@v7` | Node 24 | Breaking: `path` input replaced by `archive`. Use `archive: path/to/files` in generated steps. ESM. |
 
 ### Docker Actions
 
 | Action | Version | Node Runtime | Notes |
 |--------|---------|-------------|-------|
 | `docker/setup-buildx-action` | `@v4` | Node 24 | `install` input removed |
-| `docker/build-push-action` | `@v7` | Node 24 | ESM; deprecated env vars removed |
+| `docker/build-push-action` | `@v7` | Node 24 | ESM; deprecated env vars removed. Removed: `DOCKER_BUILDKIT` (now always enabled). Do not emit these in generated workflows. |
 | `docker/login-action` | `@v4` | Node 24 | |
 
 ### Security & Signing
 
 | Action | Version | Notes |
 |--------|---------|-------|
-| `sigstore/cosign-installer` | `@v4` | Installs Cosign v3; v3.x installer only supports Cosign v2 |
+| `sigstore/cosign-installer` | `@v4` | Installs Cosign v3 binary. Note: the v3.x installer action only supports Cosign v2 binary — use `@v4` to get Cosign v3. |
 | `aquasecurity/trivy-action` | `@v0.35.0` | Uses `v` prefix tags after supply chain attack fix |
 
 ### Dependency & PR Management
@@ -62,7 +62,7 @@ Always use these versions when referencing actions. Do NOT use older major versi
 ### Workflow Files
 - Location: `.github/workflows/`
 - Python version: `3.13`
-- Node version: `22`
+- Node version: `24`
 - Runner: `ubuntu-latest`
 
 ### Security Scanning (SAST)
@@ -79,7 +79,7 @@ Semgrep runs as direct CLI, not as a GitHub Action:
       --error \
       --exclude='*/migrations/*' \
       --exclude='*/tests/*' \
-      project_root/ frontend/src/
+      project_root/ frontend/src/  # project_root/ is the literal Django source directory in this repo
 ```
 
 ### Docker Build Convention
@@ -95,7 +95,6 @@ Semgrep runs as direct CLI, not as a GitHub Action:
 | `ci-cd.yml` | Lint → Test → Security Scan | push/PR on main, develop |
 | `docker.yml` | Docker build, publish, sign | tag `v*`, weekly, PR |
 | `deploy.yml` | K8s deployment via kustomize | tag `v*` |
-| `dependencies.yml` | pip-compile + npm update with auto-PR | weekly Monday 6 AM |
+| `dependabot-auto-merge.yml` | Auto-merge Dependabot minor/patch PRs | pull_request (dependabot) |
 | `e2e-tests.yml` | Playwright E2E in containers | push (frontend paths) |
 | `update-integration-tests.yml` | Update migration tests | tag `v*.*.*` |
-| `dependabot-auto-merge.yml` | Auto-merge minor/patch Dependabot PRs | PR events |
