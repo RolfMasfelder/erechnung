@@ -332,7 +332,7 @@ virtualenv==21.3.3
     # via pre-commit
 wcwidth==0.7.0
     # via prompt-toolkit
-weasyprint==68.1
+weasyprint==69.0
     # via -r requirements.in
 webencodings==0.5.1
     # via
