@@ -95,7 +95,8 @@ Semgrep runs as direct CLI, not as a GitHub Action:
 | `ci-cd.yml` | Lint → Test → Security Scan | push/PR on main, develop |
 | `docker.yml` | Docker build, publish, sign | tag `v*`, weekly, PR |
 | `deploy.yml` | K8s deployment via kustomize | tag `v*` |
-| `dependencies.yml` | pip-compile + npm update with auto-PR | weekly Monday 6 AM |
+| `dependabot-auto-merge.yml` | Auto-merge Dependabot minor/patch PRs | pull_request (dependabot) |
+| `dependabot-pip-compile.yml` | Regenerate requirements.txt on Dependabot PRs touching requirements.in | pull_request (dependabot, requirements.in) |
 | `e2e-tests.yml` | Playwright E2E in containers | push (frontend paths) |
 | `update-integration-tests.yml` | Update migration tests | tag `v*.*.*` |
 | `dependabot-auto-merge.yml` | Auto-merge minor/patch Dependabot PRs | PR events |
