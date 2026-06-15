@@ -234,7 +234,7 @@ pypdf==6.13.0
     # via factur-x
 pyphen==0.17.2
     # via weasyprint
-pytest==9.0.3
+pytest==9.1.0
     # via
     #   -r requirements.in
     #   pytest-django
