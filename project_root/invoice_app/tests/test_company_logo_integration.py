@@ -191,7 +191,7 @@ class CompanyLogoTemplateTests(TestCase):
 
         self.country = Country.objects.get_or_create(
             code="DE",
-            defaults={"name": "Deutschland", "numeric_code": "276"},
+            defaults={"name": "Deutschland", "numeric_code": "276", "standard_vat_rate": "19.00"},
         )[0]
 
         self.business_partner = BusinessPartner.objects.create(
