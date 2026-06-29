@@ -122,7 +122,7 @@ environs==15.0.1
     # via -r requirements.in
 factory-boy==3.3.3
     # via -r requirements.in
-factur-x==4.3
+factur-x==5.0
     # via -r requirements.in
 faker==40.21.0
     # via factory-boy
@@ -278,9 +278,7 @@ rpds-py==2026.5.1
 ruff==0.15.18
     # via -r requirements.in
 saxonche==13.0.0
-    # via
-    #   -r requirements.in
-    #   factur-x
+    # via -r requirements.in
 sentry-sdk==2.63.0
     # via -r requirements.in
 six==1.17.0
