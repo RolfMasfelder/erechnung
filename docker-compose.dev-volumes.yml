@@ -5,23 +5,23 @@ services:
   web:
     volumes:
       # Mount the entire project for development hot-reload
-      - ./project_root:/app/project_root
+      - ./project_root:/app/project_root:z
       # Mount scripts directory
-      - ./scripts:/app/scripts
+      - ./scripts:/app/scripts:z
       # Mount requirements for dependency changes
-      - ./requirements.txt:/app/requirements.txt
+      - ./requirements.txt:/app/requirements.txt:z
       # Mount pyproject.toml for dependency and tool config
-      - ./pyproject.toml:/app/pyproject.toml
+      - ./pyproject.toml:/app/pyproject.toml:z
 
   init:
     volumes:
       # Mount the entire project for development
-      - ./project_root:/app/project_root
-      - ./scripts:/app/scripts
+      - ./project_root:/app/project_root:z
+      - ./scripts:/app/scripts:z
 
   celery:
     volumes:
       # Mount the entire project for development hot-reload
-      - ./project_root:/app/project_root
+      - ./project_root:/app/project_root:z
       # Mount scripts directory
-      - ./scripts:/app/scripts
+      - ./scripts:/app/scripts:z
