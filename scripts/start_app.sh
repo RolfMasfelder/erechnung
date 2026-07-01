@@ -72,8 +72,12 @@ start_app() {
 
     # Create necessary directories with proper permissions
     echo "Creating required directories..."
-    mkdir -p "$PROJECT_ROOT/media" "$PROJECT_ROOT/static" "$PROJECT_ROOT/logs"
-    chmod -R 777 "$PROJECT_ROOT/media" "$PROJECT_ROOT/static"
+    # project_root/static and project_root/media are in .gitignore and must be
+    # created before volume-mounting, otherwise Docker creates them as root:root
+    mkdir -p "$PROJECT_ROOT/project_root/static" \
+             "$PROJECT_ROOT/project_root/media/invoices" \
+             "$PROJECT_ROOT/project_root/media/xml" \
+             "$PROJECT_ROOT/project_root/media/company_logos"
     # Ensure existing log files are writable by container UID 1234
     find "$PROJECT_ROOT/logs" -name "*.log" -exec chmod 666 {} \;
 
