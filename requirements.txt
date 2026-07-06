@@ -122,7 +122,7 @@ environs==15.0.1
     # via -r requirements.in
 factory-boy==3.3.3
     # via -r requirements.in
-factur-x==5.0
+factur-x==5.1
     # via -r requirements.in
 faker==40.21.0
     # via factory-boy
@@ -250,6 +250,8 @@ python-dotenv==1.2.2
     #   environs
 python-json-logger==4.1.0
     # via -r requirements.in
+python-stdnum==2.2
+    # via factur-x
 pyyaml==6.0.3
     # via
     #   bandit
