@@ -122,7 +122,7 @@ environs==15.0.1
     # via -r requirements.in
 factory-boy==3.3.3
     # via -r requirements.in
-factur-x==5.1
+factur-x==6.2
     # via -r requirements.in
 faker==40.21.0
     # via factory-boy
@@ -268,6 +268,7 @@ referencing==0.37.0
 requests==2.34.2
     # via
     #   cachecontrol
+    #   factur-x
     #   pip-audit
 rich==15.0.0
     # via
