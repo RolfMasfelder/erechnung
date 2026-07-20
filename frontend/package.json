@@ -34,7 +34,7 @@
     "esbuild": "^0.28.1",
     "happy-dom": "^20.10.6",
     "postcss": "^8.5.20",
-    "tailwindcss": "^4.3.2",
+    "tailwindcss": "^4.3.3",
     "vite": "^8.1.5",
     "vitest": "^4.1.10"
   }
