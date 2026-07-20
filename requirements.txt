@@ -282,7 +282,7 @@ ruff==0.15.21
     # via -r requirements.in
 saxonche==13.0.0
     # via -r requirements.in
-sentry-sdk==2.64.0
+sentry-sdk==2.66.0
     # via -r requirements.in
 six==1.17.0
     # via python-dateutil
