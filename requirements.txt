@@ -230,7 +230,7 @@ pyjwt==2.13.0
     # via djangorestframework-simplejwt
 pyparsing==3.3.2
     # via pip-requirements-parser
-pypdf==6.13.0
+pypdf==6.14.2
     # via factur-x
 pyphen==0.17.2
     # via weasyprint
