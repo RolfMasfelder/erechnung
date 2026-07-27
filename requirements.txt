@@ -208,7 +208,7 @@ pluggy==1.6.0
     # via pytest
 pre-commit==4.6.0
     # via -r requirements.in
-prometheus-client==0.25.0
+prometheus-client==0.26.0
     # via
     #   -r requirements.in
     #   django-prometheus
