@@ -2,7 +2,7 @@
 # Basiert auf offiziellem Microsoft Playwright Image mit Ubuntu 24.04 LTS
 # Enthält Chromium, Firefox, WebKit + alle System-Dependencies
 
-FROM mcr.microsoft.com/playwright:v1.61.1-noble
+FROM mcr.microsoft.com/playwright:v1.62.0-noble
 
 # Arbeitsverzeichnis setzen
 WORKDIR /app
