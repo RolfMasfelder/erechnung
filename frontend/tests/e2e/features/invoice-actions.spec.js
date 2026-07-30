@@ -8,7 +8,7 @@ import { login } from '../fixtures/auth.js'
  * Testet die konsolidierten Action-Buttons:
  *   1. Smart-Download: B2B-Rechnung → "PDF herunterladen"
  *   2. Smart-Download: B2G-Rechnung → "XML herunterladen"
- *   3. Vorschau-Button immer sichtbar
+ *   3. Vorschau-Button nur bei B2B sichtbar (XRechnung/B2G hat keine PDF-Repräsentation)
  *   4. Entfernte Buttons nicht mehr vorhanden (generatePDF, generateXRechnung, markAsSent)
  *   5. SendInvoiceModal: Delivery-Mode-Selector mit E-Mail / Download / Peppol
  *   6. SendInvoiceModal Download-Modus: Info-Text abhängig von Partnertyp
@@ -137,9 +137,10 @@ test.describe('InvoiceDetailView: konsolidierte Action-Buttons', () => {
       await expect(page.getByRole('button', { name: /Vorschau/i })).toBeVisible()
     })
 
-    test('Vorschau-Button ist bei B2G-Rechnung sichtbar', async ({ page }) => {
+    test('Vorschau-Button ist bei B2G-Rechnung NICHT sichtbar', async ({ page }) => {
+      // XRechnung (B2G) ist reines XML ohne offizielle visuelle/PDF-Repräsentation.
       await goToB2GInvoice(page)
-      await expect(page.getByRole('button', { name: /Vorschau/i })).toBeVisible()
+      await expect(page.getByRole('button', { name: /Vorschau/i })).not.toBeVisible()
     })
 
     test('Vorschau-Button öffnet neuen Tab', async ({ page, context }) => {
