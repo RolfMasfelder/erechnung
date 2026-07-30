@@ -61,6 +61,7 @@ jobs:
           POSTGRES_PASSWORD=erechnung
           POSTGRES_HOST=db
           POSTGRES_PORT=5432
+          INIT_CREATE_TEST_DATA=False
           EOF
 
           # Frontend .env.test
