@@ -29,4 +29,17 @@ else:
     print("Test user already exists")
 EOF
 
+echo "4. Generating test data if needed..."
+if [ "${INIT_CREATE_TEST_DATA:-true}" = "true" ]; then
+    INVOICE_COUNT=$(python project_root/manage.py shell -c "from invoice_app.models import Invoice; print(Invoice.objects.count())" 2>/dev/null | tail -1)
+    if [ "$INVOICE_COUNT" = "0" ]; then
+        echo "No invoices found - generating test data (INIT_CREATE_TEST_DATA=true)..."
+        python project_root/manage.py generate_test_data --preset standard
+    else
+        echo "Test data already present ($INVOICE_COUNT invoices) - skipping generation"
+    fi
+else
+    echo "Skipping test data bootstrap (INIT_CREATE_TEST_DATA=false)"
+fi
+
 echo "Django initialization complete!"
