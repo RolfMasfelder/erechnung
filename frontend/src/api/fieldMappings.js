@@ -90,6 +90,9 @@ export const invoiceFields = createFieldMapper({
     // BG-22: Prepaid / rounding (BT-113 / BT-114)
     prepaid_amount:        'prepaid_amount',
     rounding_amount:       'rounding_amount',
+    // BG-10: Payee (BT-59/BT-60), only set when payee differs from seller
+    payee_name:            'payee_name',
+    payee_id:              'payee_id',
     status:           'status',
     notes:            'notes',
     subtotal:         'subtotal',
@@ -136,6 +139,18 @@ export const invoiceLineFields = createFieldMapper({
     gross_price:          'gross_price',
     billing_period_start: 'billing_period_start',
     billing_period_end:   'billing_period_end',
+    // BG-32: Item attributes (BT-160/BT-161), read-only nested list
+    attributes:           'attributes',
+  },
+})
+
+// -- Invoice Line Attribute (BG-32, BT-160/BT-161) -------------------------
+export const invoiceLineAttributeFields = createFieldMapper({
+  UI_TO_API: {
+    invoice_line: 'invoice_line',
+    name:         'name',
+    value:        'value',
+    sort_order:   'sort_order',
   },
 })
 
@@ -219,6 +234,13 @@ export const companyFields = createFieldMapper({
     default_currency:      'default_currency',
     default_payment_terms: 'default_payment_terms',
     is_active:             'is_active',
+    // BG-11: Seller tax representative (BT-62–BT-69)
+    tax_representative_name:          'tax_representative_name',
+    tax_representative_vat_id:        'tax_representative_vat_id',
+    tax_representative_address_line1: 'tax_representative_address_line1',
+    tax_representative_postal_code:   'tax_representative_postal_code',
+    tax_representative_city:          'tax_representative_city',
+    tax_representative_country:       'tax_representative_country',
   },
 })
 

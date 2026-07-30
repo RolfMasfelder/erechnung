@@ -174,6 +174,79 @@
         </div>
       </div>
 
+      <!-- Steuervertreter BG-7 (BT-62–BT-69) -->
+      <div class="form-group">
+        <label class="section-toggle">
+          <input type="checkbox" v-model="showTaxRepresentative" />
+          Steuervertreter angeben (BG-7)
+        </label>
+        <p class="field-hint">Nur relevant bei Verkäufern aus Drittstaaten mit EU-Steuervertreter</p>
+      </div>
+      <template v-if="showTaxRepresentative">
+        <div class="form-group">
+          <label for="tax_representative_name">Name des Steuervertreters (BT-62)</label>
+          <BaseInput
+            id="tax_representative_name"
+            v-model="formData.tax_representative_name"
+            placeholder="z.B. Steuervertreter GmbH"
+            :error="errors.tax_representative_name"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="tax_representative_vat_id">USt-IdNr. des Steuervertreters (BT-63)</label>
+          <BaseInput
+            id="tax_representative_vat_id"
+            v-model="formData.tax_representative_vat_id"
+            placeholder="z.B. DE123456789"
+            :error="errors.tax_representative_vat_id"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="tax_representative_address_line1">Straße und Hausnummer (BT-64)</label>
+          <BaseInput
+            id="tax_representative_address_line1"
+            v-model="formData.tax_representative_address_line1"
+            placeholder="z.B. Musterstraße 1"
+            :error="errors.tax_representative_address_line1"
+          />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="tax_representative_postal_code">PLZ (BT-67)</label>
+            <BaseInput
+              id="tax_representative_postal_code"
+              v-model="formData.tax_representative_postal_code"
+              placeholder="z.B. 12345"
+              :error="errors.tax_representative_postal_code"
+            />
+          </div>
+
+          <div class="form-group flex-2">
+            <label for="tax_representative_city">Stadt (BT-66)</label>
+            <BaseInput
+              id="tax_representative_city"
+              v-model="formData.tax_representative_city"
+              placeholder="z.B. Berlin"
+              :error="errors.tax_representative_city"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="tax_representative_country">Land ISO (BT-69)</label>
+            <BaseInput
+              id="tax_representative_country"
+              v-model="formData.tax_representative_country"
+              placeholder="z.B. DE"
+              maxlength="2"
+              :error="errors.tax_representative_country"
+            />
+          </div>
+        </div>
+      </template>
+
       <!-- Logo -->
       <div class="form-group">
         <label>Firmenlogo</label>
@@ -296,8 +369,17 @@ const formData = reactive({
   bank_name: '',
   iban: '',
   bic: '',
-  is_active: true
+  is_active: true,
+  // BG-7: Seller Tax Representative (BT-62–BT-69)
+  tax_representative_name: '',
+  tax_representative_vat_id: '',
+  tax_representative_address_line1: '',
+  tax_representative_postal_code: '',
+  tax_representative_city: '',
+  tax_representative_country: ''
 })
+
+const showTaxRepresentative = ref(false)
 
 const countryOptions = [
   { value: 'DE', label: 'Deutschland' },
@@ -331,6 +413,10 @@ const loadCompany = async () => {
     if (countryMatch) {
       formData.country = countryMatch.value
     }
+
+    showTaxRepresentative.value = !!(
+      formData.tax_representative_name || formData.tax_representative_vat_id
+    )
 
     currentLogoUrl.value = company.logo || ''
   } catch (error) {

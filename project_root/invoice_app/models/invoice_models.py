@@ -208,6 +208,20 @@ class Invoice(models.Model):
         help_text=_("Contract number or identifier (EN16931 BT-12)"),
     )
 
+    # EN16931 BG-10: Payee (only if different from the seller)
+    payee_name = models.CharField(
+        _("Payee Name"),
+        max_length=200,
+        blank=True,
+        help_text=_("Name of the payee if different from the seller (EN16931 BT-59)"),
+    )
+    payee_id = models.CharField(
+        _("Payee Identifier"),
+        max_length=100,
+        blank=True,
+        help_text=_("Payee identifier, e.g. bank/factoring reference (EN16931 BT-60)"),
+    )
+
     # Status and file references
     status = models.CharField(_("Status"), max_length=20, choices=InvoiceStatus.choices, default=InvoiceStatus.DRAFT)
     pdf_file = models.FileField(_("PDF File"), upload_to="invoices/pdf/", null=True, blank=True)
@@ -1249,3 +1263,31 @@ class InvoiceAllowanceCharge(models.Model):
         kind = _("Zuschlag") if self.is_charge else _("Rabatt")
         label = self.reason or self.reason_code or str(self.actual_amount)
         return f"{kind}: {label} ({self.actual_amount} EUR)"
+
+
+class InvoiceLineAttribute(models.Model):
+    """
+    Product attribute (key-value pair) for a specific invoice line (EN16931 BG-32).
+
+    Maps to CII SpecifiedTradeProduct/ApplicableProductCharacteristic:
+    - ``name``  → Description (BT-160)
+    - ``value`` → Value (BT-161)
+    """
+
+    invoice_line = models.ForeignKey(
+        "invoice_app.InvoiceLine",
+        on_delete=models.CASCADE,
+        related_name="attributes",
+        verbose_name=_("Invoice Line"),
+    )
+    name = models.CharField(_("Attribute Name"), max_length=100, help_text=_("EN16931 BT-160"))
+    value = models.CharField(_("Attribute Value"), max_length=200, help_text=_("EN16931 BT-161"))
+    sort_order = models.PositiveSmallIntegerField(_("Sort Order"), default=0)
+
+    class Meta:
+        verbose_name = _("Invoice Line Attribute")
+        verbose_name_plural = _("Invoice Line Attributes")
+        ordering = ["sort_order", "id"]
+
+    def __str__(self):
+        return f"{self.name}: {self.value}"

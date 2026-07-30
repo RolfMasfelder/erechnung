@@ -18,6 +18,7 @@ from invoice_app.models import (
     InvoiceAllowanceCharge,
     InvoiceAttachment,
     InvoiceLine,
+    InvoiceLineAttribute,
     PrivacyImpactAssessment,
     ProcessingActivity,
     Product,
@@ -108,6 +109,13 @@ class CompanySerializer(serializers.ModelSerializer):
             "bic",
             "default_currency",
             "default_payment_terms",
+            # BG-7/BG-8: Seller tax representative (BT-62–BT-69)
+            "tax_representative_name",
+            "tax_representative_vat_id",
+            "tax_representative_address_line1",
+            "tax_representative_postal_code",
+            "tax_representative_city",
+            "tax_representative_country",
             "is_active",
             "created_at",
             "updated_at",
@@ -128,6 +136,12 @@ class CompanySerializer(serializers.ModelSerializer):
             "bank_account": {"required": False, "allow_blank": True},
             "iban": {"required": False, "allow_blank": True},
             "bic": {"required": False, "allow_blank": True},
+            "tax_representative_name": {"required": False, "allow_blank": True},
+            "tax_representative_vat_id": {"required": False, "allow_blank": True},
+            "tax_representative_address_line1": {"required": False, "allow_blank": True},
+            "tax_representative_postal_code": {"required": False, "allow_blank": True},
+            "tax_representative_city": {"required": False, "allow_blank": True},
+            "tax_representative_country": {"required": False, "allow_blank": True},
         }
 
     def validate(self, attrs):
@@ -364,6 +378,20 @@ class AuditLogSerializer(serializers.ModelSerializer):
         )
 
 
+class InvoiceLineAttributeSerializer(serializers.ModelSerializer):
+    """Serializer for line-level product attributes (EN16931 BG-32: BT-160/BT-161)."""
+
+    class Meta:
+        model = InvoiceLineAttribute
+        fields = [
+            "id",
+            "invoice_line",
+            "name",
+            "value",
+            "sort_order",
+        ]
+
+
 class InvoiceAllowanceChargeSerializer(serializers.ModelSerializer):
     """Serializer for invoice allowances and charges (EN16931) — header or line level."""
 
@@ -397,6 +425,7 @@ class InvoiceLineSerializer(serializers.ModelSerializer):
     effective_unit_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     description = serializers.CharField(required=False, allow_blank=True, max_length=255)
     allowance_charges = serializers.SerializerMethodField(help_text="Positionsebene Rabatte/Zuschläge")
+    attributes = InvoiceLineAttributeSerializer(many=True, read_only=True, help_text="Produktmerkmale (BG-32)")
 
     @extend_schema_field(InvoiceAllowanceChargeSerializer(many=True))
     def get_allowance_charges(self, obj):
@@ -429,6 +458,7 @@ class InvoiceLineSerializer(serializers.ModelSerializer):
             "line_subtotal",
             "line_total",
             "allowance_charges",
+            "attributes",
         ]
         read_only_fields = ("tax_amount", "line_subtotal", "line_total")
 
@@ -551,6 +581,9 @@ class InvoiceSerializer(serializers.ModelSerializer):
             "contract_reference",
             "billing_period_start",
             "billing_period_end",
+            # BG-10: Payee (BT-59/BT-60)
+            "payee_name",
+            "payee_id",
             "status",
             "status_display",
             "pdf_file",

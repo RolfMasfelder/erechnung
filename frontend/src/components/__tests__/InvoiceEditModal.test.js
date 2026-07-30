@@ -14,7 +14,9 @@ vi.mock('@/api/services/invoiceService', () => ({
     updateLine: vi.fn().mockResolvedValue({}),
     createLine: vi.fn().mockResolvedValue({}),
     deleteAllowanceCharge: vi.fn().mockResolvedValue({}),
-    createAllowanceCharge: vi.fn().mockResolvedValue({})
+    createAllowanceCharge: vi.fn().mockResolvedValue({}),
+    createLineAttribute: vi.fn().mockResolvedValue({ id: 100 }),
+    deleteLineAttribute: vi.fn().mockResolvedValue({})
   }
 }))
 
@@ -347,5 +349,155 @@ describe('InvoiceEditModal', () => {
 
     expect(wrapper.vm.formData.status).toBe('sent')
     // Should show readonly fields for non-draft invoices
+  })
+
+  it('does not show payee section by default', async () => {
+    invoiceService.getById.mockResolvedValue(mockInvoice)
+
+    wrapper = mount(InvoiceEditModal, {
+      props: {
+        invoiceId: 1,
+        isOpen: true
+      }
+    })
+
+    await wrapper.vm.$nextTick()
+    await new Promise(resolve => setTimeout(resolve, 200))
+
+    expect(wrapper.vm.showPayee).toBe(false)
+    expect(wrapper.find('#payee_name').exists()).toBe(false)
+  })
+
+  it('shows and pre-fills payee section when invoice has payee data (BG-10)', async () => {
+    const invoiceWithPayee = { ...mockInvoice, payee_name: 'Factoring GmbH', payee_id: 'FACT-1' }
+    invoiceService.getById.mockResolvedValue(invoiceWithPayee)
+
+    wrapper = mount(InvoiceEditModal, {
+      props: {
+        invoiceId: 1,
+        isOpen: true
+      }
+    })
+
+    await wrapper.vm.$nextTick()
+    await new Promise(resolve => setTimeout(resolve, 200))
+
+    expect(wrapper.vm.showPayee).toBe(true)
+    expect(wrapper.vm.formData.payee_name).toBe('Factoring GmbH')
+    expect(wrapper.vm.formData.payee_id).toBe('FACT-1')
+    expect(wrapper.find('#payee_name').exists()).toBe(true)
+  })
+
+  it('submits payee fields when toggled on', async () => {
+    invoiceService.getById.mockResolvedValue(mockInvoice)
+    invoiceService.update.mockResolvedValue(mockInvoice)
+
+    wrapper = mount(InvoiceEditModal, {
+      props: {
+        invoiceId: 1,
+        isOpen: true
+      }
+    })
+
+    await wrapper.vm.$nextTick()
+    await new Promise(resolve => setTimeout(resolve, 200))
+
+    wrapper.vm.showPayee = true
+    wrapper.vm.formData.payee_name = 'Factoring GmbH'
+    wrapper.vm.formData.payee_id = 'FACT-1'
+
+    await wrapper.vm.handleSubmit()
+    await wrapper.vm.$nextTick()
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    expect(invoiceService.update).toHaveBeenCalledWith(1, expect.objectContaining({
+      payee_name: 'Factoring GmbH',
+      payee_id: 'FACT-1'
+    }))
+  })
+
+  it('loads line attributes from invoice (BG-32)', async () => {
+    const invoiceWithAttributes = {
+      ...mockInvoice,
+      lines: [
+        {
+          ...mockInvoice.lines[0],
+          attributes: [
+            { id: 10, name: 'Farbe', value: 'Rot', sort_order: 0 }
+          ]
+        }
+      ]
+    }
+    invoiceService.getById.mockResolvedValue(invoiceWithAttributes)
+
+    wrapper = mount(InvoiceEditModal, {
+      props: {
+        invoiceId: 1,
+        isOpen: true
+      }
+    })
+
+    await wrapper.vm.$nextTick()
+    await new Promise(resolve => setTimeout(resolve, 200))
+
+    expect(wrapper.vm.formData.lines[0].attributes).toHaveLength(1)
+    expect(wrapper.vm.formData.lines[0].attributes[0].name).toBe('Farbe')
+    expect(wrapper.vm.formData.lines[0].attributes[0].value).toBe('Rot')
+  })
+
+  it('allows adding and removing line attributes', async () => {
+    invoiceService.getById.mockResolvedValue(mockInvoice)
+
+    wrapper = mount(InvoiceEditModal, {
+      props: {
+        invoiceId: 1,
+        isOpen: true
+      }
+    })
+
+    await wrapper.vm.$nextTick()
+    await new Promise(resolve => setTimeout(resolve, 200))
+
+    expect(wrapper.vm.formData.lines[0].attributes).toEqual([])
+
+    wrapper.vm.addLineAttribute(0)
+    await wrapper.vm.$nextTick()
+    expect(wrapper.vm.formData.lines[0].attributes).toHaveLength(1)
+
+    wrapper.vm.formData.lines[0].attributes[0].name = 'Material'
+    wrapper.vm.formData.lines[0].attributes[0].value = 'Aluminium'
+
+    wrapper.vm.removeLineAttribute(0, 0)
+    await wrapper.vm.$nextTick()
+    expect(wrapper.vm.formData.lines[0].attributes).toHaveLength(0)
+  })
+
+  it('creates line attributes on submit for a new attribute', async () => {
+    invoiceService.getById.mockResolvedValue(mockInvoice)
+    invoiceService.update.mockResolvedValue(mockInvoice)
+
+    wrapper = mount(InvoiceEditModal, {
+      props: {
+        invoiceId: 1,
+        isOpen: true
+      }
+    })
+
+    await wrapper.vm.$nextTick()
+    await new Promise(resolve => setTimeout(resolve, 200))
+
+    wrapper.vm.addLineAttribute(0)
+    wrapper.vm.formData.lines[0].attributes[0].name = 'Farbe'
+    wrapper.vm.formData.lines[0].attributes[0].value = 'Blau'
+
+    await wrapper.vm.handleSubmit()
+    await wrapper.vm.$nextTick()
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    expect(invoiceService.createLineAttribute).toHaveBeenCalledWith(expect.objectContaining({
+      invoice_line: 1,
+      name: 'Farbe',
+      value: 'Blau'
+    }))
   })
 })
