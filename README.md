@@ -20,6 +20,9 @@ Open http://localhost:5173 (frontend) or http://localhost:8000/admin/ (Django ad
 
 See [Installation Guide](docs/INSTALLATION.md) for full setup instructions.
 
+## Hint for testing-data
+Important for the future: after a `git pull` or merge that adds new migrations, `docker compose down && up -d` alone is not always enough. Check with `docker compose exec web python project_root/manage.py showmigrations invoice_app` and run `migrate` manually if needed.
+
 ## Features
 
 - **Invoice Management** — Create, edit, and manage invoices, companies, and business partners
