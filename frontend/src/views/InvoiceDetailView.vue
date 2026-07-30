@@ -28,6 +28,7 @@
           📥 {{ smartDownloadLabel }}
         </BaseButton>
         <BaseButton
+          v-if="!isGovernment"
           variant="secondary"
           title="PDF im Browser öffnen (Vorschau)"
           @click="previewPDF"
