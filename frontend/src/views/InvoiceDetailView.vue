@@ -680,7 +680,7 @@ function formatTime(iso) {
   top: 0;
   z-index: 10;
   background: white;
-  padding: 0.75rem 0 0.75rem;
+  padding: 0.75rem 1.5rem;
 }
 
 .page-header-top {
