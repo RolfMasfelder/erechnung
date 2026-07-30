@@ -229,10 +229,7 @@ describe('InvoiceListView', () => {
     expect(wrapper.vm.loading).toBe(false)
   })
 
-  it('handles navigation to detail view', async () => {
-    const push = vi.fn()
-    router.push = push
-
+  it('navigates to detail view via invoice number link', async () => {
     wrapper = mount(InvoiceListView, {
       global: {
         plugins: [router]
@@ -242,14 +239,12 @@ describe('InvoiceListView', () => {
     await wrapper.vm.$nextTick()
     await new Promise(resolve => setTimeout(resolve, 100))
 
-    // Call the viewInvoice method directly
-    wrapper.vm.viewInvoice(1)
-    expect(push).toHaveBeenCalledWith({ name: 'InvoiceDetail', params: { id: 1 } })
+    const link = wrapper.find('a.invoice-link')
+    expect(link.exists()).toBe(true)
+    expect(link.attributes('href')).toBe('/invoices/1')
   })
 
-  it('handles delete invoice', async () => {
-    mockConfirm.mockResolvedValue(true)
-
+  it('does not render an Aktionen column', async () => {
     wrapper = mount(InvoiceListView, {
       global: {
         plugins: [router]
@@ -259,31 +254,8 @@ describe('InvoiceListView', () => {
     await wrapper.vm.$nextTick()
     await new Promise(resolve => setTimeout(resolve, 100))
 
-    const initialCallCount = invoiceService.getAll.mock.calls.length
-
-    if (wrapper.vm.deleteInvoice) {
-      await wrapper.vm.deleteInvoice(1)
-      expect(invoiceService.delete).toHaveBeenCalledWith(1)
-      // After delete, loadInvoices should be called again
-      expect(invoiceService.getAll.mock.calls.length).toBeGreaterThan(initialCallCount)
-    }
-  })
-
-  it('cancels delete when user declines confirmation', async () => {
-    mockConfirm.mockResolvedValue(false)
-
-    wrapper = mount(InvoiceListView, {
-      global: {
-        plugins: [router]
-      }
-    })
-
-    await wrapper.vm.$nextTick()
-
-    if (wrapper.vm.deleteInvoice) {
-      await wrapper.vm.deleteInvoice(1)
-      expect(invoiceService.delete).not.toHaveBeenCalled()
-    }
+    expect(wrapper.text()).not.toContain('Aktionen')
+    expect(wrapper.text()).not.toContain('Ansehen')
   })
 
   it('handles sorting by column', async () => {
@@ -355,30 +327,30 @@ describe('InvoiceListView', () => {
     wrapper = mount(InvoiceListView, { global: { plugins: [router] } })
     await flushPromises()
 
-    if (wrapper.vm.handleRowSelect) {
-      await wrapper.vm.handleRowSelect({ id: 1, selected: true })
-      // No error means the function executed
-      await wrapper.vm.handleRowSelect({ id: 1, selected: false })
-    }
+    await wrapper.vm.handleRowSelect({ id: 1, selected: true })
+    expect(wrapper.vm.selectedIdsArray).toContain(1)
+
+    await wrapper.vm.handleRowSelect({ id: 1, selected: false })
+    expect(wrapper.vm.selectedIdsArray).not.toContain(1)
   })
 
   it('handleSelectAll selects all invoices', async () => {
     wrapper = mount(InvoiceListView, { global: { plugins: [router] } })
     await flushPromises()
 
-    if (wrapper.vm.handleSelectAll) {
-      await wrapper.vm.handleSelectAll({ ids: [1, 2], selected: true })
-      await wrapper.vm.handleSelectAll({ ids: [1, 2], selected: false })
-    }
+    await wrapper.vm.handleSelectAll({ ids: [1, 2], selected: true })
+    expect(wrapper.vm.selectedIdsArray.sort()).toEqual([1, 2])
+
+    await wrapper.vm.handleSelectAll({ ids: [1, 2], selected: false })
+    expect(wrapper.vm.selectedIdsArray).toEqual([])
   })
 
   it('handleSelectRange selects range of invoices', async () => {
     wrapper = mount(InvoiceListView, { global: { plugins: [router] } })
     await flushPromises()
 
-    if (wrapper.vm.handleSelectRange) {
-      await wrapper.vm.handleSelectRange({ ids: [1, 2] })
-    }
+    await wrapper.vm.handleSelectRange({ ids: [1, 2] })
+    expect(wrapper.vm.selectedIdsArray.sort()).toEqual([1, 2])
   })
 
   it('handleInvoiceCreated reloads list and navigates', async () => {
@@ -427,37 +399,17 @@ describe('InvoiceListView', () => {
     }
   })
 
-  it('generateAndDownloadPDF calls service and downloads', async () => {
-    invoiceService.generatePDF.mockResolvedValue({})
-    invoiceService.downloadPDF.mockResolvedValue(new Blob(['pdf'], { type: 'application/pdf' }))
-    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test')
-    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
-    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
-
+  it('shows bulk action bar with export button once rows are selected', async () => {
     wrapper = mount(InvoiceListView, { global: { plugins: [router] } })
     await flushPromises()
 
-    if (wrapper.vm.generateAndDownloadPDF) {
-      await wrapper.vm.generateAndDownloadPDF(1)
-      await flushPromises()
-      expect(invoiceService.generatePDF).toHaveBeenCalledWith(1)
-      expect(invoiceService.downloadPDF).toHaveBeenCalledWith(1)
-    }
-  })
+    expect(wrapper.find('.bulk-action-bar').exists()).toBe(false)
 
-  it('handleBulkExport exports selected invoices to CSV', async () => {
-    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test')
-    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
-    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    await wrapper.vm.handleRowSelect({ id: 1, selected: true })
+    await wrapper.vm.$nextTick()
 
-    wrapper = mount(InvoiceListView, { global: { plugins: [router] } })
-    await flushPromises()
-
-    if (wrapper.vm.handleBulkExport) {
-      await wrapper.vm.handleBulkExport()
-      await flushPromises()
-    }
-    // Just verify it doesn't crash and mock was usable
+    expect(wrapper.find('.bulk-action-bar').exists()).toBe(true)
+    expect(wrapper.find('.export-button-wrapper').exists()).toBe(true)
   })
 
   it('handleBulkDelete deletes when confirmed', async () => {
@@ -466,11 +418,14 @@ describe('InvoiceListView', () => {
     wrapper = mount(InvoiceListView, { global: { plugins: [router] } })
     await flushPromises()
 
-    if (wrapper.vm.handleBulkDelete) {
-      await wrapper.vm.handleBulkDelete()
-      await flushPromises()
-    }
-    // Passes without error
+    await wrapper.vm.handleSelectAll({ ids: [1, 2], selected: true })
+
+    await wrapper.vm.handleBulkDelete()
+    await flushPromises()
+
+    expect(invoiceService.delete).toHaveBeenCalledWith(1)
+    expect(invoiceService.delete).toHaveBeenCalledWith(2)
+    expect(wrapper.vm.selectedIdsArray).toEqual([])
   })
 
   it('handleBulkDelete does nothing when cancelled', async () => {

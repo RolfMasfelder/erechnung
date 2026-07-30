@@ -62,6 +62,44 @@ class Company(models.Model):
     default_currency = models.CharField(_("Default Currency"), max_length=3, default="EUR")
     default_payment_terms = models.PositiveIntegerField(_("Default Payment Terms (days)"), default=30)
 
+    # ── Seller Tax Representative (EN16931 BG-7 / BG-8) ─────────────────────
+    tax_representative_name = models.CharField(
+        _("Tax Representative Name"),
+        max_length=255,
+        blank=True,
+        help_text=_("Name of the seller's tax representative (EN16931 BT-62)"),
+    )
+    tax_representative_vat_id = models.CharField(
+        _("Tax Representative VAT ID"),
+        max_length=50,
+        blank=True,
+        help_text=_("VAT ID of the seller's tax representative (EN16931 BT-63)"),
+    )
+    tax_representative_address_line1 = models.CharField(
+        _("Tax Representative Address Line 1"),
+        max_length=255,
+        blank=True,
+        help_text=_("Street of the seller's tax representative (EN16931 BT-64)"),
+    )
+    tax_representative_postal_code = models.CharField(
+        _("Tax Representative Postal Code"),
+        max_length=20,
+        blank=True,
+        help_text=_("Postal code of the seller's tax representative (EN16931 BT-67)"),
+    )
+    tax_representative_city = models.CharField(
+        _("Tax Representative City"),
+        max_length=100,
+        blank=True,
+        help_text=_("City of the seller's tax representative (EN16931 BT-66)"),
+    )
+    tax_representative_country = models.CharField(
+        _("Tax Representative Country"),
+        max_length=100,
+        blank=True,
+        help_text=_("Country of the seller's tax representative (EN16931 BT-69)"),
+    )
+
     # Audit fields
     created_at = models.DateTimeField(_("Created At"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Updated At"), auto_now=True)

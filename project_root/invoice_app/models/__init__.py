@@ -16,6 +16,7 @@ from invoice_app.models.invoice_models import (
     InvoiceAllowanceCharge,
     InvoiceAttachment,
     InvoiceLine,
+    InvoiceLineAttribute,
 )
 from invoice_app.models.product import Product
 from invoice_app.models.user import UserProfile, UserRole
@@ -37,6 +38,7 @@ __all__ = [
     "InvoiceAttachment",
     "AttachmentType",
     "InvoiceAllowanceCharge",
+    "InvoiceLineAttribute",
     # User management
     "UserRole",
     "UserProfile",

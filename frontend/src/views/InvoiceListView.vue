@@ -79,36 +79,6 @@
         <template #cell-due_date="{ value }">
           {{ formatDate(value) }}
         </template>
-
-        <template #actions="{ row }">
-          <div class="action-buttons">
-            <BaseButton
-              size="sm"
-              variant="primary"
-              @click="viewInvoice(row.id)"
-            >
-              Ansehen
-            </BaseButton>
-
-            <BaseButton
-              size="sm"
-              variant="secondary"
-              :loading="generatingPdfId === row.id"
-              @click="generateAndDownloadPDF(row.id)"
-            >
-              PDF
-            </BaseButton>
-
-            <BaseButton
-              v-if="row.status === 'draft'"
-              size="sm"
-              variant="danger"
-              @click="deleteInvoice(row.id)"
-            >
-              Löschen
-            </BaseButton>
-          </div>
-        </template>
       </BaseTable>
 
       <BasePagination
@@ -154,7 +124,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch, computed } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseCard from '@/components/BaseCard.vue'
 import BaseTable from '@/components/BaseTable.vue'
@@ -177,7 +147,6 @@ const { confirm } = useConfirm()
 const loading = ref(false)
 const invoices = ref([])
 const showCreateModal = ref(false)
-const generatingPdfId = ref(null)
 
 // Bulk selection setup
 const bulkSelect = useBulkSelect({
@@ -365,55 +334,6 @@ const handleBulkDelete = async () => {
   } catch (error) {
     console.error('Bulk delete failed:', error)
     toast.error('Fehler beim Löschen')
-  }
-}
-
-const viewInvoice = (id) => {
-  router.push({ name: 'InvoiceDetail', params: { id } })
-}
-
-const generateAndDownloadPDF = async (id) => {
-  generatingPdfId.value = id
-  try {
-    // Generate PDF first, then download
-    await invoiceService.generatePDF(id)
-    const blob = await invoiceService.downloadPDF(id)
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `invoice-${id}.pdf`
-    document.body.appendChild(a)
-    a.click()
-    window.URL.revokeObjectURL(url)
-    document.body.removeChild(a)
-    toast.success('PDF erfolgreich generiert und heruntergeladen')
-  } catch (error) {
-    console.error('Failed to generate/download PDF:', error)
-    toast.error('Fehler bei der PDF-Generierung')
-  } finally {
-    generatingPdfId.value = null
-  }
-}
-
-const deleteInvoice = async (id) => {
-  const confirmed = await confirm(
-    'Möchten Sie diese Rechnung wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.',
-    {
-      title: 'Rechnung löschen',
-      variant: 'danger',
-      confirmText: 'Löschen'
-    }
-  )
-
-  if (!confirmed) return
-
-  try {
-    await invoiceService.delete(id)
-    toast.success('Rechnung erfolgreich gelöscht')
-    loadInvoices()
-  } catch (error) {
-    console.error('Failed to delete invoice:', error)
-    toast.error('Fehler beim Löschen der Rechnung')
   }
 }
 

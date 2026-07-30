@@ -17,6 +17,7 @@ from .rest_views import (
     DataSubjectRequestViewSet,
     InvoiceAllowanceChargeViewSet,
     InvoiceAttachmentViewSet,
+    InvoiceLineAttributeViewSet,
     InvoiceLineViewSet,
     InvoiceViewSet,
     PrivacyImpactAssessmentViewSet,
@@ -39,6 +40,7 @@ router.register(r"invoices", InvoiceViewSet, basename="api-invoice")
 router.register(r"invoice-lines", InvoiceLineViewSet, basename="api-invoice-line")
 router.register(r"invoice-attachments", InvoiceAttachmentViewSet, basename="api-invoice-attachment")
 router.register(r"invoice-allowance-charges", InvoiceAllowanceChargeViewSet, basename="api-invoice-allowance-charge")
+router.register(r"invoice-line-attributes", InvoiceLineAttributeViewSet, basename="api-invoice-line-attribute")
 # GDPR / DSGVO
 router.register(r"gdpr/requests", DataSubjectRequestViewSet, basename="api-dsr")
 router.register(r"gdpr/processing-activities", ProcessingActivityViewSet, basename="api-processing-activity")

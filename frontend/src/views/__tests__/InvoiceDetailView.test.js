@@ -143,6 +143,41 @@ describe('InvoiceDetailView', () => {
     expect(text).toContain('2') // quantity
   })
 
+  it('does not show XR badge for non-government business partners', async () => {
+    wrapper = mount(InvoiceDetailView, {
+      global: {
+        plugins: [router]
+      }
+    })
+
+    await router.isReady()
+    await wrapper.vm.$nextTick()
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    expect(wrapper.find('.type-xrechnung').exists()).toBe(false)
+  })
+
+  it('marks XRechnung (B2G) invoices with an XR badge', async () => {
+    invoiceService.getById.mockResolvedValue({
+      ...mockInvoice,
+      business_partner_details: { id: 1, name: 'Behörde GmbH', partner_type: 'GOVERNMENT' }
+    })
+
+    wrapper = mount(InvoiceDetailView, {
+      global: {
+        plugins: [router]
+      }
+    })
+
+    await router.isReady()
+    await wrapper.vm.$nextTick()
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    const badge = wrapper.find('.type-xrechnung')
+    expect(badge.exists()).toBe(true)
+    expect(badge.text()).toBe('XR')
+  })
+
   it('downloads PDF when button clicked', async () => {
     const mockBlob = new Blob(['pdf content'], { type: 'application/pdf' })
     invoiceService.downloadPDF.mockResolvedValue(mockBlob)

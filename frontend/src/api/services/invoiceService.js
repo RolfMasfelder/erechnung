@@ -3,6 +3,7 @@ import {
   invoiceFields,
   invoiceLineFields,
   allowanceChargeFields,
+  invoiceLineAttributeFields,
 } from '../fieldMappings'
 
 /**
@@ -108,6 +109,36 @@ export const invoiceService = {
    */
   async deleteLine(lineId) {
     await apiClient.delete(`/invoice-lines/${lineId}/`)
+  },
+
+  /**
+   * Produktattribut einer Rechnungsposition anlegen (EN16931 BG-32, BT-160/BT-161)
+   * @param {object} data - UI field names (invoice_line, name, value, sort_order)
+   * @returns {Promise<object>}
+   */
+  async createLineAttribute(data) {
+    const response = await apiClient.post('/invoice-line-attributes/', invoiceLineAttributeFields.toApi(data))
+    return invoiceLineAttributeFields.fromApi(response.data)
+  },
+
+  /**
+   * Produktattribut einer Rechnungsposition aktualisieren
+   * @param {number} id
+   * @param {object} data - UI field names
+   * @returns {Promise<object>}
+   */
+  async updateLineAttribute(id, data) {
+    const response = await apiClient.patch(`/invoice-line-attributes/${id}/`, invoiceLineAttributeFields.toApi(data))
+    return invoiceLineAttributeFields.fromApi(response.data)
+  },
+
+  /**
+   * Produktattribut einer Rechnungsposition löschen
+   * @param {number} id
+   * @returns {Promise<void>}
+   */
+  async deleteLineAttribute(id) {
+    await apiClient.delete(`/invoice-line-attributes/${id}/`)
   },
 
   /**

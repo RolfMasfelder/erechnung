@@ -6,6 +6,7 @@
           <router-link to="/invoices" class="back-link">← Zurück</router-link>
           <h1 class="page-title">
             <span v-if="invoice?.invoice_type === 'CREDIT_NOTE'" class="type-badge type-credit-note">Gutschrift</span>
+            <span v-if="isGovernment" class="type-badge type-xrechnung">XR</span>
             {{ invoice?.invoice_number }}
           </h1>
         </div>
@@ -679,7 +680,7 @@ function formatTime(iso) {
   top: 0;
   z-index: 10;
   background: white;
-  padding: 0.75rem 0 0.75rem;
+  padding: 0.75rem 1.5rem;
 }
 
 .page-header-top {
@@ -882,6 +883,11 @@ function formatTime(iso) {
 .type-credit-note {
   background-color: #fce7f3;
   color: #9d174d;
+}
+
+.type-xrechnung {
+  background-color: #dbeafe;
+  color: #1e40af;
 }
 
 /* Cross-link to related invoices */

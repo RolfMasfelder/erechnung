@@ -189,6 +189,34 @@
         </div>
       </template>
 
+      <!-- Zahlungsempfänger BG-10 (BT-59/BT-60) -->
+      <div class="form-group">
+        <label class="section-toggle">
+          <input type="checkbox" v-model="showPayee" />
+          Abweichender Zahlungsempfänger angeben (BG-10)
+        </label>
+      </div>
+      <template v-if="showPayee">
+        <div class="form-row">
+          <div class="form-group flex-2">
+            <BaseInput
+              id="payee_name"
+              v-model="formData.payee_name"
+              label="Name des Zahlungsempfängers (BT-59)"
+              placeholder="z.B. Factoring GmbH"
+            />
+          </div>
+          <div class="form-group">
+            <BaseInput
+              id="payee_id"
+              v-model="formData.payee_id"
+              label="Kennung (BT-60, optional)"
+              placeholder="z.B. Gläubiger-ID"
+            />
+          </div>
+        </div>
+      </template>
+
       <!-- Datumfelder -->
       <div class="form-row">
         <div class="form-group">
@@ -429,6 +457,59 @@
               />
             </div>
           </div>
+
+          <!-- Produktattribute BG-32 (BT-160/BT-161) -->
+          <div class="line-attributes-section">
+            <div class="section-header">
+              <span class="form-label">Attribute (BG-32, optional)</span>
+              <BaseButton
+                v-if="formData.status === 'draft'"
+                type="button"
+                variant="secondary"
+                size="sm"
+                @click="addLineAttribute(index)"
+              >
+                + Attribut
+              </BaseButton>
+            </div>
+            <p v-if="line.attributes.length === 0" class="ac-empty">
+              Keine Produktattribute
+            </p>
+            <div
+              v-for="(attr, attrIdx) in line.attributes"
+              :key="attrIdx"
+              class="form-row"
+            >
+              <div class="form-group">
+                <label :for="`attr-name-${index}-${attrIdx}`">Name (BT-160)</label>
+                <BaseInput
+                  :id="`attr-name-${index}-${attrIdx}`"
+                  v-model="attr.name"
+                  placeholder="z.B. Farbe"
+                  :readonly="formData.status !== 'draft'"
+                />
+              </div>
+              <div class="form-group">
+                <label :for="`attr-value-${index}-${attrIdx}`">Wert (BT-161)</label>
+                <BaseInput
+                  :id="`attr-value-${index}-${attrIdx}`"
+                  v-model="attr.value"
+                  placeholder="z.B. Rot"
+                  :readonly="formData.status !== 'draft'"
+                />
+              </div>
+              <div class="form-group" v-if="formData.status === 'draft'">
+                <BaseButton
+                  type="button"
+                  variant="danger"
+                  size="sm"
+                  @click="removeLineAttribute(index, attrIdx)"
+                >
+                  Entfernen
+                </BaseButton>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -617,6 +698,7 @@ const loadingProducts = ref(false)
 const submitError = ref(null)
 const originalAcIds = ref([])
 const originalLineIds = ref([])
+const originalLineAttributeIds = ref({})
 
 const customers = ref([])
 const products = ref([])
@@ -641,6 +723,9 @@ const formData = reactive({
   // BT-113 / BT-114
   prepaid_amount: 0,
   rounding_amount: 0,
+  // BG-10: Payee (only set when payee differs from seller)
+  payee_name: '',
+  payee_id: '',
   status: 'draft',
   notes: '',
   lines: [],
@@ -648,6 +733,7 @@ const formData = reactive({
 })
 
 const showDeliveryAddress = ref(false)
+const showPayee = ref(false)
 
 const errors = reactive({})
 
@@ -739,7 +825,8 @@ function createEmptyLine() {
     vat_exemption_reason_code: '',
     gross_price: null,
     billing_period_start: null,
-    billing_period_end: null
+    billing_period_end: null,
+    attributes: []
   }
 }
 
@@ -790,6 +877,14 @@ function addAllowanceCharge() {
 
 function removeAllowanceCharge(index) {
   formData.allowance_charges.splice(index, 1)
+}
+
+function addLineAttribute(lineIndex) {
+  formData.lines[lineIndex].attributes.push({ name: '', value: '' })
+}
+
+function removeLineAttribute(lineIndex, attrIndex) {
+  formData.lines[lineIndex].attributes.splice(attrIndex, 1)
 }
 
 async function handleClose() {
@@ -859,10 +954,13 @@ async function loadData() {
       delivery_country: invoice.delivery_country || '',
       prepaid_amount: Number.parseFloat(invoice.prepaid_amount) || 0,
       rounding_amount: Number.parseFloat(invoice.rounding_amount) || 0,
+      payee_name: invoice.payee_name || '',
+      payee_id: invoice.payee_id || '',
       status: invoice.status,
       notes: invoice.notes || '',
     })
     showDeliveryAddress.value = !!(invoice.delivery_address_line1 || invoice.delivery_city || invoice.delivery_country)
+    showPayee.value = !!(invoice.payee_name || invoice.payee_id)
     Object.assign(formData, {
       lines: (invoice.lines || invoice.invoice_lines || []).map(line => ({
         id: line.id,
@@ -878,7 +976,8 @@ async function loadData() {
         vat_exemption_reason_code: line.vat_exemption_reason_code || '',
         gross_price: line.gross_price == null ? null : Number.parseFloat(line.gross_price),
         billing_period_start: line.billing_period_start || null,
-        billing_period_end: line.billing_period_end || null
+        billing_period_end: line.billing_period_end || null,
+        attributes: (line.attributes || []).map(a => ({ id: a.id, name: a.name || '', value: a.value || '' }))
       })),
       allowance_charges: (invoice.allowance_charges || []).map(ac => ({
         id: ac.id,
@@ -892,6 +991,10 @@ async function loadData() {
     // Merke IDs der bestehenden Rabatte/Zuschläge und Positionen für späteres Löschen
     originalAcIds.value = (invoice.allowance_charges || []).map(ac => ac.id)
     originalLineIds.value = (invoice.lines || []).map(l => l.id)
+    originalLineAttributeIds.value = {}
+    ;(invoice.lines || []).forEach(line => {
+      originalLineAttributeIds.value[line.id] = (line.attributes || []).map(a => a.id)
+    })
 
     // Zusatzdaten laden
     const [customersResponse, productsResponse, companiesResponse] = await Promise.all([
@@ -968,6 +1071,8 @@ async function handleSubmit() {
       delivery_country: formData.delivery_country || '',
       prepaid_amount: formData.prepaid_amount || 0,
       rounding_amount: formData.rounding_amount || 0,
+      payee_name: showPayee.value ? (formData.payee_name || '') : '',
+      payee_id: showPayee.value ? (formData.payee_id || '') : '',
       notes: formData.notes,
       // lines ist im InvoiceSerializer read_only – werden separat via /invoice-lines/ verwaltet
     }
@@ -983,7 +1088,7 @@ async function handleSubmit() {
       await Promise.all(removedLineIds.map(id => invoiceService.deleteLine(id)))
 
       // Bestehende updaten, neue anlegen
-      await Promise.all(formData.lines.map(line => {
+      await Promise.all(formData.lines.map(async line => {
         const linePayload = {
           invoice: props.invoiceId,
           product: line.product,
@@ -999,11 +1104,27 @@ async function handleSubmit() {
           billing_period_start: line.billing_period_start || null,
           billing_period_end: line.billing_period_end || null
         }
+        let resultLine
         if (line.id) {
-          return invoiceService.updateLine(line.id, linePayload)
+          await invoiceService.updateLine(line.id, linePayload)
         } else {
-          return invoiceService.createLine(props.invoiceId, linePayload)
+          resultLine = await invoiceService.createLine(props.invoiceId, linePayload)
+          line.id = resultLine.id
         }
+
+        // Produktattribute (BG-32): bestehende löschen, aktuelle neu anlegen
+        const existingAttrIds = originalLineAttributeIds.value[line.id] || []
+        await Promise.all(existingAttrIds.map(attrId => invoiceService.deleteLineAttribute(attrId)))
+        const validAttributes = (line.attributes || []).filter(a => a.name?.trim() && a.value?.trim())
+        const createdAttrs = await Promise.all(validAttributes.map((attr, attrIdx) =>
+          invoiceService.createLineAttribute({
+            invoice_line: line.id,
+            name: attr.name,
+            value: attr.value,
+            sort_order: attrIdx
+          })
+        ))
+        originalLineAttributeIds.value[line.id] = createdAttrs.map(a => a.id)
       }))
       originalLineIds.value = formData.lines.filter(l => l.id).map(l => l.id)
     }
@@ -1259,6 +1380,12 @@ onMounted(() => {
   font-weight: 600;
   margin: 0;
   color: #374151;
+}
+
+.line-attributes-section {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed #d1d5db;
 }
 
 .ac-empty {

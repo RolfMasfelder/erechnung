@@ -196,6 +196,14 @@ class ZugferdXmlGenerator:
         buyer_data = invoice_data.get("customer", {})
         self._add_trade_party_details(buyer_party, buyer_data)
 
+        # SellerTaxRepresentativeTradeParty (BG-7/BG-8: BT-62–BT-69) — optional
+        # Per XSD sequence: must come after BuyerTradeParty and before the
+        # *OrderReferencedDocument elements.
+        tax_rep_data = invoice_data.get("tax_representative")
+        if tax_rep_data and tax_rep_data.get("name"):
+            tax_rep_party = etree.SubElement(agreement, f"{{{RAM_NS}}}SellerTaxRepresentativeTradeParty")
+            self._add_trade_party_details(tax_rep_party, tax_rep_data)
+
         # SellerOrderReferencedDocument must come BEFORE BuyerOrderReferencedDocument
         # per the CII XSD sequence (HeaderTradeAgreementType). Wrong order causes
         # schema validation error (cvc-complex-type.2.4.a).
@@ -417,6 +425,17 @@ class ZugferdXmlGenerator:
         # InvoiceCurrencyCode (required)
         currency = etree.SubElement(settlement, f"{{{RAM_NS}}}InvoiceCurrencyCode")
         currency.text = invoice_data.get("currency", "EUR")
+
+        # PayeeTradeParty (BG-10: BT-59/BT-60) — only if payee differs from the seller
+        payee_data = invoice_data.get("payee")
+        if payee_data and (payee_data.get("name") or payee_data.get("id")):
+            payee_party = etree.SubElement(settlement, f"{{{RAM_NS}}}PayeeTradeParty")
+            payee_id_val = payee_data.get("id")
+            if payee_id_val:
+                payee_id_el = etree.SubElement(payee_party, f"{{{RAM_NS}}}ID")
+                payee_id_el.text = payee_id_val
+            payee_name_el = etree.SubElement(payee_party, f"{{{RAM_NS}}}Name")
+            payee_name_el.text = payee_data.get("name") or ""
 
         # InvoiceReferencedDocument (BT-25/BT-26) — for credit notes referencing original invoice
         inv_ref = invoice_data.get("invoice_referenced_document")
@@ -966,6 +985,27 @@ class ZugferdXmlGenerator:
         else:
             product_name = getattr(item, "description", "Unknown Product")
         name_element.text = product_name
+
+        # ApplicableProductCharacteristic (BG-32: BT-160 name / BT-161 value) — optional, repeatable
+        if isinstance(item, dict):
+            attributes = item.get("attributes", [])
+        else:
+            attributes = getattr(item, "attributes", None)
+            attributes = list(attributes.all()) if attributes is not None else []
+        for attribute in attributes:
+            if isinstance(attribute, dict):
+                attr_name = attribute.get("name", "")
+                attr_value = attribute.get("value", "")
+            else:
+                attr_name = getattr(attribute, "name", "")
+                attr_value = getattr(attribute, "value", "")
+            if not attr_name and not attr_value:
+                continue
+            characteristic = etree.SubElement(product_element, f"{{{RAM_NS}}}ApplicableProductCharacteristic")
+            description_el = etree.SubElement(characteristic, f"{{{RAM_NS}}}Description")
+            description_el.text = attr_name
+            value_el = etree.SubElement(characteristic, f"{{{RAM_NS}}}Value")
+            value_el.text = attr_value
 
     def _add_specified_line_trade_agreement(self, line_item, item):
         """Add SpecifiedLineTradeAgreement (price information) to line item."""

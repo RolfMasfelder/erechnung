@@ -37,6 +37,7 @@
               :to="{ name: 'InvoiceDetail', params: { id: row.id } }"
               class="invoice-link"
             >
+              <span v-if="row.business_partner_details?.partner_type === 'GOVERNMENT'" class="type-badge type-xrechnung">XR</span>
               {{ row.invoice_number }}
             </router-link>
           </template>
@@ -58,16 +59,6 @@
 
           <template #cell-total_amount="{ value }">
             {{ formatCurrency(value) }}
-          </template>
-
-          <template #actions="{ row }">
-            <BaseButton
-              size="sm"
-              variant="primary"
-              @click="viewInvoice(row.id)"
-            >
-              Details
-            </BaseButton>
           </template>
         </BaseTable>
 
@@ -146,7 +137,7 @@ const parseNumericValue = (value) => {
   if (typeof value === 'string') {
     const normalized = value
       .replace(/\s/g, '')
-      .replace(/\./g, '')
+      .replaceAll('.', '')
       .replace(',', '.')
 
     const parsed = Number(normalized)
@@ -272,10 +263,6 @@ const formatDate = (value) => {
     month: '2-digit',
     year: 'numeric'
   })
-}
-
-const viewInvoice = (id) => {
-  router.push({ name: 'InvoiceDetail', params: { id } })
 }
 
 const createInvoice = () => {
@@ -408,6 +395,21 @@ onMounted(() => {
 .invoice-link:hover {
   color: #1d4ed8;
   text-decoration: underline;
+}
+
+.type-badge {
+  display: inline-block;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.2rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  margin-right: 0.25rem;
+  vertical-align: middle;
+}
+
+.type-xrechnung {
+  background-color: #dbeafe;
+  color: #1e40af;
 }
 
 @media (max-width: 1024px) {

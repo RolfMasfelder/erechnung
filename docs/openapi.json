@@ -3825,6 +3825,340 @@
                 }
             }
         },
+        "/api/invoice-line-attributes/": {
+            "get": {
+                "operationId": "invoice_line_attributes_list",
+                "description": "API endpoint for managing line-level product attributes (EN16931 BG-32: BT-160/BT-161).",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "invoice_line",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "Eine Seitenzahl in der paginierten Ergebnismenge.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Anzahl der pro Seite zurückzugebenden Ergebnisse.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "Ein Suchbegriff.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "invoice-line-attributes"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedInvoiceLineAttributeList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "invoice_line_attributes_create",
+                "description": "API endpoint for managing line-level product attributes (EN16931 BG-32: BT-160/BT-161).",
+                "tags": [
+                    "invoice-line-attributes"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceLineAttributeRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceLineAttributeRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceLineAttributeRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvoiceLineAttribute"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/invoice-line-attributes/{id}/": {
+            "get": {
+                "operationId": "invoice_line_attributes_retrieve",
+                "description": "API endpoint for managing line-level product attributes (EN16931 BG-32: BT-160/BT-161).",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice Line Attribute identifiziert.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "invoice-line-attributes"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvoiceLineAttribute"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "invoice_line_attributes_update",
+                "description": "API endpoint for managing line-level product attributes (EN16931 BG-32: BT-160/BT-161).",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice Line Attribute identifiziert.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "invoice-line-attributes"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceLineAttributeRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceLineAttributeRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvoiceLineAttributeRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvoiceLineAttribute"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "invoice_line_attributes_partial_update",
+                "description": "API endpoint for managing line-level product attributes (EN16931 BG-32: BT-160/BT-161).",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice Line Attribute identifiziert.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "invoice-line-attributes"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedInvoiceLineAttributeRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedInvoiceLineAttributeRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedInvoiceLineAttributeRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvoiceLineAttribute"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "invoice_line_attributes_destroy",
+                "description": "API endpoint for managing line-level product attributes (EN16931 BG-32: BT-160/BT-161).",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Ein eindeutiger Ganzzahl-Wert, der Invoice Line Attribute identifiziert.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "invoice-line-attributes"
+                ],
+                "security": [
+                    {
+                        "jwtAuth": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
         "/api/invoice-lines/": {
             "get": {
                 "operationId": "invoice_lines_list",
@@ -6495,15 +6829,31 @@
                         "maxLength": 50
                     },
                     "email": {
-                        "type": "string",
-                        "format": "email",
                         "title": "E-Mail-Adresse",
-                        "maxLength": 254
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "email",
+                                "maxLength": 254
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
                     },
                     "website": {
-                        "type": "string",
-                        "format": "uri",
-                        "maxLength": 200
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "uri",
+                                "maxLength": 200
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
                     },
                     "payment_terms": {
                         "type": "integer",
@@ -6535,9 +6885,17 @@
                         "maxLength": 255
                     },
                     "accounting_email": {
-                        "type": "string",
-                        "format": "email",
-                        "maxLength": 254
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "email",
+                                "maxLength": 254
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
                     },
                     "is_active": {
                         "type": "boolean"
@@ -6681,12 +7039,28 @@
                         "maxLength": 50
                     },
                     "email": {
-                        "type": "string",
-                        "format": "email"
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "email"
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
                     },
                     "website": {
-                        "type": "string",
-                        "format": "uri"
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "uri"
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
                     },
                     "payment_terms": {
                         "type": "integer",
@@ -6714,8 +7088,16 @@
                         "maxLength": 255
                     },
                     "accounting_email": {
-                        "type": "string",
-                        "format": "email"
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "email"
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
                     },
                     "is_customer": {
                         "type": "boolean",
@@ -6827,15 +7209,31 @@
                         "maxLength": 50
                     },
                     "email": {
-                        "type": "string",
-                        "format": "email",
                         "title": "E-Mail-Adresse",
-                        "maxLength": 254
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "email",
+                                "maxLength": 254
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
                     },
                     "website": {
-                        "type": "string",
-                        "format": "uri",
-                        "maxLength": 200
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "uri",
+                                "maxLength": 200
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
                     },
                     "payment_terms": {
                         "type": "integer",
@@ -6867,9 +7265,17 @@
                         "maxLength": 255
                     },
                     "accounting_email": {
-                        "type": "string",
-                        "format": "email",
-                        "maxLength": 254
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "email",
+                                "maxLength": 254
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
                     },
                     "is_active": {
                         "type": "boolean"
@@ -7011,20 +7417,35 @@
                         "maxLength": 50
                     },
                     "email": {
-                        "type": "string",
-                        "format": "email",
                         "title": "E-Mail-Adresse",
-                        "maxLength": 254
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "email",
+                                "maxLength": 254
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
                     },
                     "website": {
-                        "type": "string",
-                        "format": "uri",
-                        "maxLength": 200
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "uri",
+                                "maxLength": 200
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
                     },
                     "contact_name": {
                         "type": "string",
-                        "title": "Kontaktperson (BT-39)",
-                        "description": "EN16931 BT-39: Seller contact person name",
+                        "description": "Invoice contact person name (EN16931 BT-39)",
                         "maxLength": 100
                     },
                     "logo": {
@@ -7059,6 +7480,37 @@
                         "maximum": 2147483647,
                         "minimum": 0,
                         "title": "Default Payment Terms (days)"
+                    },
+                    "tax_representative_name": {
+                        "type": "string",
+                        "description": "Name of the seller's tax representative (EN16931 BT-62)",
+                        "maxLength": 255
+                    },
+                    "tax_representative_vat_id": {
+                        "type": "string",
+                        "description": "VAT ID of the seller's tax representative (EN16931 BT-63)",
+                        "maxLength": 50
+                    },
+                    "tax_representative_address_line1": {
+                        "type": "string",
+                        "title": "Tax Representative Address Line 1",
+                        "description": "Street of the seller's tax representative (EN16931 BT-64)",
+                        "maxLength": 255
+                    },
+                    "tax_representative_postal_code": {
+                        "type": "string",
+                        "description": "Postal code of the seller's tax representative (EN16931 BT-67)",
+                        "maxLength": 20
+                    },
+                    "tax_representative_city": {
+                        "type": "string",
+                        "description": "City of the seller's tax representative (EN16931 BT-66)",
+                        "maxLength": 100
+                    },
+                    "tax_representative_country": {
+                        "type": "string",
+                        "description": "Country of the seller's tax representative (EN16931 BT-69)",
+                        "maxLength": 100
                     },
                     "is_active": {
                         "type": "boolean"
@@ -7153,20 +7605,35 @@
                         "maxLength": 50
                     },
                     "email": {
-                        "type": "string",
-                        "format": "email",
                         "title": "E-Mail-Adresse",
-                        "maxLength": 254
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "email",
+                                "maxLength": 254
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
                     },
                     "website": {
-                        "type": "string",
-                        "format": "uri",
-                        "maxLength": 200
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "uri",
+                                "maxLength": 200
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
                     },
                     "contact_name": {
                         "type": "string",
-                        "title": "Kontaktperson (BT-39)",
-                        "description": "EN16931 BT-39: Seller contact person name",
+                        "description": "Invoice contact person name (EN16931 BT-39)",
                         "maxLength": 100
                     },
                     "logo": {
@@ -7202,6 +7669,37 @@
                         "maximum": 2147483647,
                         "minimum": 0,
                         "title": "Default Payment Terms (days)"
+                    },
+                    "tax_representative_name": {
+                        "type": "string",
+                        "description": "Name of the seller's tax representative (EN16931 BT-62)",
+                        "maxLength": 255
+                    },
+                    "tax_representative_vat_id": {
+                        "type": "string",
+                        "description": "VAT ID of the seller's tax representative (EN16931 BT-63)",
+                        "maxLength": 50
+                    },
+                    "tax_representative_address_line1": {
+                        "type": "string",
+                        "title": "Tax Representative Address Line 1",
+                        "description": "Street of the seller's tax representative (EN16931 BT-64)",
+                        "maxLength": 255
+                    },
+                    "tax_representative_postal_code": {
+                        "type": "string",
+                        "description": "Postal code of the seller's tax representative (EN16931 BT-67)",
+                        "maxLength": 20
+                    },
+                    "tax_representative_city": {
+                        "type": "string",
+                        "description": "City of the seller's tax representative (EN16931 BT-66)",
+                        "maxLength": 100
+                    },
+                    "tax_representative_country": {
+                        "type": "string",
+                        "description": "Country of the seller's tax representative (EN16931 BT-69)",
+                        "maxLength": 100
                     },
                     "is_active": {
                         "type": "boolean"
@@ -7828,59 +8326,24 @@
                         "type": "string",
                         "format": "date",
                         "nullable": true,
-                        "title": "Leistungsbeginn (BT-73)",
-                        "description": "EN16931 BT-73: Start of billing/service period"
+                        "description": "Start of billing/service period (EN16931 BT-73)"
                     },
                     "billing_period_end": {
                         "type": "string",
                         "format": "date",
                         "nullable": true,
-                        "title": "Leistungsende (BT-74)",
-                        "description": "EN16931 BT-74: End of billing/service period"
+                        "description": "End of billing/service period (EN16931 BT-74)"
                     },
-                    "delivery_address_line1": {
+                    "payee_name": {
                         "type": "string",
-                        "maxLength": 200,
-                        "title": "Lieferadresse Straße (BT-75)",
-                        "description": "EN16931 BT-75: Delivery address street and house number"
+                        "description": "Name of the payee if different from the seller (EN16931 BT-59)",
+                        "maxLength": 200
                     },
-                    "delivery_address_line2": {
+                    "payee_id": {
                         "type": "string",
-                        "maxLength": 200,
-                        "title": "Lieferadresse Zusatz (BT-76)",
-                        "description": "EN16931 BT-76: Delivery address additional information"
-                    },
-                    "delivery_city": {
-                        "type": "string",
-                        "maxLength": 100,
-                        "title": "Lieferort (BT-77)",
-                        "description": "EN16931 BT-77: Delivery city"
-                    },
-                    "delivery_postal_code": {
-                        "type": "string",
-                        "maxLength": 20,
-                        "title": "Lieferpostleitzahl (BT-78)",
-                        "description": "EN16931 BT-78: Delivery postal code"
-                    },
-                    "delivery_country": {
-                        "type": "string",
-                        "maxLength": 2,
-                        "title": "Lieferland (BT-80)",
-                        "description": "EN16931 BT-80: ISO 3166-1 alpha-2 country code of delivery address"
-                    },
-                    "prepaid_amount": {
-                        "type": "string",
-                        "format": "decimal",
-                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
-                        "title": "Anzahlung (BT-113)",
-                        "description": "EN16931 BT-113: Amount already paid"
-                    },
-                    "rounding_amount": {
-                        "type": "string",
-                        "format": "decimal",
-                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
-                        "title": "Rundungsbetrag (BT-114)",
-                        "description": "EN16931 BT-114: Rounding adjustment for the due amount"
+                        "title": "Payee Identifier",
+                        "description": "Payee identifier, e.g. bank/factoring reference (EN16931 BT-60)",
+                        "maxLength": 100
                     },
                     "status": {
                         "$ref": "#/components/schemas/InvoiceStatusEnum"
@@ -7892,14 +8355,14 @@
                     "pdf_file": {
                         "type": "string",
                         "format": "uri",
-                        "readOnly": true,
-                        "nullable": true
+                        "nullable": true,
+                        "readOnly": true
                     },
                     "xml_file": {
                         "type": "string",
                         "format": "uri",
-                        "readOnly": true,
-                        "nullable": true
+                        "nullable": true,
+                        "readOnly": true
                     },
                     "notes": {
                         "type": "string"
@@ -7947,6 +8410,45 @@
                     "is_overdue": {
                         "type": "boolean",
                         "readOnly": true
+                    },
+                    "delivery_address_line1": {
+                        "type": "string",
+                        "title": "Delivery Address Line 1",
+                        "description": "Street and house number of delivery address (EN16931 BT-75)",
+                        "maxLength": 200
+                    },
+                    "delivery_address_line2": {
+                        "type": "string",
+                        "title": "Delivery Address Line 2",
+                        "description": "Additional delivery address information (EN16931 BT-76)",
+                        "maxLength": 200
+                    },
+                    "delivery_city": {
+                        "type": "string",
+                        "description": "City of delivery address (EN16931 BT-77)",
+                        "maxLength": 100
+                    },
+                    "delivery_postal_code": {
+                        "type": "string",
+                        "description": "Postal code of delivery address (EN16931 BT-78)",
+                        "maxLength": 20
+                    },
+                    "delivery_country": {
+                        "type": "string",
+                        "description": "ISO 3166-1 alpha-2 country code of delivery address (EN16931 BT-80)",
+                        "maxLength": 2
+                    },
+                    "prepaid_amount": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
+                        "description": "Amount already paid / advance payment (EN16931 BT-113)"
+                    },
+                    "rounding_amount": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
+                        "description": "Rounding adjustment for the due amount (EN16931 BT-114)"
                     },
                     "is_locked": {
                         "type": "boolean",
@@ -8373,32 +8875,34 @@
                     },
                     "discount_reason_code": {
                         "type": "string",
-                        "maxLength": 10,
-                        "description": "UNTDID 5189/7161 reason code for line-level allowance/charge (EN16931 BT-140/BT-145)"
+                        "description": "UNTDID 5189 or 7161 reason code for line-level allowance/charge (EN16931 BT-140/BT-145)",
+                        "maxLength": 10
                     },
                     "vat_exemption_reason_code": {
                         "type": "string",
-                        "maxLength": 20,
-                        "description": "VATEX code for VAT exemption reason (EN16931 BT-121, e.g. 'VATEX-EU-AE')"
+                        "description": "VATEX code for VAT exemption reason (EN16931 BT-121, e.g. 'VATEX-EU-AE')",
+                        "maxLength": 20
                     },
                     "gross_price": {
                         "type": "string",
                         "format": "decimal",
-                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,6})?$",
+                        "pattern": "^-?\\d{0,9}(?:\\.\\d{0,6})?$",
                         "nullable": true,
-                        "description": "Price before price-level discount, BG-29 BT-148 (EN16931). If set, XML includes GrossPriceProductTradePrice."
+                        "description": "Price before price-level discount (EN16931 BT-148). Net price = gross_price - price_discount."
                     },
                     "billing_period_start": {
                         "type": "string",
                         "format": "date",
                         "nullable": true,
-                        "description": "BT-134: Start of line-specific billing/service period"
+                        "title": "Line Billing Period Start",
+                        "description": "Start of line-specific billing/service period (EN16931 BT-134)"
                     },
                     "billing_period_end": {
                         "type": "string",
                         "format": "date",
                         "nullable": true,
-                        "description": "BT-135: End of line-specific billing/service period"
+                        "title": "Line Billing Period End",
+                        "description": "End of line-specific billing/service period (EN16931 BT-135)"
                     },
                     "line_subtotal": {
                         "type": "string",
@@ -8419,10 +8923,19 @@
                         },
                         "readOnly": true,
                         "description": "Positionsebene Rabatte/Zuschläge"
+                    },
+                    "attributes": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/InvoiceLineAttribute"
+                        },
+                        "readOnly": true,
+                        "description": "Produktmerkmale (BG-32)"
                     }
                 },
                 "required": [
                     "allowance_charges",
+                    "attributes",
                     "effective_unit_price",
                     "id",
                     "invoice",
@@ -8430,6 +8943,75 @@
                     "line_total",
                     "product_name",
                     "tax_amount"
+                ]
+            },
+            "InvoiceLineAttribute": {
+                "type": "object",
+                "description": "Serializer for line-level product attributes (EN16931 BG-32: BT-160/BT-161).",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "invoice_line": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Attribute Name",
+                        "description": "EN16931 BT-160",
+                        "maxLength": 100
+                    },
+                    "value": {
+                        "type": "string",
+                        "title": "Attribute Value",
+                        "description": "EN16931 BT-161",
+                        "maxLength": 200
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "maximum": 32767,
+                        "minimum": 0
+                    }
+                },
+                "required": [
+                    "id",
+                    "invoice_line",
+                    "name",
+                    "value"
+                ]
+            },
+            "InvoiceLineAttributeRequest": {
+                "type": "object",
+                "description": "Serializer for line-level product attributes (EN16931 BG-32: BT-160/BT-161).",
+                "properties": {
+                    "invoice_line": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "title": "Attribute Name",
+                        "description": "EN16931 BT-160",
+                        "maxLength": 100
+                    },
+                    "value": {
+                        "type": "string",
+                        "minLength": 1,
+                        "title": "Attribute Value",
+                        "description": "EN16931 BT-161",
+                        "maxLength": 200
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "maximum": 32767,
+                        "minimum": 0
+                    }
+                },
+                "required": [
+                    "invoice_line",
+                    "name",
+                    "value"
                 ]
             },
             "InvoiceLineRequest": {
@@ -8492,32 +9074,34 @@
                     },
                     "discount_reason_code": {
                         "type": "string",
-                        "maxLength": 10,
-                        "description": "UNTDID 5189/7161 reason code for line-level allowance/charge (EN16931 BT-140/BT-145)"
+                        "description": "UNTDID 5189 or 7161 reason code for line-level allowance/charge (EN16931 BT-140/BT-145)",
+                        "maxLength": 10
                     },
                     "vat_exemption_reason_code": {
                         "type": "string",
-                        "maxLength": 20,
-                        "description": "VATEX code for VAT exemption reason (EN16931 BT-121, e.g. 'VATEX-EU-AE')"
+                        "description": "VATEX code for VAT exemption reason (EN16931 BT-121, e.g. 'VATEX-EU-AE')",
+                        "maxLength": 20
                     },
                     "gross_price": {
                         "type": "string",
                         "format": "decimal",
-                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,6})?$",
+                        "pattern": "^-?\\d{0,9}(?:\\.\\d{0,6})?$",
                         "nullable": true,
-                        "description": "Price before price-level discount, BG-29 BT-148 (EN16931). If set, XML includes GrossPriceProductTradePrice."
+                        "description": "Price before price-level discount (EN16931 BT-148). Net price = gross_price - price_discount."
                     },
                     "billing_period_start": {
                         "type": "string",
                         "format": "date",
                         "nullable": true,
-                        "description": "BT-134: Start of line-specific billing/service period"
+                        "title": "Line Billing Period Start",
+                        "description": "Start of line-specific billing/service period (EN16931 BT-134)"
                     },
                     "billing_period_end": {
                         "type": "string",
                         "format": "date",
                         "nullable": true,
-                        "description": "BT-135: End of line-specific billing/service period"
+                        "title": "Line Billing Period End",
+                        "description": "End of line-specific billing/service period (EN16931 BT-135)"
                     }
                 },
                 "required": [
@@ -8607,59 +9191,24 @@
                         "type": "string",
                         "format": "date",
                         "nullable": true,
-                        "title": "Leistungsbeginn (BT-73)",
-                        "description": "EN16931 BT-73: Start of billing/service period"
+                        "description": "Start of billing/service period (EN16931 BT-73)"
                     },
                     "billing_period_end": {
                         "type": "string",
                         "format": "date",
                         "nullable": true,
-                        "title": "Leistungsende (BT-74)",
-                        "description": "EN16931 BT-74: End of billing/service period"
+                        "description": "End of billing/service period (EN16931 BT-74)"
                     },
-                    "delivery_address_line1": {
+                    "payee_name": {
                         "type": "string",
-                        "maxLength": 200,
-                        "title": "Lieferadresse Straße (BT-75)",
-                        "description": "EN16931 BT-75: Delivery address street and house number"
+                        "description": "Name of the payee if different from the seller (EN16931 BT-59)",
+                        "maxLength": 200
                     },
-                    "delivery_address_line2": {
+                    "payee_id": {
                         "type": "string",
-                        "maxLength": 200,
-                        "title": "Lieferadresse Zusatz (BT-76)",
-                        "description": "EN16931 BT-76: Delivery address additional information"
-                    },
-                    "delivery_city": {
-                        "type": "string",
-                        "maxLength": 100,
-                        "title": "Lieferort (BT-77)",
-                        "description": "EN16931 BT-77: Delivery city"
-                    },
-                    "delivery_postal_code": {
-                        "type": "string",
-                        "maxLength": 20,
-                        "title": "Lieferpostleitzahl (BT-78)",
-                        "description": "EN16931 BT-78: Delivery postal code"
-                    },
-                    "delivery_country": {
-                        "type": "string",
-                        "maxLength": 2,
-                        "title": "Lieferland (BT-80)",
-                        "description": "EN16931 BT-80: ISO 3166-1 alpha-2 country code of delivery address"
-                    },
-                    "prepaid_amount": {
-                        "type": "string",
-                        "format": "decimal",
-                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
-                        "title": "Anzahlung (BT-113)",
-                        "description": "EN16931 BT-113: Amount already paid"
-                    },
-                    "rounding_amount": {
-                        "type": "string",
-                        "format": "decimal",
-                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
-                        "title": "Rundungsbetrag (BT-114)",
-                        "description": "EN16931 BT-114: Rounding adjustment for the due amount"
+                        "title": "Payee Identifier",
+                        "description": "Payee identifier, e.g. bank/factoring reference (EN16931 BT-60)",
+                        "maxLength": 100
                     },
                     "status": {
                         "$ref": "#/components/schemas/InvoiceStatusEnum"
@@ -8670,6 +9219,45 @@
                     "created_by": {
                         "type": "integer",
                         "nullable": true
+                    },
+                    "delivery_address_line1": {
+                        "type": "string",
+                        "title": "Delivery Address Line 1",
+                        "description": "Street and house number of delivery address (EN16931 BT-75)",
+                        "maxLength": 200
+                    },
+                    "delivery_address_line2": {
+                        "type": "string",
+                        "title": "Delivery Address Line 2",
+                        "description": "Additional delivery address information (EN16931 BT-76)",
+                        "maxLength": 200
+                    },
+                    "delivery_city": {
+                        "type": "string",
+                        "description": "City of delivery address (EN16931 BT-77)",
+                        "maxLength": 100
+                    },
+                    "delivery_postal_code": {
+                        "type": "string",
+                        "description": "Postal code of delivery address (EN16931 BT-78)",
+                        "maxLength": 20
+                    },
+                    "delivery_country": {
+                        "type": "string",
+                        "description": "ISO 3166-1 alpha-2 country code of delivery address (EN16931 BT-80)",
+                        "maxLength": 2
+                    },
+                    "prepaid_amount": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
+                        "description": "Amount already paid / advance payment (EN16931 BT-113)"
+                    },
+                    "rounding_amount": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
+                        "description": "Rounding adjustment for the due amount (EN16931 BT-114)"
                     }
                 }
             },
@@ -9006,6 +9594,37 @@
                     }
                 }
             },
+            "PaginatedInvoiceLineAttributeList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/InvoiceLineAttribute"
+                        }
+                    }
+                }
+            },
             "PaginatedInvoiceLineList": {
                 "type": "object",
                 "required": [
@@ -9261,15 +9880,31 @@
                         "maxLength": 50
                     },
                     "email": {
-                        "type": "string",
-                        "format": "email",
                         "title": "E-Mail-Adresse",
-                        "maxLength": 254
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "email",
+                                "maxLength": 254
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
                     },
                     "website": {
-                        "type": "string",
-                        "format": "uri",
-                        "maxLength": 200
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "uri",
+                                "maxLength": 200
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
                     },
                     "payment_terms": {
                         "type": "integer",
@@ -9301,9 +9936,17 @@
                         "maxLength": 255
                     },
                     "accounting_email": {
-                        "type": "string",
-                        "format": "email",
-                        "maxLength": 254
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "email",
+                                "maxLength": 254
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
                     },
                     "is_active": {
                         "type": "boolean"
@@ -9377,20 +10020,35 @@
                         "maxLength": 50
                     },
                     "email": {
-                        "type": "string",
-                        "format": "email",
                         "title": "E-Mail-Adresse",
-                        "maxLength": 254
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "email",
+                                "maxLength": 254
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
                     },
                     "website": {
-                        "type": "string",
-                        "format": "uri",
-                        "maxLength": 200
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "uri",
+                                "maxLength": 200
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
                     },
                     "contact_name": {
                         "type": "string",
-                        "title": "Kontaktperson (BT-39)",
-                        "description": "EN16931 BT-39: Seller contact person name",
+                        "description": "Invoice contact person name (EN16931 BT-39)",
                         "maxLength": 100
                     },
                     "logo": {
@@ -9426,6 +10084,37 @@
                         "maximum": 2147483647,
                         "minimum": 0,
                         "title": "Default Payment Terms (days)"
+                    },
+                    "tax_representative_name": {
+                        "type": "string",
+                        "description": "Name of the seller's tax representative (EN16931 BT-62)",
+                        "maxLength": 255
+                    },
+                    "tax_representative_vat_id": {
+                        "type": "string",
+                        "description": "VAT ID of the seller's tax representative (EN16931 BT-63)",
+                        "maxLength": 50
+                    },
+                    "tax_representative_address_line1": {
+                        "type": "string",
+                        "title": "Tax Representative Address Line 1",
+                        "description": "Street of the seller's tax representative (EN16931 BT-64)",
+                        "maxLength": 255
+                    },
+                    "tax_representative_postal_code": {
+                        "type": "string",
+                        "description": "Postal code of the seller's tax representative (EN16931 BT-67)",
+                        "maxLength": 20
+                    },
+                    "tax_representative_city": {
+                        "type": "string",
+                        "description": "City of the seller's tax representative (EN16931 BT-66)",
+                        "maxLength": 100
+                    },
+                    "tax_representative_country": {
+                        "type": "string",
+                        "description": "Country of the seller's tax representative (EN16931 BT-69)",
+                        "maxLength": 100
                     },
                     "is_active": {
                         "type": "boolean"
@@ -9596,6 +10285,34 @@
                     }
                 }
             },
+            "PatchedInvoiceLineAttributeRequest": {
+                "type": "object",
+                "description": "Serializer for line-level product attributes (EN16931 BG-32: BT-160/BT-161).",
+                "properties": {
+                    "invoice_line": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "title": "Attribute Name",
+                        "description": "EN16931 BT-160",
+                        "maxLength": 100
+                    },
+                    "value": {
+                        "type": "string",
+                        "minLength": 1,
+                        "title": "Attribute Value",
+                        "description": "EN16931 BT-161",
+                        "maxLength": 200
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "maximum": 32767,
+                        "minimum": 0
+                    }
+                }
+            },
             "PatchedInvoiceLineRequest": {
                 "type": "object",
                 "description": "Serializer for the InvoiceLine model.",
@@ -9656,32 +10373,34 @@
                     },
                     "discount_reason_code": {
                         "type": "string",
-                        "maxLength": 10,
-                        "description": "UNTDID 5189/7161 reason code for line-level allowance/charge (EN16931 BT-140/BT-145)"
+                        "description": "UNTDID 5189 or 7161 reason code for line-level allowance/charge (EN16931 BT-140/BT-145)",
+                        "maxLength": 10
                     },
                     "vat_exemption_reason_code": {
                         "type": "string",
-                        "maxLength": 20,
-                        "description": "VATEX code for VAT exemption reason (EN16931 BT-121, e.g. 'VATEX-EU-AE')"
+                        "description": "VATEX code for VAT exemption reason (EN16931 BT-121, e.g. 'VATEX-EU-AE')",
+                        "maxLength": 20
                     },
                     "gross_price": {
                         "type": "string",
                         "format": "decimal",
-                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,6})?$",
+                        "pattern": "^-?\\d{0,9}(?:\\.\\d{0,6})?$",
                         "nullable": true,
-                        "description": "Price before price-level discount, BG-29 BT-148 (EN16931). If set, XML includes GrossPriceProductTradePrice."
+                        "description": "Price before price-level discount (EN16931 BT-148). Net price = gross_price - price_discount."
                     },
                     "billing_period_start": {
                         "type": "string",
                         "format": "date",
                         "nullable": true,
-                        "description": "BT-134: Start of line-specific billing/service period"
+                        "title": "Line Billing Period Start",
+                        "description": "Start of line-specific billing/service period (EN16931 BT-134)"
                     },
                     "billing_period_end": {
                         "type": "string",
                         "format": "date",
                         "nullable": true,
-                        "description": "BT-135: End of line-specific billing/service period"
+                        "title": "Line Billing Period End",
+                        "description": "End of line-specific billing/service period (EN16931 BT-135)"
                     }
                 }
             },
@@ -9768,59 +10487,24 @@
                         "type": "string",
                         "format": "date",
                         "nullable": true,
-                        "title": "Leistungsbeginn (BT-73)",
-                        "description": "EN16931 BT-73: Start of billing/service period"
+                        "description": "Start of billing/service period (EN16931 BT-73)"
                     },
                     "billing_period_end": {
                         "type": "string",
                         "format": "date",
                         "nullable": true,
-                        "title": "Leistungsende (BT-74)",
-                        "description": "EN16931 BT-74: End of billing/service period"
+                        "description": "End of billing/service period (EN16931 BT-74)"
                     },
-                    "delivery_address_line1": {
+                    "payee_name": {
                         "type": "string",
-                        "maxLength": 200,
-                        "title": "Lieferadresse Straße (BT-75)",
-                        "description": "EN16931 BT-75: Delivery address street and house number"
+                        "description": "Name of the payee if different from the seller (EN16931 BT-59)",
+                        "maxLength": 200
                     },
-                    "delivery_address_line2": {
+                    "payee_id": {
                         "type": "string",
-                        "maxLength": 200,
-                        "title": "Lieferadresse Zusatz (BT-76)",
-                        "description": "EN16931 BT-76: Delivery address additional information"
-                    },
-                    "delivery_city": {
-                        "type": "string",
-                        "maxLength": 100,
-                        "title": "Lieferort (BT-77)",
-                        "description": "EN16931 BT-77: Delivery city"
-                    },
-                    "delivery_postal_code": {
-                        "type": "string",
-                        "maxLength": 20,
-                        "title": "Lieferpostleitzahl (BT-78)",
-                        "description": "EN16931 BT-78: Delivery postal code"
-                    },
-                    "delivery_country": {
-                        "type": "string",
-                        "maxLength": 2,
-                        "title": "Lieferland (BT-80)",
-                        "description": "EN16931 BT-80: ISO 3166-1 alpha-2 country code of delivery address"
-                    },
-                    "prepaid_amount": {
-                        "type": "string",
-                        "format": "decimal",
-                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
-                        "title": "Anzahlung (BT-113)",
-                        "description": "EN16931 BT-113: Amount already paid"
-                    },
-                    "rounding_amount": {
-                        "type": "string",
-                        "format": "decimal",
-                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
-                        "title": "Rundungsbetrag (BT-114)",
-                        "description": "EN16931 BT-114: Rounding adjustment for the due amount"
+                        "title": "Payee Identifier",
+                        "description": "Payee identifier, e.g. bank/factoring reference (EN16931 BT-60)",
+                        "maxLength": 100
                     },
                     "status": {
                         "$ref": "#/components/schemas/InvoiceStatusEnum"
@@ -9831,6 +10515,45 @@
                     "created_by": {
                         "type": "integer",
                         "nullable": true
+                    },
+                    "delivery_address_line1": {
+                        "type": "string",
+                        "title": "Delivery Address Line 1",
+                        "description": "Street and house number of delivery address (EN16931 BT-75)",
+                        "maxLength": 200
+                    },
+                    "delivery_address_line2": {
+                        "type": "string",
+                        "title": "Delivery Address Line 2",
+                        "description": "Additional delivery address information (EN16931 BT-76)",
+                        "maxLength": 200
+                    },
+                    "delivery_city": {
+                        "type": "string",
+                        "description": "City of delivery address (EN16931 BT-77)",
+                        "maxLength": 100
+                    },
+                    "delivery_postal_code": {
+                        "type": "string",
+                        "description": "Postal code of delivery address (EN16931 BT-78)",
+                        "maxLength": 20
+                    },
+                    "delivery_country": {
+                        "type": "string",
+                        "description": "ISO 3166-1 alpha-2 country code of delivery address (EN16931 BT-80)",
+                        "maxLength": 2
+                    },
+                    "prepaid_amount": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
+                        "description": "Amount already paid / advance payment (EN16931 BT-113)"
+                    },
+                    "rounding_amount": {
+                        "type": "string",
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,13}(?:\\.\\d{0,2})?$",
+                        "description": "Rounding adjustment for the due amount (EN16931 BT-114)"
                     }
                 }
             },
@@ -10084,13 +10807,14 @@
                     },
                     "seller_item_id": {
                         "type": "string",
-                        "maxLength": 50,
-                        "description": "Seller's item identifier (EN16931 BT-155)"
+                        "description": "Seller's own item identifier (EN16931 BT-155), e.g. catalog number",
+                        "maxLength": 50
                     },
                     "gtin": {
                         "type": "string",
-                        "maxLength": 14,
-                        "description": "GTIN/EAN 13 or 14 digits, schemeID 0160 (EN16931 BT-156/BT-157)"
+                        "title": "GTIN / EAN",
+                        "description": "Global Trade Item Number, 13 or 14 digits (EN16931 BT-156/BT-157)",
+                        "maxLength": 14
                     },
                     "is_active": {
                         "type": "boolean"
@@ -10598,13 +11322,14 @@
                     },
                     "seller_item_id": {
                         "type": "string",
-                        "maxLength": 50,
-                        "description": "Seller's item identifier (EN16931 BT-155)"
+                        "description": "Seller's own item identifier (EN16931 BT-155), e.g. catalog number",
+                        "maxLength": 50
                     },
                     "gtin": {
                         "type": "string",
-                        "maxLength": 14,
-                        "description": "GTIN/EAN 13 or 14 digits, schemeID 0160 (EN16931 BT-156/BT-157)"
+                        "title": "GTIN / EAN",
+                        "description": "Global Trade Item Number, 13 or 14 digits (EN16931 BT-156/BT-157)",
+                        "maxLength": 14
                     },
                     "is_active": {
                         "type": "boolean"
@@ -10922,13 +11647,14 @@
                     },
                     "seller_item_id": {
                         "type": "string",
-                        "maxLength": 50,
-                        "description": "Seller's item identifier (EN16931 BT-155)"
+                        "description": "Seller's own item identifier (EN16931 BT-155), e.g. catalog number",
+                        "maxLength": 50
                     },
                     "gtin": {
                         "type": "string",
-                        "maxLength": 14,
-                        "description": "GTIN/EAN 13 or 14 digits, schemeID 0160 (EN16931 BT-156/BT-157)"
+                        "title": "GTIN / EAN",
+                        "description": "Global Trade Item Number, 13 or 14 digits (EN16931 BT-156/BT-157)",
+                        "maxLength": 14
                     },
                     "is_active": {
                         "type": "boolean"
@@ -11073,8 +11799,16 @@
                 "type": "object",
                 "properties": {
                     "recipient": {
-                        "type": "string",
-                        "format": "email"
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "email"
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
                     },
                     "message": {
                         "type": "string",

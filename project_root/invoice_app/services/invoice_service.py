@@ -45,6 +45,10 @@ class InvoiceService:
             if line.product_id:
                 product_seller_id = line.product.seller_item_id or ""
                 product_gtin = line.product.gtin or ""
+            # 3.17-L: line-level product attributes (BG-32: BT-160/BT-161)
+            line_attributes = [
+                {"name": attr.name, "value": attr.value} for attr in line.attributes.all().order_by("sort_order")
+            ]
             items.append(
                 {
                     "product_name": line.description,
@@ -71,6 +75,7 @@ class InvoiceService:
                     "billing_period_end": line.billing_period_end.strftime("%Y%m%d")
                     if line.billing_period_end
                     else None,
+                    "attributes": line_attributes,
                 }
             )
 
@@ -123,6 +128,11 @@ class InvoiceService:
             "buyer_reference": invoice.buyer_reference or "",
             "seller_reference": invoice.seller_reference or "",
             "contract_reference": invoice.contract_reference or "",
+            # 3.17-J: Payee (BG-10) — only if different from the seller
+            "payee": {
+                "name": invoice.payee_name or "",
+                "id": invoice.payee_id or "",
+            },
             "currency": invoice.currency,
             "subtotal": float(invoice.subtotal),
             "tax_amount": float(invoice.tax_amount),
@@ -156,6 +166,15 @@ class InvoiceService:
                 "iban": invoice.company.iban,
                 "bic": invoice.company.bic,
                 "bank_name": invoice.company.bank_name,
+            },
+            # 3.17-K: Seller tax representative (BG-7/BG-8) — only if configured
+            "tax_representative": {
+                "name": invoice.company.tax_representative_name or "",
+                "vat_id": invoice.company.tax_representative_vat_id or "",
+                "street_name": invoice.company.tax_representative_address_line1 or "",
+                "postcode_code": invoice.company.tax_representative_postal_code or "",
+                "city_name": invoice.company.tax_representative_city or "",
+                "country_id": invoice.company.tax_representative_country or "",
             },
             # Backward compatibility: also provide as 'issuer'
             "issuer": {

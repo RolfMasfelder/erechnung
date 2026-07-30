@@ -33,6 +33,7 @@ from invoice_app.models import (
     InvoiceAllowanceCharge,
     InvoiceAttachment,
     InvoiceLine,
+    InvoiceLineAttribute,
     PrivacyImpactAssessment,
     ProcessingActivity,
     Product,
@@ -62,6 +63,7 @@ from .serializers import (
     ImportResultSerializer,
     InvoiceAllowanceChargeSerializer,
     InvoiceAttachmentSerializer,
+    InvoiceLineAttributeSerializer,
     InvoiceLineSerializer,
     InvoiceSerializer,
     PrivacyImpactAssessmentSerializer,
@@ -986,6 +988,19 @@ class InvoiceAllowanceChargeViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ["invoice", "is_charge"]
     search_fields = ["reason", "reason_code"]
+
+
+class InvoiceLineAttributeViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint for managing line-level product attributes (EN16931 BG-32: BT-160/BT-161).
+    """
+
+    queryset = InvoiceLineAttribute.objects.all().select_related("invoice_line")
+    serializer_class = InvoiceLineAttributeSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ["invoice_line"]
+    search_fields = ["name", "value"]
 
 
 class DashboardStatsView(APIView):
