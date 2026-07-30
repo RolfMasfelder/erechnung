@@ -59,16 +59,6 @@
           <template #cell-total_amount="{ value }">
             {{ formatCurrency(value) }}
           </template>
-
-          <template #actions="{ row }">
-            <BaseButton
-              size="sm"
-              variant="primary"
-              @click="viewInvoice(row.id)"
-            >
-              Details
-            </BaseButton>
-          </template>
         </BaseTable>
 
         <div class="card-footer">
@@ -146,7 +136,7 @@ const parseNumericValue = (value) => {
   if (typeof value === 'string') {
     const normalized = value
       .replace(/\s/g, '')
-      .replace(/\./g, '')
+      .replaceAll('.', '')
       .replace(',', '.')
 
     const parsed = Number(normalized)
@@ -272,10 +262,6 @@ const formatDate = (value) => {
     month: '2-digit',
     year: 'numeric'
   })
-}
-
-const viewInvoice = (id) => {
-  router.push({ name: 'InvoiceDetail', params: { id } })
 }
 
 const createInvoice = () => {

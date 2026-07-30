@@ -240,9 +240,7 @@ describe('DashboardView', () => {
     expect(text).toContain('Neues Produkt')
   })
 
-  it('navigates to invoice detail when clicking details button', async () => {
-    const push = vi.spyOn(router, 'push')
-
+  it('navigates to invoice detail via invoice number link', async () => {
     wrapper = mount(DashboardView, {
       global: {
         plugins: [router]
@@ -252,15 +250,22 @@ describe('DashboardView', () => {
     await wrapper.vm.$nextTick()
     await new Promise(resolve => setTimeout(resolve, 100))
 
-    if (wrapper.vm.viewInvoice) {
-      await wrapper.vm.viewInvoice(1)
-      expect(push).toHaveBeenCalledWith(
-        expect.objectContaining({
-          name: 'InvoiceDetail',
-          params: { id: 1 }
-        })
-      )
-    }
+    const link = wrapper.find('a.invoice-link')
+    expect(link.exists()).toBe(true)
+    expect(link.attributes('href')).toBe('/invoices/1')
+  })
+
+  it('does not render an Aktionen column', async () => {
+    wrapper = mount(DashboardView, {
+      global: {
+        plugins: [router]
+      }
+    })
+
+    await wrapper.vm.$nextTick()
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    expect(wrapper.text()).not.toContain('Aktionen')
   })
 
   it('parseNumericValue handles finite number', async () => {
