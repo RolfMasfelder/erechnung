@@ -81,7 +81,7 @@ django==6.0.7
     #   djangorestframework
     #   djangorestframework-simplejwt
     #   drf-spectacular
-django-allauth==65.18.0
+django-allauth==65.19.0
     # via -r requirements.in
 django-axes==8.3.1
     # via -r requirements.in
