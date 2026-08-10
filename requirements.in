@@ -27,7 +27,7 @@
 
 # --- Core Framework & REST ---
 django>=6.0.7,<6.1
-djangorestframework>=3.16,<3.18
+djangorestframework>=3.17.2,<3.18
 django-allauth
 django-axes
 django-cors-headers
