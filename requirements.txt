@@ -206,7 +206,7 @@ platformdirs==4.10.0
     #   virtualenv
 pluggy==1.6.0
     # via pytest
-pre-commit==4.6.1
+pre-commit==4.6.2
     # via -r requirements.in
 prometheus-client==0.26.0
     # via
