@@ -1,0 +1,7 @@
+# pip's own bundled copies (pip/_vendor/) of msgpack and setuptools are outdated
+# in the current python:3.13-slim-trixie base image (pip 26.2.1 vendors
+# msgpack==1.1.2 and setuptools==70.3.0). These are internal to pip itself, not
+# used by our application code, and not fixable via requirements.txt/Dockerfile.
+# Remove these two entries once a newer pip release ships updated vendored copies.
+GHSA-6v7p-g79w-8964
+CVE-2025-47273

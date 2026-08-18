@@ -348,6 +348,7 @@ jobs:
     - name: Run Trivy filesystem scan
       uses: aquasecurity/trivy-action@v0.36.0
       with:
+        version: 'v0.74.0'  # pin Trivy binary; action's own default lags behind
         scan-type: 'fs'
         scan-ref: '.'
         severity: 'CRITICAL'
