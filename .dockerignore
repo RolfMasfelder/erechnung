@@ -28,6 +28,7 @@ LICENSE
 README.md
 htmlcov
 test-artifacts
+tools/Mustang-CLI-*.jar
 docs/archive
 security-reports
 **/*.pyc
