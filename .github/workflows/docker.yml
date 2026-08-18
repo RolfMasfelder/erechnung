@@ -37,6 +37,7 @@ jobs:
     - name: Scan image with Trivy
       uses: aquasecurity/trivy-action@v0.36.0
       with:
+        version: 'v0.74.0'  # pin Trivy binary; action's own default lags behind
         image-ref: erechnung:pr-scan
         format: table
         exit-code: '1'
@@ -115,6 +116,7 @@ jobs:
     - name: Scan published image with Trivy
       uses: aquasecurity/trivy-action@v0.36.0
       with:
+        version: 'v0.74.0'  # pin Trivy binary; action's own default lags behind
         image-ref: ghcr.io/rolfmasfelder/erechnung:${{ steps.version.outputs.VERSION }}
         format: sarif
         output: trivy-results.sarif

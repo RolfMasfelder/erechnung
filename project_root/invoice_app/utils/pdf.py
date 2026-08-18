@@ -13,6 +13,7 @@ Hinweis: factur-x ≥ 3.x nutzt pypdf als Backend, das alle von Ghostscript gese
 
 from __future__ import annotations  # noqa: I001
 
+import glob
 import logging
 import os
 import subprocess
@@ -237,7 +238,12 @@ class PdfA3Generator:
         Returns:
             str: Path to the generated .ps file.
         """
-        gs_template = "/usr/share/ghostscript/10.00.0/lib/PDFA_def.ps"
+        # Resolve the installed Ghostscript version's own template instead of
+        # hardcoding a version number, which changes with the base OS image.
+        matches = sorted(glob.glob("/usr/share/ghostscript/*/lib/PDFA_def.ps"))
+        if not matches:
+            raise FileNotFoundError("Ghostscript PDFA_def.ps template not found under /usr/share/ghostscript/")
+        gs_template = matches[-1]
         with open(gs_template, encoding="utf-8") as f:
             ps_content = f.read()
 

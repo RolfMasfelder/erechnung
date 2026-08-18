@@ -1,4 +1,4 @@
-FROM python:3.13.14-slim-bookworm AS base
+FROM python:3.13.15-slim-trixie AS base
 
 # Build arguments for versioning
 ARG APP_VERSION=1.0.0
@@ -37,7 +37,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     libharfbuzz0b \
     libfontconfig1 \
     libcairo2 \
-    libgdk-pixbuf2.0-0 \
+    libgdk-pixbuf-2.0-0 \
     fonts-liberation \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \

@@ -36,7 +36,7 @@ Always use these versions when referencing actions. Do NOT use older major versi
 | Action | Version | Notes |
 |--------|---------|-------|
 | `sigstore/cosign-installer` | `@v4` | Installs Cosign v3 binary. Note: the v3.x installer action only supports Cosign v2 binary — use `@v4` to get Cosign v3. |
-| `aquasecurity/trivy-action` | `@v0.35.0` | Uses `v` prefix tags after supply chain attack fix |
+| `aquasecurity/trivy-action` | `@v0.36.0` | Uses `v` prefix tags after supply chain attack fix. Always set `with: version: 'vX.Y.Z'` explicitly to pin the Trivy **binary** — the action's own bundled default lags behind the latest Trivy release (check `repos/aquasecurity/trivy/releases/latest` via `gh api` for current binary version). |
 
 ### Dependency & PR Management
 
