@@ -86,9 +86,11 @@ pythonVersion = "3.13"
 djangoStubsSource = "django-stubs"
 typeCheckingMode = "basic"
 exclude = [
+    "**/.*",
     "**/node_modules/**",
     "**/__pycache__/**",
     "**/.ruff_cache/**",
+    "**/venv/**",
     "**/migrations/**",
 ]
 
