@@ -98,12 +98,12 @@ django-filter==26.1
 django-prometheus==2.5.0
     # via -r requirements.in
 django-redis==7.0.0
+    # via -r requirements.in
+django-stubs[compatible-mypy]==6.0.8
     # via
     #   -r requirements.in
     #   djangorestframework-stubs
 django-stubs-ext==6.0.5
-    # via -r requirements.in
-django-stubs[compatible-mypy]==6.0.8
     # via django-stubs
 djangorestframework==3.18.0
     # via
@@ -133,7 +133,7 @@ filelock==3.29.1
     #   virtualenv
 fonttools[woff]==4.63.0
     # via weasyprint
-gunicorn==26.0.0
+gunicorn==26.1.0
     # via -r requirements.in
 identify==2.6.19
     # via pre-commit
@@ -177,7 +177,6 @@ packageurl-python==0.17.6
 packaging==26.2
     # via
     #   django-csp
-    #   gunicorn
     #   kombu
     #   pikepdf
     #   pip-audit
