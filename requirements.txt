@@ -186,7 +186,7 @@ packaging==26.2
     #   wheel
 pathspec==1.1.1
     # via mypy
-pikepdf==10.11.0
+pikepdf==10.12.0
     # via -r requirements.in
 pillow==12.3.0
     # via
