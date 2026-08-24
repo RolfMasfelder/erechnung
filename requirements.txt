@@ -99,7 +99,7 @@ django-prometheus==2.5.0
     # via -r requirements.in
 django-redis==7.0.0
     # via -r requirements.in
-django-stubs[compatible-mypy]==6.0.8
+django-stubs[compatible-mypy]==6.1.0
     # via
     #   -r requirements.in
     #   djangorestframework-stubs
@@ -112,7 +112,7 @@ djangorestframework==3.18.0
     #   drf-spectacular
 djangorestframework-simplejwt==5.5.1
     # via -r requirements.in
-djangorestframework-stubs==3.17.1
+djangorestframework-stubs==3.18.0
     # via -r requirements.in
 drf-spectacular==0.30.0
     # via -r requirements.in
