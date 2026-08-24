@@ -98,12 +98,12 @@ django-filter==26.1
 django-prometheus==2.5.0
     # via -r requirements.in
 django-redis==7.0.0
+    # via -r requirements.in
+django-stubs[compatible-mypy]==6.0.8
     # via
     #   -r requirements.in
     #   djangorestframework-stubs
 django-stubs-ext==6.0.5
-    # via -r requirements.in
-django-stubs[compatible-mypy]==6.0.8
     # via django-stubs
 djangorestframework==3.18.0
     # via
@@ -248,7 +248,7 @@ python-dotenv==1.2.2
     # via
     #   -r requirements.in
     #   environs
-python-json-logger==4.1.0
+python-json-logger==4.2.0
     # via -r requirements.in
 python-stdnum==2.2
     # via factur-x
