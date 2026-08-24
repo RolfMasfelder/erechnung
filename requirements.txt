@@ -89,7 +89,7 @@ django-cors-headers==4.9.0
     # via -r requirements.in
 django-csp==4.0
     # via -r requirements.in
-django-debug-toolbar==7.1.0
+django-debug-toolbar==7.1.1
     # via -r requirements.in
 django-extensions==4.1
     # via -r requirements.in
@@ -98,12 +98,12 @@ django-filter==26.1
 django-prometheus==2.5.0
     # via -r requirements.in
 django-redis==7.0.0
+    # via -r requirements.in
+django-stubs[compatible-mypy]==6.0.8
     # via
     #   -r requirements.in
     #   djangorestframework-stubs
 django-stubs-ext==6.0.5
-    # via -r requirements.in
-django-stubs[compatible-mypy]==6.0.8
     # via django-stubs
 djangorestframework==3.18.0
     # via
