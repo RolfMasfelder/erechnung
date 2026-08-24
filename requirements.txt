@@ -122,7 +122,7 @@ environs==15.1.0
     # via -r requirements.in
 factory-boy==3.3.3
     # via -r requirements.in
-factur-x==6.7
+factur-x==6.8
     # via -r requirements.in
 faker==40.21.0
     # via factory-boy
