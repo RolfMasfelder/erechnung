@@ -133,7 +133,7 @@ filelock==3.29.1
     #   virtualenv
 fonttools[woff]==4.63.0
     # via weasyprint
-gunicorn==26.1.0
+gunicorn==26.2.0
     # via -r requirements.in
 identify==2.6.19
     # via pre-commit
