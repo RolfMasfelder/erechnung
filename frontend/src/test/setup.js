@@ -11,7 +11,12 @@ const localStorageMock = {
   clear: vi.fn()
 }
 
-global.localStorage = localStorageMock
+// happy-dom (vitest 5) exposes localStorage as getter-only, so define via property descriptor
+Object.defineProperty(global, 'localStorage', {
+  value: localStorageMock,
+  writable: true,
+  configurable: true
+})
 
 // Mock window.location
 delete window.location
