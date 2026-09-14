@@ -213,7 +213,7 @@ prometheus-client==0.26.0
     #   django-prometheus
 prompt-toolkit==3.0.52
     # via click-repl
-psycopg2-binary==2.9.12
+psycopg2-binary==2.9.13
     # via -r requirements.in
 py-serializable==2.1.0
     # via cyclonedx-python-lib
