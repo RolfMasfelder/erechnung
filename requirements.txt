@@ -225,7 +225,7 @@ pygments==2.20.0
     # via
     #   pytest
     #   rich
-pyjwt==2.13.0
+pyjwt==2.14.0
     # via djangorestframework-simplejwt
 pyparsing==3.3.2
     # via pip-requirements-parser
