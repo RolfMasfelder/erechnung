@@ -1,4 +1,4 @@
-FROM python:3.13.15-slim-trixie AS base
+FROM python:3.13.16-slim-trixie AS base
 
 # Build arguments for versioning
 ARG APP_VERSION=1.0.0
