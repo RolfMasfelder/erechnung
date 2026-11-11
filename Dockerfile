@@ -48,6 +48,12 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     && mkdir -p /app/project_root/media/invoices /app/project_root/media/xml /app/project_root/media/company_logos /app/static /app/logs \
     && chown -R app_user:app_group /app
 
+# Freshen pip: the base image ships a pip whose vendored copies
+# (pip/_vendor/: urllib3 2.7.0, msgpack <1.2.4, setuptools 70.3.0) carry
+# advisory findings that Trivy reports against the image (target "Python").
+# pip 26.3 vendors current urllib3 / msgpack 1.2.4, clearing those findings.
+RUN pip install --no-cache-dir --upgrade "pip==26.3"
+
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
