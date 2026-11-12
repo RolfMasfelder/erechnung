@@ -19,23 +19,23 @@
     "@vuepic/vue-datepicker": "^14.0.0",
     "axios": "^1.20.0",
     "date-fns": "^4.4.0",
-    "pinia": "^4.0.3",
+    "pinia": "^4.1.0",
     "vue": "^3.5.43",
-    "vue-router": "^5.3.1"
+    "vue-router": "^5.4.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.3.3",
-    "@vitejs/plugin-vue": "^6.0.9",
+    "@vitejs/plugin-vue": "^6.0.10",
     "@vitest/coverage-v8": "^5.0.1",
-    "@vitest/ui": "^5.0.0",
+    "@vitest/ui": "^5.0.5",
     "@vue/test-utils": "^2.5.1",
     "autoprefixer": "^10.6.1",
     "esbuild": "^0.28.2",
     "happy-dom": "^21.0.3",
     "postcss": "^8.5.28",
     "tailwindcss": "^4.3.3",
-    "vite": "^8.3.1",
+    "vite": "^8.3.4",
     "vitest": "^5.0.1"
   }
 }
