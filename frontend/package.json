@@ -30,7 +30,7 @@
     "@vitest/coverage-v8": "^5.0.1",
     "@vitest/ui": "^5.0.5",
     "@vue/test-utils": "^2.5.1",
-    "autoprefixer": "^10.6.1",
+    "autoprefixer": "^10.6.2",
     "esbuild": "^0.28.2",
     "happy-dom": "^21.0.3",
     "postcss": "^8.5.28",
